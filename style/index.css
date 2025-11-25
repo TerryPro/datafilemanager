@@ -1,0 +1,33 @@
+@import 'base.css';
+/* 统一字体设置 */
+.df-panel-root, .df-panel-toolbar, .df-refresh, .df-panel-list, .df-table,
+.df-row, .df-header, .df-cell, .df-empty,
+.aiassist-dialog-body, .ai-field, .ai-textarea, .ai-select, .ai-checkbox, .ai-preview, .ai-help {
+  font-family: var(--jp-ui-font-family);
+  font-size: var(--jp-ui-font-size1);
+  color: var(--jp-ui-font-color1);
+}
+
+/* DataFrame Inspector 面板样式 */
+.df-panel-root { padding: 8px; }
+.df-panel-toolbar { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 6px; }
+.df-refresh { border: none; background: transparent; padding: 4px; cursor: pointer; border-radius: 4px; }
+.df-refresh:hover { background: var(--jp-layout-color2); }
+.df-refresh .jp-Icon { display: inline-block; }
+.df-panel-list { overflow: auto; }
+.df-table { display: grid; grid-auto-rows: minmax(28px, auto); row-gap: 2px; }
+.df-row { display: grid; grid-template-columns: minmax(100px, 1fr) 140px 100px; column-gap: 8px; align-items: center; padding: 4px 6px; border-bottom: 1px solid var(--jp-border-color2); }
+.df-header { background: var(--jp-layout-color2); border-radius: 4px; font-weight: 500; }
+.df-cell { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.df-row:not(.df-header):hover { background: var(--jp-layout-color2); }
+.df-empty { padding: 8px; color: var(--jp-ui-font-color2); }
+
+/* AI Assist 对话框布局样式 */
+.aiassist-dialog-body { display: flex; flex-direction: column; gap: 8px; min-width: 560px; max-width: 100%; overflow-x: hidden; }
+.ai-field { display: grid; grid-template-columns: 120px 1fr; align-items: start; column-gap: 8px; }
+.ai-textarea { width: 100%; box-sizing: border-box; resize: vertical; min-height: 100px; }
+.ai-select { width: 220px; box-sizing: border-box; }
+.ai-checkbox { display: flex; align-items: center; gap: 6px; padding-left: 120px; }
+.ai-preview { max-height: 260px; overflow-y: auto; overflow-x: hidden; white-space: pre-wrap; word-break: break-word; border: 1px solid var(--jp-border-color2); background: var(--jp-layout-color2); padding: 8px; border-radius: 4px; }
+.ai-help { grid-column: 2; color: var(--jp-ui-font-color2); font-size: 12px; }
+/* 保持扩展样式入口 */

@@ -1,0 +1,22 @@
+{
+  "id": "datafilemanager:plugin",
+  "jupyter.lab.transform": true,
+  "jupyter.lab.toolbars": {
+    "Notebook": [
+      {
+        "name": "ai-assist",
+        "type": "command",
+        "command": "datafilemanager:ai-open",
+        "icon": "datafilemanager:ai",
+        "label": "AI",
+        "caption": "AI Assist",
+        "rank": 1
+      }
+    ]
+  },
+  "title": "DataFileManager Settings",
+  "description": "Toolbar configuration for AI Assist",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false
+}

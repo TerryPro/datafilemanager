@@ -13,9 +13,8 @@ export class AiSidebar extends Widget {
     private aiService: AiService;
     private chatHistory: HTMLDivElement;
     private intentInput: HTMLTextAreaElement;
-    private modeButtons: Map<string, HTMLButtonElement> = new Map();
-    private selectedMode: string = 'replace';
-    private generateBtn: HTMLButtonElement;
+    private modeSelect: HTMLSelectElement;
+    private executeBtn: HTMLButtonElement;
 
     constructor(app: JupyterFrontEnd, tracker: INotebookTracker) {
         super();
@@ -28,42 +27,28 @@ export class AiSidebar extends Widget {
         this.tracker = tracker;
         this.aiService = new AiService();
 
-        this.node.style.display = 'flex';
-        this.node.style.flexDirection = 'column';
-        this.node.style.padding = '12px';
-        this.node.style.overflow = 'hidden';
-        this.node.style.backgroundColor = 'var(--jp-layout-color1)';
-
         // Chat History Area
         this.chatHistory = document.createElement('div');
         this.chatHistory.className = 'ai-sidebar-history';
-        this.chatHistory.style.flex = '1';
-        this.chatHistory.style.overflowY = 'auto';
-        this.chatHistory.style.marginBottom = '12px';
-        this.chatHistory.style.border = '1px solid var(--jp-border-color2)';
-        this.chatHistory.style.borderRadius = '8px';
-        this.chatHistory.style.padding = '10px';
-        this.chatHistory.style.backgroundColor = 'var(--jp-layout-color0)';
         this.node.appendChild(this.chatHistory);
 
-        // Input Area
+        // Input Container
         const inputContainer = document.createElement('div');
-        inputContainer.style.display = 'flex';
-        inputContainer.style.flexDirection = 'column';
-        inputContainer.style.gap = '10px';
+        inputContainer.className = 'ai-sidebar-input-container';
 
-        // Mode Selection - Modern Button Group
-        const modeLabel = document.createElement('label');
-        modeLabel.textContent = '模式选择:';
-        modeLabel.style.fontWeight = '600';
-        modeLabel.style.fontSize = '12px';
-        modeLabel.style.color = 'var(--jp-ui-font-color1)';
-        inputContainer.appendChild(modeLabel);
+        // Intent Input
+        this.intentInput = document.createElement('textarea');
+        this.intentInput.className = 'jp-mod-styled ai-sidebar-intent-input';
+        this.intentInput.rows = 4;
+        inputContainer.appendChild(this.intentInput);
 
-        const modeContainer = document.createElement('div');
-        modeContainer.style.display = 'flex';
-        modeContainer.style.gap = '6px';
-        modeContainer.style.flexWrap = 'wrap';
+        // Toolbar
+        const toolbar = document.createElement('div');
+        toolbar.className = 'ai-sidebar-toolbar';
+
+        // Mode Select
+        this.modeSelect = document.createElement('select');
+        this.modeSelect.className = 'jp-mod-styled ai-sidebar-mode-select';
 
         const modes = [
             { value: 'replace', label: '替换' },
@@ -74,97 +59,29 @@ export class AiSidebar extends Widget {
         ];
 
         modes.forEach(m => {
-            const btn = document.createElement('button');
-            btn.className = 'ai-mode-btn';
-            btn.textContent = m.label;
-            btn.style.flex = '1';
-            btn.style.minWidth = '70px';
-            btn.style.padding = '8px 12px';
-            btn.style.border = '1px solid var(--jp-border-color2)';
-            btn.style.borderRadius = '6px';
-            btn.style.backgroundColor = 'var(--jp-layout-color2)';
-            btn.style.color = 'var(--jp-ui-font-color1)';
-            btn.style.cursor = 'pointer';
-            btn.style.fontSize = '12px';
-            btn.style.fontWeight = '500';
-            btn.style.transition = 'all 0.2s ease';
-            btn.style.outline = 'none';
-
-            btn.onmouseover = () => {
-                if (this.selectedMode !== m.value) {
-                    btn.style.backgroundColor = 'var(--jp-layout-color3)';
-                }
-            };
-            btn.onmouseout = () => {
-                if (this.selectedMode !== m.value) {
-                    btn.style.backgroundColor = 'var(--jp-layout-color2)';
-                }
-            };
-
-            btn.onclick = () => this.selectMode(m.value);
-            this.modeButtons.set(m.value, btn);
-            modeContainer.appendChild(btn);
+            const opt = document.createElement('option');
+            opt.value = m.value;
+            opt.textContent = m.label;
+            this.modeSelect.appendChild(opt);
         });
 
-        inputContainer.appendChild(modeContainer);
+        toolbar.appendChild(this.modeSelect);
 
-        // Set initial selected mode
-        this.selectMode('replace');
+        // Execute Button
+        this.executeBtn = document.createElement('button');
+        this.executeBtn.className = 'ai-sidebar-execute-btn';
+        this.executeBtn.title = '生成';
+        this.executeBtn.innerHTML = '▶';
+        this.executeBtn.onclick = () => this.handleGenerate();
 
-        // Intent Input
-        const label = document.createElement('label');
-        label.textContent = '意图描述:';
-        label.style.fontWeight = '600';
-        label.style.fontSize = '12px';
-        label.style.color = 'var(--jp-ui-font-color1)';
-        inputContainer.appendChild(label);
+        toolbar.appendChild(this.executeBtn);
 
-        this.intentInput = document.createElement('textarea');
-        this.intentInput.className = 'jp-mod-styled';
-        this.intentInput.placeholder = '输入您的需求...';
-        this.intentInput.rows = 3;
-        this.intentInput.style.width = 'calc(100% - 4px)';
-        this.intentInput.style.resize = 'vertical';
-        this.intentInput.style.borderRadius = '6px';
-        this.intentInput.style.padding = '10px 12px';
-        this.intentInput.style.fontSize = '13px';
-        this.intentInput.style.lineHeight = '1.5';
-        this.intentInput.style.boxSizing = 'border-box';
-        this.intentInput.style.border = '1px solid var(--jp-border-color2)';
-        this.intentInput.style.backgroundColor = 'var(--jp-layout-color0)';
-        inputContainer.appendChild(this.intentInput);
-
-        // Generate Button
-        this.generateBtn = document.createElement('button');
-        this.generateBtn.className = 'jp-Button jp-mod-accept';
-        this.generateBtn.textContent = '生成';
-        this.generateBtn.style.width = '100%';
-        this.generateBtn.style.padding = '10px';
-        this.generateBtn.style.borderRadius = '6px';
-        this.generateBtn.style.fontSize = '14px';
-        this.generateBtn.style.fontWeight = '600';
-        this.generateBtn.onclick = () => this.handleGenerate();
-        inputContainer.appendChild(this.generateBtn);
+        inputContainer.appendChild(toolbar);
 
         this.node.appendChild(inputContainer);
     }
 
-    private selectMode(mode: string) {
-        this.selectedMode = mode;
-        this.modeButtons.forEach((btn, key) => {
-            if (key === mode) {
-                btn.style.backgroundColor = 'var(--jp-brand-color1)';
-                btn.style.color = 'white';
-                btn.style.borderColor = 'var(--jp-brand-color1)';
-                btn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
-            } else {
-                btn.style.backgroundColor = 'var(--jp-layout-color2)';
-                btn.style.color = 'var(--jp-ui-font-color1)';
-                btn.style.borderColor = 'var(--jp-border-color2)';
-                btn.style.boxShadow = 'none';
-            }
-        });
-    }
+
 
     private async handleGenerate() {
         const panel = this.tracker.currentWidget;
@@ -186,10 +103,10 @@ export class AiSidebar extends Widget {
         }
 
         const source = cell.model.sharedModel.getSource();
-        const mode = this.selectedMode;
+        const mode = this.modeSelect.value;
 
-        this.generateBtn.disabled = true;
-        this.generateBtn.textContent = '生成中...';
+        this.executeBtn.disabled = true;
+        this.executeBtn.style.opacity = '0.5';
         this.appendHistory('User', intent);
 
         try {
@@ -204,8 +121,8 @@ export class AiSidebar extends Widget {
         } catch (e) {
             this.appendHistory('System', `请求失败: ${e instanceof Error ? e.message : String(e)}`, 'error');
         } finally {
-            this.generateBtn.disabled = false;
-            this.generateBtn.textContent = '生成';
+            this.executeBtn.disabled = false;
+            this.executeBtn.style.opacity = '1';
         }
     }
 
@@ -213,7 +130,7 @@ export class AiSidebar extends Widget {
         const panel = this.tracker.currentWidget;
         if (!panel) return;
 
-        const mode = this.selectedMode as 'replace' | 'insert' | 'append' | 'explain' | 'fix';
+        const mode = this.modeSelect.value as 'replace' | 'insert' | 'append' | 'explain' | 'fix';
 
         try {
             await this.applySuggestion(panel, suggestion, mode);
@@ -246,75 +163,38 @@ export class AiSidebar extends Widget {
 
     private appendHistory(sender: string, text: string, type: 'normal' | 'error' | 'warning' | 'success' | 'info' = 'normal', showApplyBtn: boolean = false) {
         const msg = document.createElement('div');
-        msg.style.marginBottom = '10px';
-        msg.style.padding = '10px';
-        msg.style.borderRadius = '8px';
-        msg.style.fontSize = '13px';
-        msg.style.wordBreak = 'break-word';
-        msg.style.position = 'relative';
+        msg.className = 'ai-sidebar-message';
 
         if (sender === 'User') {
-            msg.style.backgroundColor = 'var(--jp-layout-color2)';
-            msg.style.alignSelf = 'flex-end';
-            msg.style.borderLeft = '3px solid var(--jp-brand-color1)';
+            msg.classList.add('ai-sidebar-message-user');
             msg.innerHTML = `<strong>You:</strong> ${text}`;
         } else if (sender === 'AI') {
-            msg.style.backgroundColor = 'var(--jp-layout-color3)';
-            msg.style.borderLeft = '3px solid var(--jp-success-color1)';
-            msg.style.display = 'flex';
-            msg.style.justifyContent = 'space-between';
-            msg.style.alignItems = 'flex-start';
-            msg.style.gap = '10px';
+            msg.classList.add('ai-sidebar-message-ai');
 
             const textContent = document.createElement('div');
-            textContent.style.flex = '1';
-            textContent.style.whiteSpace = 'pre-wrap';
-            textContent.style.fontFamily = 'var(--jp-code-font-family)';
+            textContent.className = 'ai-sidebar-message-ai-text';
             textContent.innerHTML = `<strong>AI:</strong>\n${text}`;
             msg.appendChild(textContent);
 
             if (showApplyBtn) {
                 const applyIcon = document.createElement('button');
+                applyIcon.className = 'ai-sidebar-apply-btn';
                 applyIcon.innerHTML = '✓';
                 applyIcon.title = '应用此建议';
-                applyIcon.style.backgroundColor = 'var(--jp-brand-color1)';
-                applyIcon.style.color = 'white';
-                applyIcon.style.border = 'none';
-                applyIcon.style.borderRadius = '50%';
-                applyIcon.style.width = '28px';
-                applyIcon.style.height = '28px';
-                applyIcon.style.cursor = 'pointer';
-                applyIcon.style.fontSize = '16px';
-                applyIcon.style.fontWeight = 'bold';
-                applyIcon.style.flexShrink = '0';
-                applyIcon.style.transition = 'all 0.2s ease';
-                applyIcon.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
-
-                applyIcon.onmouseover = () => {
-                    applyIcon.style.transform = 'scale(1.1)';
-                    applyIcon.style.boxShadow = '0 3px 6px rgba(0,0,0,0.3)';
-                };
-                applyIcon.onmouseout = () => {
-                    applyIcon.style.transform = 'scale(1)';
-                    applyIcon.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
-                };
-
                 applyIcon.onclick = () => this.handleApply(text.replace(/^AI:\n/, ''));
                 msg.appendChild(applyIcon);
             }
         } else {
-            msg.style.fontStyle = 'italic';
-            msg.style.fontSize = '12px';
+            msg.classList.add('ai-sidebar-message-system');
             msg.innerHTML = `<strong>[${sender}]</strong> ${text}`;
             if (type === 'error') {
-                msg.style.color = 'var(--jp-error-color1)';
-                msg.style.backgroundColor = 'var(--jp-error-color3)';
+                msg.classList.add('ai-sidebar-message-error');
             }
             if (type === 'success') {
-                msg.style.color = 'var(--jp-success-color1)';
+                msg.classList.add('ai-sidebar-message-success');
             }
             if (type === 'info') {
-                msg.style.color = 'var(--jp-info-color1)';
+                msg.classList.add('ai-sidebar-message-info');
             }
         }
 

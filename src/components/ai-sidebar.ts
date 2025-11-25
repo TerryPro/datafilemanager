@@ -66,17 +66,17 @@ export class AiSidebar extends Widget {
         modeContainer.style.flexWrap = 'wrap';
 
         const modes = [
-            { value: 'replace', label: '替换', icon: '🔄' },
-            { value: 'fix', label: '修复', icon: '🔧' },
-            { value: 'explain', label: '解释', icon: '💡' },
-            { value: 'insert', label: '插入', icon: '➕' },
-            { value: 'append', label: '追加', icon: '📝' }
+            { value: 'replace', label: '替换' },
+            { value: 'fix', label: '修复' },
+            { value: 'explain', label: '解释' },
+            { value: 'insert', label: '插入' },
+            { value: 'append', label: '追加' }
         ];
 
         modes.forEach(m => {
             const btn = document.createElement('button');
             btn.className = 'ai-mode-btn';
-            btn.innerHTML = `<span style="margin-right: 4px;">${m.icon}</span>${m.label}`;
+            btn.textContent = m.label;
             btn.style.flex = '1';
             btn.style.minWidth = '70px';
             btn.style.padding = '8px 12px';
@@ -123,17 +123,21 @@ export class AiSidebar extends Widget {
         this.intentInput.className = 'jp-mod-styled';
         this.intentInput.placeholder = '输入您的需求...';
         this.intentInput.rows = 3;
-        this.intentInput.style.width = '100%';
+        this.intentInput.style.width = 'calc(100% - 4px)';
         this.intentInput.style.resize = 'vertical';
         this.intentInput.style.borderRadius = '6px';
-        this.intentInput.style.padding = '8px';
+        this.intentInput.style.padding = '10px 12px';
         this.intentInput.style.fontSize = '13px';
+        this.intentInput.style.lineHeight = '1.5';
+        this.intentInput.style.boxSizing = 'border-box';
+        this.intentInput.style.border = '1px solid var(--jp-border-color2)';
+        this.intentInput.style.backgroundColor = 'var(--jp-layout-color0)';
         inputContainer.appendChild(this.intentInput);
 
         // Generate Button
         this.generateBtn = document.createElement('button');
         this.generateBtn.className = 'jp-Button jp-mod-accept';
-        this.generateBtn.textContent = '✨ 生成';
+        this.generateBtn.textContent = '生成';
         this.generateBtn.style.width = '100%';
         this.generateBtn.style.padding = '10px';
         this.generateBtn.style.borderRadius = '6px';
@@ -185,7 +189,7 @@ export class AiSidebar extends Widget {
         const mode = this.selectedMode;
 
         this.generateBtn.disabled = true;
-        this.generateBtn.textContent = '⏳ 生成中...';
+        this.generateBtn.textContent = '生成中...';
         this.appendHistory('User', intent);
 
         try {
@@ -194,16 +198,14 @@ export class AiSidebar extends Widget {
 
             if (resp.error) {
                 this.appendHistory('AI', `错误: ${resp.error}\n\n建议:\n${resp.suggestion}`, 'error');
-                this.lastSuggestion = resp.suggestion;
             } else {
                 this.appendHistory('AI', resp.suggestion, 'success', true);
-                this.lastSuggestion = resp.suggestion;
             }
         } catch (e) {
             this.appendHistory('System', `请求失败: ${e instanceof Error ? e.message : String(e)}`, 'error');
         } finally {
             this.generateBtn.disabled = false;
-            this.generateBtn.textContent = '✨ 生成';
+            this.generateBtn.textContent = '生成';
         }
     }
 
@@ -215,9 +217,8 @@ export class AiSidebar extends Widget {
 
         try {
             await this.applySuggestion(panel, suggestion, mode);
-            this.appendHistory('System', '✅ 代码已应用。', 'info');
         } catch (e) {
-            this.appendHistory('System', `❌ 应用失败: ${e instanceof Error ? e.message : String(e)}`, 'error');
+            this.appendHistory('System', `应用失败: ${e instanceof Error ? e.message : String(e)}`, 'error');
         }
     }
 

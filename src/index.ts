@@ -11,6 +11,7 @@ import { IDocumentManager } from '@jupyterlab/docmanager';
 import { DataFramePanel } from './components/dataframe-panel';
 import { CsvFileManager } from './components/csv-file-manager';
 import { AiCommandManager } from './components/ai-command-manager';
+import { AiSidebar } from './components/ai-sidebar';
 
 // 创建一个全局变量来跟踪文件浏览器实例
 const tracker: {
@@ -75,6 +76,12 @@ const plugin: JupyterFrontEndPlugin<void> = {
     );
     // 初始化AI组件和命令
     aiCommandManager.initialize();
+
+    // 注册 AI 侧边栏
+    if (notebookTracker) {
+      const aiSidebar = new AiSidebar(app, notebookTracker);
+      app.shell.add(aiSidebar, 'right', { rank: 1000 });
+    }
   }
 };
 

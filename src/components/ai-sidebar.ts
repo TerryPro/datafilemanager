@@ -51,11 +51,9 @@ export class AiSidebar extends Widget {
         this.modeSelect.className = 'jp-mod-styled ai-sidebar-mode-select';
 
         const modes = [
-            { value: 'replace', label: '替换' },
-            { value: 'fix', label: '修复' },
-            { value: 'explain', label: '解释' },
-            { value: 'insert', label: '插入' },
-            { value: 'append', label: '追加' }
+            { value: 'replace', label: '编写代码' },
+            { value: 'fix', label: '修改代码' },
+            { value: 'explain', label: '编写说明' },
         ];
 
         modes.forEach(m => {
@@ -110,7 +108,15 @@ export class AiSidebar extends Widget {
         this.appendHistory('User', intent);
 
         try {
-            const payload = this.aiService.buildAiRequestPayload(panel, source, intent, mode, false);
+            let variables: any[] = [];
+            try {
+                variables = await this.aiService.getDataFrameInfo(panel);
+                console.log('Fetched variables:', variables);
+            } catch (e) {
+                console.warn('Failed to fetch variables:', e);
+            }
+
+            const payload = this.aiService.buildAiRequestPayload(panel, source, intent, mode, false, variables);
             const resp = await this.aiService.requestGenerate(payload);
 
             if (resp.error) {

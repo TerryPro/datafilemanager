@@ -43,9 +43,64 @@ export class AiService {
     }
 
     /**
+     * Get DataFrame info from the current kernel.
+     */
+    async getDataFrameInfo(panel: NotebookPanel): Promise<any[]> {
+        const session = panel.sessionContext.session;
+        if (!session?.kernel) {
+            return [];
+        }
+
+        const code = `
+import json
+import pandas as pd
+_dfs = []
+for _name, _var in list(globals().items()):
+    if not _name.startswith('_') and isinstance(_var, pd.DataFrame):
+        _dfs.append({
+            'name': _name,
+            'type': 'DataFrame',
+            'shape': _var.shape,
+            'columns': _var.columns.tolist(),
+            'dtypes': {k: str(v) for k, v in _var.dtypes.items()}
+        })
+print(json.dumps(_dfs))
+`;
+
+        console.log('Executing DataFrame info script...');
+        const future = session.kernel.requestExecute({ code, stop_on_error: false, silent: false, store_history: false });
+        let result: any[] = [];
+
+        future.onIOPub = (msg) => {
+            const msgType = msg.header.msg_type;
+            console.log('IOPub message:', msgType, msg.content);
+            if (msgType === 'stream') {
+                const content = msg.content as any;
+                if (content.name === 'stdout') {
+                    console.log('Stdout received:', content.text);
+                    try {
+                        result = JSON.parse(content.text);
+                        console.log('Parsed DataFrame info:', result);
+                    } catch (e) {
+                        console.error('Failed to parse DataFrame info:', e);
+                    }
+                } else if (content.name === 'stderr') {
+                    console.warn('Stderr received:', content.text);
+                }
+            } else if (msgType === 'error') {
+                console.error('Kernel error:', msg.content);
+            }
+        };
+
+        await future.done;
+        console.log('Execution finished. Result:', result);
+        return result;
+    }
+
+    /**
      * Build the payload for the AI request.
      */
-    buildAiRequestPayload(panel: NotebookPanel, source: string, intent: string, mode: string, autoRun: boolean): any {
+    buildAiRequestPayload(panel: NotebookPanel, source: string, intent: string, mode: string, autoRun: boolean, variables: any[] = []): any {
         const kernel = panel.sessionContext?.session?.kernel?.name ?? 'python';
         const ctx = this.pickNeighborCells(panel, 2);
 
@@ -73,7 +128,7 @@ export class AiService {
             }
         }
 
-        return { language: kernel, source, context: ctx, intent, options: { mode, autoRun, privacy: 'normal' }, output };
+        return { language: kernel, source, context: ctx, intent, options: { mode, autoRun, privacy: 'normal' }, output, variables };
     }
 
     /**

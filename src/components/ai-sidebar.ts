@@ -27,6 +27,24 @@ export class AiSidebar extends Widget {
         this.tracker = tracker;
         this.aiService = new AiService();
 
+        // Sidebar Header
+        const header = document.createElement('div');
+        header.className = 'ai-sidebar-header';
+
+        const title = document.createElement('div');
+        title.className = 'ai-sidebar-title';
+        title.innerHTML = `${this.ICONS.ai} <span>AI Assistant</span>`;
+
+        const clearBtn = document.createElement('button');
+        clearBtn.className = 'ai-sidebar-clear-btn';
+        clearBtn.innerHTML = this.ICONS.trash;
+        clearBtn.title = '清空对话';
+        clearBtn.onclick = () => this.clearHistory();
+
+        header.appendChild(title);
+        header.appendChild(clearBtn);
+        this.node.appendChild(header);
+
         // Chat History Area
         this.chatHistory = document.createElement('div');
         this.chatHistory.className = 'ai-sidebar-history';
@@ -80,6 +98,10 @@ export class AiSidebar extends Widget {
     }
 
 
+
+    private clearHistory() {
+        this.chatHistory.innerHTML = '';
+    }
 
     private async handleGenerate() {
         const panel = this.tracker.currentWidget;
@@ -167,86 +189,115 @@ export class AiSidebar extends Widget {
         }
     }
 
+    // 定义SVG图标常量
+    private readonly ICONS = {
+        expand: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`,
+        collapse: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>`,
+        apply: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`,
+        user: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`,
+        ai: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M12 12 2.1 12a10.1 10.1 0 0 0 9.9 9.9v-9.9z"></path><path d="M12 12V2.1A10.1 10.1 0 0 0 2.1 12h9.9z"></path></svg>`,
+        trash: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`
+    };
+
     private appendHistory(sender: string, text: string, type: 'normal' | 'error' | 'warning' | 'success' | 'info' = 'normal', showApplyBtn: boolean = false) {
         const msg = document.createElement('div');
         msg.className = 'ai-sidebar-message';
 
         if (sender === 'User') {
             msg.classList.add('ai-sidebar-message-user');
-            msg.innerHTML = `<strong>You:</strong> ${text}`;
+            // User Header
+            const header = document.createElement('div');
+            header.className = 'ai-message-header';
+
+            const label = document.createElement('div');
+            label.className = 'ai-message-label';
+            label.innerHTML = `${this.ICONS.user} <span>You</span>`;
+            header.appendChild(label);
+
+            msg.appendChild(header);
+
+            // User Content
+            const content = document.createElement('div');
+            content.className = 'ai-message-content';
+            content.textContent = text;
+            msg.appendChild(content);
+
         } else if (sender === 'AI') {
             msg.classList.add('ai-sidebar-message-ai');
 
-            // 检查内容是否需要折叠（超过5行）
-            const lines = text.split('\n');
-            const shouldCollapse = lines.length > 5;
+            // AI Header with Toolbar
+            const header = document.createElement('div');
+            header.className = 'ai-message-header';
 
-            // 创建顶部工具栏（包含展开和应用按钮）
+            const label = document.createElement('div');
+            label.className = 'ai-message-label';
+            label.innerHTML = `${this.ICONS.ai} <span>AI Suggestion</span>`;
+            header.appendChild(label);
+
             const toolbar = document.createElement('div');
-            toolbar.className = 'ai-sidebar-message-toolbar';
+            toolbar.className = 'ai-message-toolbar';
+            header.appendChild(toolbar);
 
-            // 创建文本内容
-            const textContent = document.createElement('div');
-            textContent.className = 'ai-sidebar-message-ai-text';
+            msg.appendChild(header);
+
+            // Content Area
+            const content = document.createElement('div');
+            content.className = 'ai-message-content ai-code-block';
+
+            // Check if content needs collapsing
+            const lines = text.split('\n');
+            const shouldCollapse = lines.length > 8; // 稍微增加默认显示的行数
 
             if (shouldCollapse) {
-                // 创建折叠状态的内容
-                const collapsedText = lines.slice(0, 5).join('\n') + '\n...';
-                textContent.innerHTML = `<strong>AI:</strong>\n${collapsedText}`;
-                textContent.classList.add('ai-sidebar-message-collapsed');
+                const collapsedText = lines.slice(0, 8).join('\n') + '\n...';
+                content.textContent = collapsedText;
+                content.classList.add('collapsed');
 
-                // 创建展开/收起按钮（使用图标）
+                // Toggle Button
                 const toggleBtn = document.createElement('button');
-                toggleBtn.className = 'ai-sidebar-icon-btn';
-                toggleBtn.innerHTML = '▼';
-                toggleBtn.title = '展开完整内容';
+                toggleBtn.className = 'ai-toolbar-btn';
+                toggleBtn.innerHTML = this.ICONS.expand;
+                toggleBtn.title = '展开完整代码';
 
                 let isExpanded = false;
                 toggleBtn.onclick = () => {
                     isExpanded = !isExpanded;
                     if (isExpanded) {
-                        textContent.innerHTML = `<strong>AI:</strong>\n${text}`;
-                        textContent.classList.remove('ai-sidebar-message-collapsed');
-                        toggleBtn.innerHTML = '▲';
-                        toggleBtn.title = '收起内容';
+                        content.textContent = text;
+                        content.classList.remove('collapsed');
+                        toggleBtn.innerHTML = this.ICONS.collapse;
+                        toggleBtn.title = '收起代码';
                     } else {
-                        textContent.innerHTML = `<strong>AI:</strong>\n${collapsedText}`;
-                        textContent.classList.add('ai-sidebar-message-collapsed');
-                        toggleBtn.innerHTML = '▼';
-                        toggleBtn.title = '展开完整内容';
+                        content.textContent = collapsedText;
+                        content.classList.add('collapsed');
+                        toggleBtn.innerHTML = this.ICONS.expand;
+                        toggleBtn.title = '展开完整代码';
                     }
                 };
-
                 toolbar.appendChild(toggleBtn);
             } else {
-                textContent.innerHTML = `<strong>AI:</strong>\n${text}`;
+                content.textContent = text;
             }
 
-            // 添加应用按钮
+            // Apply Button
             if (showApplyBtn) {
                 const applyBtn = document.createElement('button');
-                applyBtn.className = 'ai-sidebar-icon-btn';
-                applyBtn.innerHTML = '✓';
-                applyBtn.title = '应用此建议';
+                applyBtn.className = 'ai-toolbar-btn ai-btn-primary';
+                applyBtn.innerHTML = this.ICONS.apply;
+                applyBtn.title = '应用此代码';
                 applyBtn.onclick = () => this.handleApply(text.replace(/^AI:\n/, ''));
                 toolbar.appendChild(applyBtn);
             }
 
-            // 组装消息结构
-            msg.appendChild(toolbar);
-            msg.appendChild(textContent);
+            msg.appendChild(content);
+
         } else {
+            // System Message
             msg.classList.add('ai-sidebar-message-system');
             msg.innerHTML = `<strong>[${sender}]</strong> ${text}`;
-            if (type === 'error') {
-                msg.classList.add('ai-sidebar-message-error');
-            }
-            if (type === 'success') {
-                msg.classList.add('ai-sidebar-message-success');
-            }
-            if (type === 'info') {
-                msg.classList.add('ai-sidebar-message-info');
-            }
+            if (type === 'error') msg.classList.add('error');
+            if (type === 'success') msg.classList.add('success');
+            if (type === 'info') msg.classList.add('info');
         }
 
         this.chatHistory.appendChild(msg);

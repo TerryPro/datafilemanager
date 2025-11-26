@@ -153,6 +153,49 @@
   background-color: var(--jp-layout-color1);
 }
 
+/* 侧边栏头部 */
+.ai-sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 0 8px 0;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--jp-border-color2);
+}
+
+.ai-sidebar-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--jp-ui-font-color0);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.ai-sidebar-title svg {
+  color: var(--jp-brand-color1);
+}
+
+.ai-sidebar-clear-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--jp-ui-font-color2);
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.ai-sidebar-clear-btn:hover {
+  background-color: var(--jp-layout-color2);
+  color: var(--jp-error-color1);
+}
+
 /* 聊天历史区域 */
 .ai-sidebar-history {
   flex: 1;
@@ -240,99 +283,134 @@
   cursor: not-allowed;
 }
 
-/* 消息样式 */
+/* 消息容器基础样式 - 统一卡片风格 */
 .ai-sidebar-message {
-  margin-bottom: 10px;
-  padding: 10px;
-  border-radius: 8px;
-  font-size: 13px;
-  word-break: break-word;
-  position: relative;
+  margin-bottom: 16px;
+  border: 1px solid var(--jp-border-color2);
+  border-radius: 6px;
+  background-color: var(--jp-layout-color1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  max-width: 100%;
 }
 
-.ai-sidebar-message-user {
-  background-color: var(--jp-layout-color2);
-  align-self: flex-end;
-  border-left: 3px solid var(--jp-brand-color1);
-}
-
-.ai-sidebar-message-ai {
-  background-color: var(--jp-layout-color3);
-  border-left: 3px solid var(--jp-success-color1);
+/* 消息头部 */
+.ai-message-header {
   display: flex;
-  flex-direction: column;
-  gap: 0;
-  position: relative;
-}
-
-/* AI消息顶部工具栏 */
-.ai-sidebar-message-toolbar {
-  display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
-  gap: 4px;
-  padding: 4px 6px;
+  padding: 6px 10px;
   background-color: var(--jp-layout-color2);
   border-bottom: 1px solid var(--jp-border-color2);
-  min-height: 24px;
+  min-height: 28px;
 }
 
-/* 图标按钮样式（类似JupyterLab工具栏） */
-.ai-sidebar-icon-btn {
-  background-color: transparent;
+.ai-message-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 11px;
   color: var(--jp-ui-font-color1);
-  border: none;
-  border-radius: 2px;
-  padding: 2px 6px;
-  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ai-sidebar-message-ai .ai-message-label svg {
+  color: var(--jp-brand-color1);
+}
+
+.ai-sidebar-message-user .ai-message-label svg {
+  color: var(--jp-ui-font-color2);
+}
+
+/* 消息内容 */
+.ai-message-content {
+  padding: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--jp-ui-font-color1);
+  background-color: var(--jp-layout-color0);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* AI特定内容样式 (代码字体) */
+.ai-sidebar-message-ai .ai-message-content {
+  font-family: var(--jp-code-font-family);
   font-size: 12px;
-  line-height: 1;
-  transition: background-color 0.1s;
+  color: var(--jp-content-font-color1);
+  overflow-x: auto;
+}
+
+/* 工具栏 */
+.ai-message-toolbar {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.ai-toolbar-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  color: var(--jp-ui-font-color2);
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.ai-sidebar-icon-btn:hover {
+.ai-toolbar-btn:hover {
   background-color: var(--jp-layout-color3);
+  color: var(--jp-ui-font-color0);
 }
 
-.ai-sidebar-icon-btn:active {
-  background-color: var(--jp-brand-color1);
-  color: var(--jp-ui-inverse-font-color1);
-}
-
-.ai-sidebar-message-ai-text {
-  padding: 10px;
-  white-space: pre-wrap;
-  font-family: var(--jp-code-font-family);
-  word-break: break-word;
-}
-
-/* 折叠状态的消息 */
-.ai-sidebar-message-collapsed {
-  max-height: 150px;
-  overflow: hidden;
-}
-
-.ai-sidebar-message-system {
-  font-style: italic;
-  font-size: 12px;
-}
-
-.ai-sidebar-message-error {
-  color: var(--jp-error-color1);
-  background-color: var(--jp-error-color3);
-}
-
-.ai-sidebar-message-success {
+.ai-toolbar-btn.ai-btn-primary {
   color: var(--jp-success-color1);
 }
 
-.ai-sidebar-message-info {
-  color: var(--jp-info-color1);
+.ai-toolbar-btn.ai-btn-primary:hover {
+  background-color: var(--jp-success-color0);
+  color: white;
+}
+
+/* 折叠状态 */
+.ai-message-content.collapsed {
+  max-height: 160px;
+  overflow-y: hidden;
+  position: relative;
+  mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+}
+
+/* 系统消息 */
+.ai-sidebar-message-system {
+  text-align: center;
+  font-size: 11px;
+  color: var(--jp-ui-font-color2);
+  margin: 8px 0;
+  padding: 4px;
+  border-radius: 4px;
+  background-color: var(--jp-layout-color2);
+}
+
+.ai-sidebar-message-system.error {
+  color: var(--jp-error-color1);
+  background-color: var(--jp-error-color3);
+  border: 1px solid var(--jp-error-color2);
+}
+
+.ai-sidebar-message-system.success {
+  color: var(--jp-success-color1);
+}
+
+/* SVG 图标通用样式 */
+svg {
+  display: block;
 }
 
 /* 保持扩展样式入口 */

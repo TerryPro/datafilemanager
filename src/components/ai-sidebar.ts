@@ -69,8 +69,9 @@ export class AiSidebar extends Widget {
         this.modeSelect.className = 'jp-mod-styled ai-sidebar-mode-select';
 
         const modes = [
-            { value: 'replace', label: '编写代码' },
-            { value: 'fix', label: '修改代码' },
+            { value: 'create', label: '编写代码' },
+            { value: 'fix', label: '错误修复' },
+            { value: 'refactor', label: '代码完善' },
             { value: 'explain', label: '编写说明' },
         ];
 
@@ -158,7 +159,7 @@ export class AiSidebar extends Widget {
         const panel = this.tracker.currentWidget;
         if (!panel) return;
 
-        const mode = this.modeSelect.value as 'replace' | 'insert' | 'append' | 'explain' | 'fix';
+        const mode = this.modeSelect.value as 'create' | 'insert' | 'append' | 'explain' | 'fix' | 'refactor';
 
         try {
             await this.applySuggestion(panel, suggestion, mode);
@@ -167,14 +168,14 @@ export class AiSidebar extends Widget {
         }
     }
 
-    private async applySuggestion(panel: NotebookPanel, suggestion: string, mode: 'replace' | 'insert' | 'append' | 'explain' | 'fix'): Promise<void> {
+    private async applySuggestion(panel: NotebookPanel, suggestion: string, mode: 'create' | 'insert' | 'append' | 'explain' | 'fix' | 'refactor'): Promise<void> {
         const content = panel.content;
         const cell = content.activeCell;
         if (!cell || cell.model.type !== 'code') {
             return;
         }
 
-        if (mode === 'replace' || mode === 'fix') {
+        if (mode === 'create' || mode === 'fix' || mode === 'refactor') {
             cell.model.sharedModel.setSource(suggestion);
         } else if (mode === 'insert') {
             await this.app.commands.execute('notebook:insert-cell-below');

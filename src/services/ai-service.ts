@@ -111,17 +111,21 @@ print(json.dumps(_dfs))
             if (cell && cell.model.type === 'code') {
                 const outputs = (cell.model as any).outputs;
                 for (let i = 0; i < outputs.length; i++) {
-                    const out = outputs.get(i);
-                    if (out.type === 'stream' && (out.data as any).name === 'stderr') {
-                        output += `[stderr] ${(out.data as any).text}\n`;
-                    } else if (out.type === 'error') {
-                        output += `[error] ${(out.data as any).ename}: ${(out.data as any).evalue}\n`;
-                        if ((out.data as any).traceback) {
-                            output += `Traceback:\n${((out.data as any).traceback as string[]).join('\n')}\n`;
+                    const outModel = outputs.get(i);
+                    const out = outModel.toJSON();
+
+                    if (out.output_type === 'stream' && out.name === 'stderr') {
+                        const text = Array.isArray(out.text) ? out.text.join('') : out.text;
+                        output += `[stderr] ${text}\n`;
+                    } else if (out.output_type === 'error') {
+                        output += `[error] ${out.ename}: ${out.evalue}\n`;
+                        if (out.traceback) {
+                            output += `Traceback:\n${out.traceback.join('\n')}\n`;
                         }
-                    } else if (out.type === 'execute_result' || out.type === 'display_data') {
-                        if (out.data['text/plain']) {
-                            output += `[output] ${out.data['text/plain']}\n`;
+                    } else if (out.output_type === 'execute_result' || out.output_type === 'display_data') {
+                        if (out.data && out.data['text/plain']) {
+                            const text = Array.isArray(out.data['text/plain']) ? out.data['text/plain'].join('') : out.data['text/plain'];
+                            output += `[output] ${text}\n`;
                         }
                     }
                 }

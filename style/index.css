@@ -260,15 +260,61 @@
   background-color: var(--jp-layout-color3);
   border-left: 3px solid var(--jp-success-color1);
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 10px;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+}
+
+/* AI消息顶部工具栏 */
+.ai-sidebar-message-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  background-color: var(--jp-layout-color2);
+  border-bottom: 1px solid var(--jp-border-color2);
+  min-height: 24px;
+}
+
+/* 图标按钮样式（类似JupyterLab工具栏） */
+.ai-sidebar-icon-btn {
+  background-color: transparent;
+  color: var(--jp-ui-font-color1);
+  border: none;
+  border-radius: 2px;
+  padding: 2px 6px;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  transition: background-color 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+}
+
+.ai-sidebar-icon-btn:hover {
+  background-color: var(--jp-layout-color3);
+}
+
+.ai-sidebar-icon-btn:active {
+  background-color: var(--jp-brand-color1);
+  color: var(--jp-ui-inverse-font-color1);
 }
 
 .ai-sidebar-message-ai-text {
-  flex: 1;
+  padding: 10px;
   white-space: pre-wrap;
   font-family: var(--jp-code-font-family);
+  word-break: break-word;
+}
+
+/* 折叠状态的消息 */
+.ai-sidebar-message-collapsed {
+  max-height: 150px;
+  overflow: hidden;
 }
 
 .ai-sidebar-message-system {
@@ -287,26 +333,6 @@
 
 .ai-sidebar-message-info {
   color: var(--jp-info-color1);
-}
-
-/* 应用按钮 */
-.ai-sidebar-apply-btn {
-  background-color: transparent;
-  color: var(--jp-ui-font-color1);
-  border: 1px solid var(--jp-border-color2);
-  border-radius: 3px;
-  padding: 4px 8px;
-  cursor: pointer;
-  font-size: 14px;
-  flex-shrink: 0;
-  transition: background-color 0.1s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.ai-sidebar-apply-btn:hover {
-  background-color: var(--jp-layout-color3);
 }
 
 /* 保持扩展样式入口 */

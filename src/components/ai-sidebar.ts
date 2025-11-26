@@ -177,19 +177,64 @@ export class AiSidebar extends Widget {
         } else if (sender === 'AI') {
             msg.classList.add('ai-sidebar-message-ai');
 
+            // 检查内容是否需要折叠（超过5行）
+            const lines = text.split('\n');
+            const shouldCollapse = lines.length > 5;
+
+            // 创建顶部工具栏（包含展开和应用按钮）
+            const toolbar = document.createElement('div');
+            toolbar.className = 'ai-sidebar-message-toolbar';
+
+            // 创建文本内容
             const textContent = document.createElement('div');
             textContent.className = 'ai-sidebar-message-ai-text';
-            textContent.innerHTML = `<strong>AI:</strong>\n${text}`;
-            msg.appendChild(textContent);
 
-            if (showApplyBtn) {
-                const applyIcon = document.createElement('button');
-                applyIcon.className = 'ai-sidebar-apply-btn';
-                applyIcon.innerHTML = '✓';
-                applyIcon.title = '应用此建议';
-                applyIcon.onclick = () => this.handleApply(text.replace(/^AI:\n/, ''));
-                msg.appendChild(applyIcon);
+            if (shouldCollapse) {
+                // 创建折叠状态的内容
+                const collapsedText = lines.slice(0, 5).join('\n') + '\n...';
+                textContent.innerHTML = `<strong>AI:</strong>\n${collapsedText}`;
+                textContent.classList.add('ai-sidebar-message-collapsed');
+
+                // 创建展开/收起按钮（使用图标）
+                const toggleBtn = document.createElement('button');
+                toggleBtn.className = 'ai-sidebar-icon-btn';
+                toggleBtn.innerHTML = '▼';
+                toggleBtn.title = '展开完整内容';
+
+                let isExpanded = false;
+                toggleBtn.onclick = () => {
+                    isExpanded = !isExpanded;
+                    if (isExpanded) {
+                        textContent.innerHTML = `<strong>AI:</strong>\n${text}`;
+                        textContent.classList.remove('ai-sidebar-message-collapsed');
+                        toggleBtn.innerHTML = '▲';
+                        toggleBtn.title = '收起内容';
+                    } else {
+                        textContent.innerHTML = `<strong>AI:</strong>\n${collapsedText}`;
+                        textContent.classList.add('ai-sidebar-message-collapsed');
+                        toggleBtn.innerHTML = '▼';
+                        toggleBtn.title = '展开完整内容';
+                    }
+                };
+
+                toolbar.appendChild(toggleBtn);
+            } else {
+                textContent.innerHTML = `<strong>AI:</strong>\n${text}`;
             }
+
+            // 添加应用按钮
+            if (showApplyBtn) {
+                const applyBtn = document.createElement('button');
+                applyBtn.className = 'ai-sidebar-icon-btn';
+                applyBtn.innerHTML = '✓';
+                applyBtn.title = '应用此建议';
+                applyBtn.onclick = () => this.handleApply(text.replace(/^AI:\n/, ''));
+                toolbar.appendChild(applyBtn);
+            }
+
+            // 组装消息结构
+            msg.appendChild(toolbar);
+            msg.appendChild(textContent);
         } else {
             msg.classList.add('ai-sidebar-message-system');
             msg.innerHTML = `<strong>[${sender}]</strong> ${text}`;

@@ -204,7 +204,7 @@
 
 /* 模式选择器 */
 .ai-sidebar-mode-select {
-  font-size: 9px;
+  font-size: 13px !important;
   padding: 2px 20px 2px 6px;
   border: 1px solid var(--jp-border-color2);
   border-radius: 3px;
@@ -223,7 +223,7 @@
   color: var(--jp-ui-font-color1);
   cursor: pointer;
   padding: 4px 8px;
-  font-size: 14px;
+  font-size: 13px;
   border-radius: 3px;
   transition: background-color 0.1s;
   display: flex;
@@ -291,23 +291,22 @@
 
 /* 应用按钮 */
 .ai-sidebar-apply-btn {
-  background-color: var(--jp-brand-color1);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 28px;
-  height: 28px;
+  background-color: transparent;
+  color: var(--jp-ui-font-color1);
+  border: 1px solid var(--jp-border-color2);
+  border-radius: 3px;
+  padding: 4px 8px;
   cursor: pointer;
-  font-size: 16px;
-  font-weight: bold;
+  font-size: 14px;
   flex-shrink: 0;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .ai-sidebar-apply-btn:hover {
-  transform: scale(1.1);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+  background-color: var(--jp-layout-color3);
 }
 
 /* 保持扩展样式入口 */

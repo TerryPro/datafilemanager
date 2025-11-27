@@ -17,6 +17,9 @@ export class AiSidebar extends Widget {
     private executeBtn: HTMLButtonElement;
     private variableBtn: HTMLButtonElement;
     private variablePopup: HTMLDivElement;
+    private selectionBar: HTMLDivElement;
+    private selectedVariable?: { name: string; type: string; description?: string };
+    private selectedAlgorithm?: { id: string; name: string; params?: any; expectedOutput?: string; prompt?: string };
 
     constructor(app: JupyterFrontEnd, tracker: INotebookTracker) {
         super();
@@ -113,6 +116,46 @@ export class AiSidebar extends Widget {
         selectWrapper.appendChild(this.modeSelect);
         toolbar.appendChild(selectWrapper);
 
+        // Selection Bar (after intent selector)
+        this.selectionBar = document.createElement('div');
+        this.selectionBar.className = 'ai-selection-bar';
+        const varChip = document.createElement('div');
+        varChip.className = 'ai-selection-chip';
+        const varIcon = document.createElement('span');
+        varIcon.className = 'ai-chip-icon';
+        varIcon.innerHTML = this.ICONS.table;
+        const varLabel = document.createElement('span');
+        varLabel.className = 'ai-chip-label';
+        const varClear = document.createElement('button');
+        varClear.className = 'ai-chip-clear';
+        varClear.textContent = '×';
+        varClear.title = '清除已选变量';
+        varClear.onclick = () => this.clearSelectedVariable();
+        varChip.appendChild(varIcon);
+        varChip.appendChild(varLabel);
+        varChip.appendChild(varClear);
+
+        const algoChip = document.createElement('div');
+        algoChip.className = 'ai-selection-chip';
+        const algoIcon = document.createElement('span');
+        algoIcon.className = 'ai-chip-icon';
+        algoIcon.innerHTML = this.ICONS.library;
+        const algoLabel = document.createElement('span');
+        algoLabel.className = 'ai-chip-label';
+        const algoClear = document.createElement('button');
+        algoClear.className = 'ai-chip-clear';
+        algoClear.textContent = '×';
+        algoClear.title = '清除已选算法';
+        algoClear.onclick = () => this.clearSelectedAlgorithm();
+        algoChip.appendChild(algoIcon);
+        algoChip.appendChild(algoLabel);
+        algoChip.appendChild(algoClear);
+
+        this.selectionBar.appendChild(varChip);
+        this.selectionBar.appendChild(algoChip);
+        toolbar.appendChild(this.selectionBar);
+        this.updateSelectionBar();
+
         // Variable Popup
         this.variablePopup = document.createElement('div');
         this.variablePopup.className = 'ai-variable-popup';
@@ -205,7 +248,10 @@ export class AiSidebar extends Widget {
             item.appendChild(info);
 
             item.onclick = () => {
+                this.selectedVariable = { name: v.name, type: v.type, description: this.aiService.describeVariable(v) };
                 this.insertVariable(v.name);
+                this.updateSelectionBar();
+                this.updateStructuredIntent();
                 this.variablePopup.classList.remove('visible');
             };
 
@@ -241,11 +287,10 @@ export class AiSidebar extends Widget {
             return;
         }
 
-        const intent = this.intentInput.value.trim();
-        if (!intent) {
-            this.appendHistory('System', '请输入意图描述。', 'warning');
-            return;
+        if (!this.intentInput.value.trim()) {
+            this.updateStructuredIntent();
         }
+        const intent = this.intentInput.value.trim();
 
         const cell = panel.content.activeCell;
         if (!cell || cell.model.type !== 'code') {
@@ -269,7 +314,15 @@ export class AiSidebar extends Widget {
                 console.warn('Failed to fetch variables:', e);
             }
 
-            const payload = this.aiService.buildAiRequestPayload(panel, source, intent, mode, false, variables);
+            const payload = this.aiService.buildAiRequestPayload(
+                panel,
+                source,
+                intent,
+                mode,
+                false,
+                variables,
+                { variable: this.selectedVariable, algorithm: this.selectedAlgorithm }
+            );
             const resp = await this.aiService.requestGenerate(payload);
 
             if (resp.error) {
@@ -368,17 +421,12 @@ export class AiSidebar extends Widget {
 
                 item.appendChild(name);
                 item.onclick = () => {
-                    this.insertPrompt(algo.prompt);
+                    this.setSelectedAlgorithm(algo);
                     this.promptPopup.classList.remove('visible');
                 };
                 this.promptPopup.appendChild(item);
             });
         });
-    }
-
-    private insertPrompt(text: string) {
-        this.intentInput.value = text; // Replace or append? Requirement says "fill into input". Replacing is safer for templates.
-        this.intentInput.focus();
     }
 
     // 定义SVG图标常量
@@ -498,5 +546,57 @@ export class AiSidebar extends Widget {
 
         this.chatHistory.appendChild(msg);
         this.chatHistory.scrollTop = this.chatHistory.scrollHeight;
+    }
+
+    /**
+     * 更新右上角摘要显示
+     */
+    private updateSelectionBar() {
+        const chips = this.selectionBar.querySelectorAll('.ai-selection-chip');
+        const [varChip, algoChip] = [chips[0], chips[1]];
+        const varLabel = varChip?.querySelector('.ai-chip-label') as HTMLSpanElement;
+        const algoLabel = algoChip?.querySelector('.ai-chip-label') as HTMLSpanElement;
+        if (varLabel) {
+            varLabel.textContent = this.selectedVariable?.name ?? '未选择变量';
+        }
+        if (algoLabel) {
+            algoLabel.textContent = this.selectedAlgorithm?.name ?? '未选择算法';
+        }
+    }
+
+    /**
+     * 基于选择生成并填充结构化提示词
+     */
+    private updateStructuredIntent() {
+        const text = this.aiService.generateStructuredPrompt(this.selectedVariable, this.selectedAlgorithm);
+        this.intentInput.value = text;
+    }
+
+    /**
+     * 设置算法选择并更新视图
+     */
+    private setSelectedAlgorithm(algo: { id: string; name: string; prompt: string }) {
+        const meta = this.aiService.getDefaultAlgorithmMeta(algo.id);
+        this.selectedAlgorithm = { id: algo.id, name: algo.name, params: meta.params, expectedOutput: meta.expectedOutput, prompt: algo.prompt };
+        this.updateSelectionBar();
+        this.updateStructuredIntent();
+    }
+
+    /**
+     * 清除已选变量
+     */
+    private clearSelectedVariable() {
+        this.selectedVariable = undefined;
+        this.updateSelectionBar();
+        this.updateStructuredIntent();
+    }
+
+    /**
+     * 清除已选算法
+     */
+    private clearSelectedAlgorithm() {
+        this.selectedAlgorithm = undefined;
+        this.updateSelectionBar();
+        this.updateStructuredIntent();
     }
 }

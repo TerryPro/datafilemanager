@@ -1,12 +1,26 @@
 import { NotebookPanel } from '@jupyterlab/notebook';
 
+export interface IVariableInfo {
+    name: string;
+    type: string;
+    description?: string;
+}
+
+export interface IAlgorithmInfo {
+    id: string;
+    name: string;
+    params?: any;
+    expectedOutput?: string;
+    prompt?: string;
+}
+
 /**
  * AI Service to handle backend interactions and notebook context logic.
  * Independent of AiDialogManager to avoid modifying existing code.
  */
 export class AiService {
     /**
-     * Request code generation from the backend.
+     * 向后端请求生成代码
      */
     async requestGenerate(payload: any): Promise<{ suggestion: string; explanation?: string; error?: string }> {
         try {
@@ -43,7 +57,7 @@ export class AiService {
     }
 
     /**
-     * Get DataFrame info from the current kernel.
+     * 从当前内核获取可用的 DataFrame 信息
      */
     async getDataFrameInfo(panel: NotebookPanel): Promise<any[]> {
         const session = panel.sessionContext.session;
@@ -98,9 +112,17 @@ print(json.dumps(_dfs))
     }
 
     /**
-     * Build the payload for the AI request.
+     * 构建发送给后端的请求负载
      */
-    buildAiRequestPayload(panel: NotebookPanel, source: string, intent: string, mode: string, autoRun: boolean, variables: any[] = []): any {
+    buildAiRequestPayload(
+        panel: NotebookPanel,
+        source: string,
+        intent: string,
+        mode: string,
+        autoRun: boolean,
+        variables: any[] = [],
+        selection?: { variable?: { name: string; type: string; description?: string }; algorithm?: { id: string; name: string; params?: any; expectedOutput?: string } }
+    ): any {
         const kernel = panel.sessionContext?.session?.kernel?.name ?? 'python';
         const ctx = this.pickNeighborCells(panel, 2);
 
@@ -132,11 +154,11 @@ print(json.dumps(_dfs))
             }
         }
 
-        return { language: kernel, source, context: ctx, intent, options: { mode, autoRun, privacy: 'normal' }, output, variables };
+        return { language: kernel, source, context: ctx, intent, options: { mode, autoRun, privacy: 'normal', selection }, output, variables };
     }
 
     /**
-     * Pick neighbor cells for context.
+     * 选取相邻代码单元作为上下文
      */
     private pickNeighborCells(panel: NotebookPanel, n: number): { prev: string[]; next: string[] } {
         const content = panel.content;
@@ -163,7 +185,7 @@ print(json.dumps(_dfs))
     }
 
     /**
-     * Get algorithm prompts from the backend.
+     * 从后端获取算法提示词库
      */
     async getAlgorithmPrompts(): Promise<any> {
         try {
@@ -176,6 +198,73 @@ print(json.dumps(_dfs))
         } catch (error) {
             console.error('Error fetching algorithm prompts:', error);
             return {};
+        }
+    }
+
+    /**
+     * 根据 DataFrame 原始信息生成描述文本
+     */
+    describeVariable(df: { name: string; type: string; shape?: [number, number]; columns?: string[] }): string {
+        const shape = df.shape ? `${df.shape[0]}x${df.shape[1]}` : '';
+        const cols = df.columns && df.columns.length > 0 ? df.columns.slice(0, 8).join(', ') + (df.columns.length > 8 ? ' ...' : '') : '';
+        const parts = [df.type, shape ? `形状 ${shape}` : '', cols ? `列 ${cols}` : ''].filter(Boolean);
+        return parts.join('，');
+    }
+
+    /**
+     * 基于选择生成结构化提示词
+     */
+    generateStructuredPrompt(
+        variable?: { name: string; type: string },
+        algorithm?: { name: string; prompt?: string }
+    ): string {
+        const varName = variable?.name ?? '当前变量';
+        const algoName = algorithm?.name ?? '所选算法';
+        const header = `请对${varName} 执行${algoName}分析。`;
+        const backendBodyRaw = algorithm?.prompt ?? '';
+        const backendBody = this.fillPromptPlaceholders(backendBodyRaw, variable, { name: algoName });
+        if (backendBody.trim().length > 0) {
+            const startsWithInstruction = /^请对.*执行.*分析/.test(backendBody);
+            return startsWithInstruction ? backendBody : `${header}\n${backendBody}`;
+        }
+        return header;
+    }
+
+    /**
+     * 用选中变量/算法替换提示词中的站位符
+     */
+    fillPromptPlaceholders(
+        prompt: string,
+        variable?: { name: string; type: string },
+        algorithm?: { name: string }
+    ): string {
+        const safe = (v?: string, def?: string) => (v && v.trim().length > 0 ? v : def ?? '');
+        const replaced = prompt
+            .replace(/\{VAR_NAME\}/g, safe(variable?.name, '当前变量'))
+            .replace(/\{VAR_TYPE\}/g, safe(variable?.type, '数据集'))
+            .replace(/\{ALGO_NAME\}/g, safe(algorithm?.name, '所选算法'));
+        return replaced;
+    }
+
+    /**
+     * 为算法生成默认的参数配置与预期输出
+     */
+    getDefaultAlgorithmMeta(id: string): { params: any; expectedOutput: string } {
+        switch (id) {
+            case 'summary_stats':
+                return { params: {}, expectedOutput: '统计摘要表或字典' };
+            case 'line_plot':
+                return { params: { backend: 'matplotlib' }, expectedOutput: '时序曲线图' };
+            case 'spectral_analysis':
+                return { params: { method: 'welch' }, expectedOutput: '功率谱密度图' };
+            case 'autocorrelation':
+                return { params: { lags: 'auto' }, expectedOutput: 'ACF 图' };
+            case 'decomposition':
+                return { params: { model: 'STL' }, expectedOutput: '分解结果图' };
+            case 'heatmap_distribution':
+                return { params: { x: 'date', y: 'hour' }, expectedOutput: '热力图' };
+            default:
+                return { params: {}, expectedOutput: '代码与图表或统计结果' };
         }
     }
 }

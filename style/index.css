@@ -577,3 +577,53 @@ svg {
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
+
+/* Selection Bar */
+.ai-selection-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 6px;
+}
+
+.ai-selection-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border: 1px solid var(--jp-border-color2);
+  border-radius: 14px;
+  background-color: var(--jp-layout-color2);
+  font-size: 11px;
+  color: var(--jp-ui-font-color1);
+}
+
+.ai-selection-chip .ai-chip-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.ai-chip-label {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-chip-clear {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--jp-ui-font-color2);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-chip-clear:hover {
+  background-color: var(--jp-layout-color3);
+  color: var(--jp-error-color1);
+}

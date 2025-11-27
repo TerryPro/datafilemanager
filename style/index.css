@@ -217,7 +217,7 @@
 /* 意图输入框 */
 .ai-sidebar-intent-input {
   padding: 10px;
-  resize: vertical;
+  resize: none;
   font-size: 13px;
   font-family: var(--jp-code-font-family);
   line-height: 1.5;
@@ -232,55 +232,129 @@
 }
 
 /* 工具栏 */
+/* 工具栏 */
 .ai-sidebar-toolbar {
   display: flex;
-  padding: 10px;
+  padding: 4px 8px;
   align-items: center;
-  justify-content: space-between;
-  background-color: var(--jp-layout-color2);
+  gap: 4px;
+  background-color: var(--jp-layout-color1);
   border: 1px solid var(--jp-border-color2);
-  border-radius: 8px;
-  border-top-left-radius: 0;
-  border-top-right-radius: 0;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
   box-sizing: border-box;
 }
 
 /* 模式选择器 */
-.ai-sidebar-mode-select {
-  font-size: 13px !important;
-  padding: 2px 20px 2px 6px;
-  border: 1px solid var(--jp-border-color2);
-  border-radius: 3px;
-  background-color: var(--jp-layout-color1);
-  cursor: pointer;
-  min-width: 70px;
-  max-width: 85px;
-  color: var(--jp-ui-font-color1);
-  outline: none;
-}
-
-/* 执行按钮 */
-.ai-sidebar-execute-btn {
-  border: none;
-  background-color: transparent;
-  color: var(--jp-ui-font-color1);
-  cursor: pointer;
-  padding: 4px 8px;
-  font-size: 13px;
-  border-radius: 3px;
-  transition: background-color 0.1s;
+/* 模式选择器包装 */
+/* 通用工具栏按钮 */
+.ai-sidebar-toolbar-btn {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: 3px;
+  color: var(--jp-ui-font-color1);
+  cursor: pointer;
+  transition: background-color 0.2s;
+  padding: 0;
+}
+
+.ai-sidebar-toolbar-btn:hover {
+  background-color: var(--jp-layout-color2);
+}
+
+.ai-sidebar-toolbar-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* 模式选择器包装 */
+.ai-sidebar-select-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin: 0 4px;
+}
+
+.ai-sidebar-select-wrapper::after {
+  content: '';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  background-color: var(--jp-ui-font-color1);
+  mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>');
+  -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>');
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-position: center;
+  pointer-events: none;
+}
+
+/* 模式选择器 */
+.ai-sidebar-mode-select {
+  width: 90px;
+  height: 28px;
+  font-size: var(--jp-ui-font-size1);
+  padding: 0 24px 0 8px;
+  border: none;
+  border-radius: 3px;
+  background-color: transparent;
+  cursor: pointer;
+  color: var(--jp-ui-font-color1);
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  transition: background-color 0.2s;
+}
+
+.ai-sidebar-mode-select:hover {
+  background-color: var(--jp-layout-color2);
+}
+
+.ai-sidebar-mode-select:focus {
+  background-color: var(--jp-layout-color2);
+  box-shadow: inset 0 0 0 1px var(--jp-brand-color1);
+}
+
+/* 执行按钮 */
+/* 执行按钮 (复用通用按钮样式，但保留特定颜色) */
+.ai-sidebar-execute-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: 3px;
+  color: var(--jp-brand-color1);
+  cursor: pointer;
+  transition: background-color 0.2s;
+  padding: 0;
+  margin-left: auto;
 }
 
 .ai-sidebar-execute-btn:hover {
-  background-color: var(--jp-layout-color3);
+  background-color: var(--jp-layout-color2);
 }
 
 .ai-sidebar-execute-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.ai-sidebar-execute-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
 /* 消息容器基础样式 - 统一卡片风格 */
@@ -414,3 +488,69 @@ svg {
 }
 
 /* 保持扩展样式入口 */
+
+/* Variable Popup */
+.ai-variable-popup {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  width: 240px;
+  max-height: 240px;
+  overflow-y: auto;
+  background-color: var(--jp-layout-color1);
+  border: 1px solid var(--jp-border-color2);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  display: none;
+  flex-direction: column;
+  padding: 4px 0;
+}
+
+.ai-variable-popup.visible {
+  display: flex;
+}
+
+.ai-variable-item {
+  padding: 6px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--jp-code-font-family);
+  font-size: 12px;
+  color: var(--jp-ui-font-color1);
+  border-bottom: 1px solid transparent;
+}
+
+.ai-variable-item:hover {
+  background-color: var(--jp-layout-color2);
+}
+
+.ai-variable-item:last-child {
+  border-bottom: none;
+}
+
+.ai-variable-item .variable-name {
+  font-weight: 500;
+}
+
+.ai-variable-item .variable-info {
+  font-size: 10px;
+  color: var(--jp-ui-font-color2);
+  margin-left: auto;
+}
+
+.ai-variable-loading {
+  padding: 10px;
+  text-align: center;
+  color: var(--jp-ui-font-color2);
+  font-size: 12px;
+}
+
+.ai-variable-empty {
+  padding: 10px;
+  text-align: center;
+  color: var(--jp-ui-font-color2);
+  font-size: 12px;
+}

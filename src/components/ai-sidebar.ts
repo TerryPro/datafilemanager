@@ -15,6 +15,8 @@ export class AiSidebar extends Widget {
     private intentInput: HTMLTextAreaElement;
     private modeSelect: HTMLSelectElement;
     private executeBtn: HTMLButtonElement;
+    private variableBtn: HTMLButtonElement;
+    private variablePopup: HTMLDivElement;
 
     constructor(app: JupyterFrontEnd, tracker: INotebookTracker) {
         super();
@@ -65,8 +67,23 @@ export class AiSidebar extends Widget {
         toolbar.className = 'ai-sidebar-toolbar';
 
         // Mode Select
+        // Variable Button (@)
+        this.variableBtn = document.createElement('button');
+        this.variableBtn.className = 'ai-sidebar-toolbar-btn';
+        this.variableBtn.innerHTML = this.ICONS.at;
+        this.variableBtn.title = '引用变量 (@)';
+        this.variableBtn.onclick = (e) => {
+            e.stopPropagation();
+            this.toggleVariablePopup();
+        };
+        toolbar.appendChild(this.variableBtn);
+
+        // Mode Select Wrapper
+        const selectWrapper = document.createElement('div');
+        selectWrapper.className = 'ai-sidebar-select-wrapper';
+
         this.modeSelect = document.createElement('select');
-        this.modeSelect.className = 'jp-mod-styled ai-sidebar-mode-select';
+        this.modeSelect.className = 'ai-sidebar-mode-select';
 
         const modes = [
             { value: 'create', label: '编写代码' },
@@ -82,13 +99,28 @@ export class AiSidebar extends Widget {
             this.modeSelect.appendChild(opt);
         });
 
-        toolbar.appendChild(this.modeSelect);
+        selectWrapper.appendChild(this.modeSelect);
+        toolbar.appendChild(selectWrapper);
+
+        // Variable Popup
+        this.variablePopup = document.createElement('div');
+        this.variablePopup.className = 'ai-variable-popup';
+        selectWrapper.appendChild(this.variablePopup);
+
+        // Close popup when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!this.variablePopup.contains(e.target as Node) && e.target !== this.variableBtn) {
+                this.variablePopup.classList.remove('visible');
+            }
+        });
+
+        toolbar.appendChild(selectWrapper);
 
         // Execute Button
         this.executeBtn = document.createElement('button');
         this.executeBtn.className = 'ai-sidebar-execute-btn';
         this.executeBtn.title = '生成';
-        this.executeBtn.innerHTML = '▶';
+        this.executeBtn.innerHTML = this.ICONS.run;
         this.executeBtn.onclick = () => this.handleGenerate();
 
         toolbar.appendChild(this.executeBtn);
@@ -96,6 +128,85 @@ export class AiSidebar extends Widget {
         inputContainer.appendChild(toolbar);
 
         this.node.appendChild(inputContainer);
+    }
+
+    private async toggleVariablePopup() {
+        const isVisible = this.variablePopup.classList.contains('visible');
+        if (isVisible) {
+            this.variablePopup.classList.remove('visible');
+        } else {
+            this.variablePopup.classList.add('visible');
+            await this.loadVariables();
+        }
+    }
+
+    private async loadVariables() {
+        this.variablePopup.innerHTML = '<div class="ai-variable-loading">加载变量中...</div>';
+
+        const panel = this.tracker.currentWidget;
+        if (!panel) {
+            this.variablePopup.innerHTML = '<div class="ai-variable-empty">未检测到 Notebook</div>';
+            return;
+        }
+
+        try {
+            const variables = await this.aiService.getDataFrameInfo(panel);
+            this.renderVariables(variables);
+        } catch (e) {
+            this.variablePopup.innerHTML = `<div class="ai-variable-empty">加载失败: ${e}</div>`;
+        }
+    }
+
+    private renderVariables(variables: any[]) {
+        this.variablePopup.innerHTML = '';
+
+        if (variables.length === 0) {
+            this.variablePopup.innerHTML = '<div class="ai-variable-empty">无可用 DataFrame</div>';
+            return;
+        }
+
+        variables.forEach(v => {
+            const item = document.createElement('div');
+            item.className = 'ai-variable-item';
+
+            const icon = document.createElement('span');
+            icon.className = 'variable-icon';
+            icon.innerHTML = this.ICONS.table;
+
+            const name = document.createElement('span');
+            name.className = 'variable-name';
+            name.textContent = v.name;
+
+            const info = document.createElement('span');
+            info.className = 'variable-info';
+            info.textContent = `${v.shape[0]}x${v.shape[1]}`;
+
+            item.appendChild(icon);
+            item.appendChild(name);
+            item.appendChild(info);
+
+            item.onclick = () => {
+                this.insertVariable(v.name);
+                this.variablePopup.classList.remove('visible');
+            };
+
+            this.variablePopup.appendChild(item);
+        });
+    }
+
+    private insertVariable(name: string) {
+        const cursorPos = this.intentInput.selectionStart;
+        const textBefore = this.intentInput.value.substring(0, cursorPos);
+        const textAfter = this.intentInput.value.substring(cursorPos);
+
+        // Check if there is already an @ before the cursor
+        // If user typed @ and then clicked the button, we might want to replace it?
+        // But the requirement is "click button -> popup -> select -> insert".
+        // So we just insert "name " (maybe with a space?)
+
+        this.intentInput.value = textBefore + name + ' ' + textAfter;
+        this.intentInput.focus();
+        this.intentInput.setSelectionRange(cursorPos + name.length + 1, cursorPos + name.length + 1);
     }
 
 
@@ -197,7 +308,10 @@ export class AiSidebar extends Widget {
         apply: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`,
         user: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`,
         ai: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M12 12 2.1 12a10.1 10.1 0 0 0 9.9 9.9v-9.9z"></path><path d="M12 12V2.1A10.1 10.1 0 0 0 2.1 12h9.9z"></path></svg>`,
-        trash: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`
+        trash: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`,
+        run: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M5 3l14 9-14 9V3z"/></svg>`,
+        at: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"></path></svg>`,
+        table: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>`
     };
 
     private appendHistory(sender: string, text: string, type: 'normal' | 'error' | 'warning' | 'success' | 'info' = 'normal', showApplyBtn: boolean = false) {

@@ -161,4 +161,21 @@ print(json.dumps(_dfs))
         }
         return { prev, next };
     }
+
+    /**
+     * Get algorithm prompts from the backend.
+     */
+    async getAlgorithmPrompts(): Promise<any> {
+        try {
+            const resp = await fetch('/aiserver/algorithm-prompts');
+            if (resp.ok) {
+                return await resp.json();
+            }
+            console.error('Failed to fetch algorithm prompts:', resp.statusText);
+            return {};
+        } catch (error) {
+            console.error('Error fetching algorithm prompts:', error);
+            return {};
+        }
+    }
 }

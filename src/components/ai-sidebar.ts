@@ -78,6 +78,17 @@ export class AiSidebar extends Widget {
         };
         toolbar.appendChild(this.variableBtn);
 
+        // Prompt Library Button
+        this.promptBtn = document.createElement('button');
+        this.promptBtn.className = 'ai-sidebar-toolbar-btn';
+        this.promptBtn.innerHTML = this.ICONS.library; // Need to add library icon
+        this.promptBtn.title = '提示词库';
+        this.promptBtn.onclick = (e) => {
+            e.stopPropagation();
+            this.togglePromptPopup();
+        };
+        toolbar.appendChild(this.promptBtn);
+
         // Mode Select Wrapper
         const selectWrapper = document.createElement('div');
         selectWrapper.className = 'ai-sidebar-select-wrapper';
@@ -107,10 +118,18 @@ export class AiSidebar extends Widget {
         this.variablePopup.className = 'ai-variable-popup';
         selectWrapper.appendChild(this.variablePopup);
 
+        // Prompt Popup (Attached to toolbar for now, or maybe selectWrapper? Let's put it in toolbar for positioning relative to button)
+        this.promptPopup = document.createElement('div');
+        this.promptPopup.className = 'ai-variable-popup ai-prompt-popup'; // Reuse class for style, add specific one
+        toolbar.appendChild(this.promptPopup);
+
         // Close popup when clicking outside
         document.addEventListener('click', (e) => {
             if (!this.variablePopup.contains(e.target as Node) && e.target !== this.variableBtn) {
                 this.variablePopup.classList.remove('visible');
+            }
+            if (!this.promptPopup.contains(e.target as Node) && e.target !== this.promptBtn) {
+                this.promptPopup.classList.remove('visible');
             }
         });
 
@@ -301,6 +320,67 @@ export class AiSidebar extends Widget {
         }
     }
 
+    private promptBtn: HTMLButtonElement;
+    private promptPopup: HTMLDivElement;
+
+    private async togglePromptPopup() {
+        const isVisible = this.promptPopup.classList.contains('visible');
+        if (isVisible) {
+            this.promptPopup.classList.remove('visible');
+        } else {
+            this.promptPopup.classList.add('visible');
+            await this.loadPrompts();
+        }
+    }
+
+    private async loadPrompts() {
+        this.promptPopup.innerHTML = '<div class="ai-variable-loading">加载提示词库...</div>';
+        try {
+            const prompts = await this.aiService.getAlgorithmPrompts();
+            this.renderPrompts(prompts);
+        } catch (e) {
+            this.promptPopup.innerHTML = `<div class="ai-variable-empty">加载失败: ${e}</div>`;
+        }
+    }
+
+    private renderPrompts(prompts: any) {
+        this.promptPopup.innerHTML = '';
+        if (!prompts || Object.keys(prompts).length === 0) {
+            this.promptPopup.innerHTML = '<div class="ai-variable-empty">暂无提示词</div>';
+            return;
+        }
+
+        Object.keys(prompts).forEach(key => {
+            const category = prompts[key];
+
+            const catHeader = document.createElement('div');
+            catHeader.className = 'ai-prompt-category';
+            catHeader.textContent = category.label;
+            this.promptPopup.appendChild(catHeader);
+
+            category.algorithms.forEach((algo: any) => {
+                const item = document.createElement('div');
+                item.className = 'ai-variable-item';
+
+                const name = document.createElement('span');
+                name.className = 'variable-name';
+                name.textContent = algo.name;
+
+                item.appendChild(name);
+                item.onclick = () => {
+                    this.insertPrompt(algo.prompt);
+                    this.promptPopup.classList.remove('visible');
+                };
+                this.promptPopup.appendChild(item);
+            });
+        });
+    }
+
+    private insertPrompt(text: string) {
+        this.intentInput.value = text; // Replace or append? Requirement says "fill into input". Replacing is safer for templates.
+        this.intentInput.focus();
+    }
+
     // 定义SVG图标常量
     private readonly ICONS = {
         expand: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`,
@@ -311,6 +391,7 @@ export class AiSidebar extends Widget {
         trash: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`,
         run: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M5 3l14 9-14 9V3z"/></svg>`,
         at: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"></path></svg>`,
+        library: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`,
         table: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>`
     };
 

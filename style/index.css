@@ -243,6 +243,8 @@
   border-top: none;
   border-radius: 0 0 8px 8px;
   box-sizing: border-box;
+  position: relative;
+  /* Ensure popup is positioned relative to toolbar */
 }
 
 /* 模式选择器 */
@@ -553,4 +555,25 @@ svg {
   text-align: center;
   color: var(--jp-ui-font-color2);
   font-size: 12px;
+}
+
+/* Prompt Popup */
+.ai-prompt-popup {
+  width: 300px;
+  /* Wider than variable popup */
+  bottom: 100%;
+  left: 0;
+  margin-bottom: 4px;
+  /* Add some spacing */
+}
+
+.ai-prompt-category {
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--jp-ui-font-color2);
+  background-color: var(--jp-layout-color2);
+  border-bottom: 1px solid var(--jp-border-color2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }

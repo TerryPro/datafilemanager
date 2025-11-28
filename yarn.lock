@@ -1587,7 +1587,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/state@npm:^6.0.0, @codemirror/state@npm:^6.4.0, @codemirror/state@npm:^6.5.0, @codemirror/state@npm:^6.5.2":
+"@codemirror/state@npm:^6.0.0, @codemirror/state@npm:^6.2.0, @codemirror/state@npm:^6.4.0, @codemirror/state@npm:^6.5.0, @codemirror/state@npm:^6.5.2":
   version: 6.5.2
   resolution: "@codemirror/state@npm:6.5.2"
   dependencies:
@@ -1596,7 +1596,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/view@npm:^6.0.0, @codemirror/view@npm:^6.17.0, @codemirror/view@npm:^6.23.0, @codemirror/view@npm:^6.27.0, @codemirror/view@npm:^6.35.0, @codemirror/view@npm:^6.38.1":
+"@codemirror/view@npm:^6.0.0, @codemirror/view@npm:^6.12.0, @codemirror/view@npm:^6.17.0, @codemirror/view@npm:^6.23.0, @codemirror/view@npm:^6.27.0, @codemirror/view@npm:^6.35.0, @codemirror/view@npm:^6.38.1":
   version: 6.38.8
   resolution: "@codemirror/view@npm:6.38.8"
   dependencies:
@@ -6158,6 +6158,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "datafilemanager@workspace:."
   dependencies:
+    "@codemirror/state": ^6.2.0
+    "@codemirror/view": ^6.12.0
     "@jupyterlab/application": ^4.0.0
     "@jupyterlab/apputils": ^4.0.0
     "@jupyterlab/builder": ^4.5.0

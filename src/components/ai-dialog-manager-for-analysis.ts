@@ -415,18 +415,25 @@ export class AiDialogManagerForAnalysis {
 
     /**
      * 应用分析代码到Notebook，并可选执行
+     * 若当前活动代码单元为空，则直接覆盖并可选执行；否则在其下方插入新单元并应用
      */
     private async applyAnalysisCode(panel: NotebookPanel, code: string, autoRun: boolean): Promise<void> {
         const content = panel.content;
-        
-        // 在当前单元格下方插入新的代码单元格
+        const cell = content.activeCell;
+        if (cell && cell.model.type === 'code') {
+            const src = (cell.model.sharedModel.getSource() || '').trim();
+            if (src.length === 0) {
+                cell.model.sharedModel.setSource(code);
+                if (autoRun) {
+                    await this.app.commands.execute('notebook:run-cell');
+                }
+                return;
+            }
+        }
+        // 当前单元格非空或不存在，插入并应用到新单元
         await this.app.commands.execute('notebook:insert-cell-below');
-        
-        // 设置新单元格的代码内容
-        if (content.activeCell) {
+        if (content.activeCell && content.activeCell.model.type === 'code') {
             content.activeCell.model.sharedModel.setSource(code);
-            
-            // 如果设置了自动执行，则运行新单元格
             if (autoRun) {
                 await this.app.commands.execute('notebook:run-cell');
             }

@@ -355,6 +355,14 @@ export class AiSidebar extends Widget {
         if (!cell || cell.model.type !== 'code') {
             return;
         }
+        // 若当前单元格为空，直接应用，不弹出Diff预览
+        const isEmpty = ((cell.model.sharedModel.getSource() || '').trim().length === 0);
+        if (isEmpty && mode !== 'explain') {
+            const applyMode = mode === 'append' ? 'create' : mode;
+            await this.applySuggestion(panel, suggestion, applyMode);
+            this.appendHistory('System', '空单元格已直接应用代码。', 'success');
+            return;
+        }
         const oldText = (mode === 'insert' || mode === 'explain')
             ? ''
             : cell.model.sharedModel.getSource();
@@ -386,6 +394,10 @@ export class AiSidebar extends Widget {
         );
     }
 
+    /**
+     * 将建议应用到Notebook
+     * 当模式为 insert 时，若当前代码单元为空则直接覆盖该单元，否则在下方插入新单元
+     */
     private async applySuggestion(panel: NotebookPanel, suggestion: string, mode: 'create' | 'insert' | 'append' | 'explain' | 'fix' | 'refactor'): Promise<void> {
         const content = panel.content;
         const cell = content.activeCell;
@@ -396,8 +408,13 @@ export class AiSidebar extends Widget {
         if (mode === 'create' || mode === 'fix' || mode === 'refactor') {
             cell.model.sharedModel.setSource(suggestion);
         } else if (mode === 'insert') {
-            await this.app.commands.execute('notebook:insert-cell-below');
-            content.activeCell.model.sharedModel.setSource(suggestion);
+            const src = (cell.model.sharedModel.getSource() || '').trim();
+            if (src.length === 0) {
+                cell.model.sharedModel.setSource(suggestion);
+            } else {
+                await this.app.commands.execute('notebook:insert-cell-below');
+                content.activeCell.model.sharedModel.setSource(suggestion);
+            }
         } else if (mode === 'append') {
             const src = cell.model.sharedModel.getSource();
             cell.model.sharedModel.setSource(src + '\n' + suggestion);
@@ -630,7 +647,15 @@ export class AiSidebar extends Widget {
             font-size: 13px;
             color: var(--jp-ui-font-color1);
         `;
-        header.textContent = 'Diff预览（AI建议 vs 当前单元）';
+        const headerLeft = document.createElement('div');
+        headerLeft.style.cssText = `display: flex; align-items: center; gap: 12px;`;
+        const titleLabel = document.createElement('span');
+        titleLabel.textContent = 'Diff预览（AI建议 vs 当前单元）';
+        const hunkCountLabel = document.createElement('span');
+        hunkCountLabel.textContent = '变更块：计算中…';
+        hunkCountLabel.style.cssText = `font-size: 12px; color: var(--jp-ui-font-color2);`;
+        headerLeft.appendChild(titleLabel);
+        headerLeft.appendChild(hunkCountLabel);
         const headerActions = document.createElement('div');
         headerActions.style.cssText = `display: flex; gap: 8px;`;
         const acceptAllBtn = document.createElement('button');
@@ -641,6 +666,7 @@ export class AiSidebar extends Widget {
         rejectAllBtn.className = 'jp-Button jp-mod-warn';
         headerActions.appendChild(rejectAllBtn);
         headerActions.appendChild(acceptAllBtn);
+        header.appendChild(headerLeft);
         header.appendChild(headerActions);
 
         const body = document.createElement('div');
@@ -690,6 +716,18 @@ export class AiSidebar extends Widget {
         ops = result.ops;
         decisionsProvider = result.decisionsProvider;
         setAllDecisions = result.setAllDecisions;
+
+        // 计算并显示变更块数量
+        let hunkCount = 0;
+        {
+            let idx = 0;
+            while (idx < ops.length) {
+                if (ops[idx].type === 'ctx') { idx++; continue; }
+                hunkCount++;
+                while (idx < ops.length && ops[idx].type !== 'ctx') idx++;
+            }
+        }
+        hunkCountLabel.textContent = `变更块：${hunkCount}`;
 
         body.appendChild(rowsGrid);
         footer.appendChild(rejectBtn);

@@ -230,11 +230,20 @@ export class DataFramePanel {
           'assert __df is not None, f"DataFrame {__name} not found"',
           '__df.describe()'
         ].join('\n');
-        await this.commands.execute('notebook:insert-cell-below');
         const cell = nb.content.activeCell;
         if (cell && cell.model.type === 'code') {
-          cell.model.sharedModel.setSource(code);
-          await this.commands.execute('notebook:run-cell');
+          const src = (cell.model.sharedModel.getSource() || '').trim();
+          if (src.length === 0) {
+            cell.model.sharedModel.setSource(code);
+            await this.commands.execute('notebook:run-cell');
+          } else {
+            await this.commands.execute('notebook:insert-cell-below');
+            const newCell = nb.content.activeCell;
+            if (newCell && newCell.model.type === 'code') {
+              newCell.model.sharedModel.setSource(code);
+              await this.commands.execute('notebook:run-cell');
+            }
+          }
         }
       }
     });

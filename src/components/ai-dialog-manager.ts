@@ -412,6 +412,7 @@ export class AiDialogManager {
 
     /**
      * 应用AI建议到Notebook，并可选执行
+     * 当模式为 insert 时，若当前代码单元为空则直接覆盖该单元，否则在下方插入新单元
      */
     private async applySuggestion(panel: NotebookPanel, suggestion: string, mode: 'replace' | 'insert' | 'append' | 'explain' | 'fix', autoRun: boolean): Promise<void> {
         const content = panel.content;
@@ -422,8 +423,13 @@ export class AiDialogManager {
         if (mode === 'replace' || mode === 'fix') {
             cell.model.sharedModel.setSource(suggestion);
         } else if (mode === 'insert') {
-            await this.app.commands.execute('notebook:insert-cell-below');
-            content.activeCell.model.sharedModel.setSource(suggestion);
+            const src = (cell.model.sharedModel.getSource() || '').trim();
+            if (src.length === 0) {
+                cell.model.sharedModel.setSource(suggestion);
+            } else {
+                await this.app.commands.execute('notebook:insert-cell-below');
+                content.activeCell.model.sharedModel.setSource(suggestion);
+            }
         } else if (mode === 'append') {
             const src = cell.model.sharedModel.getSource();
             cell.model.sharedModel.setSource(src + '\n' + suggestion);

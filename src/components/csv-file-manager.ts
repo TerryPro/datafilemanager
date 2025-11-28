@@ -241,12 +241,8 @@ export class CsvFileManager {
           `globals()[__name].head()`
         ].join('\n');
 
-        await this.commands.execute('notebook:insert-cell-below');
-        const cell = panel.content.activeCell;
-        if (cell && cell.model.type === 'code') {
-          cell.model.sharedModel.setSource(code);
-          await this.commands.execute('notebook:run-cell');
-        }
+        // 将代码应用到Notebook：若当前单元格为空则直接写入并执行，否则在下一单元插入后写入并执行
+        await this.applyCodeToNotebook(panel, code, true);
       }
     });
 
@@ -340,6 +336,34 @@ export class CsvFileManager {
         }
       }
     });
+  }
+
+  /**
+   * 将生成的代码应用到当前Notebook。
+   * 若当前活动单元格存在且为空，则直接写入并执行；
+   * 若当前活动单元格不为空或不存在，则在其下方新建代码单元并写入、执行。
+   */
+  private async applyCodeToNotebook(panel: NotebookPanel, code: string, autoRun: boolean): Promise<void> {
+    const content = panel.content;
+    const cell = content.activeCell;
+    if (cell && cell.model.type === 'code') {
+      const src = (cell.model.sharedModel.getSource() || '').trim();
+      if (src.length === 0) {
+        cell.model.sharedModel.setSource(code);
+        if (autoRun) {
+          await this.commands.execute('notebook:run-cell');
+        }
+        return;
+      }
+    }
+    await this.commands.execute('notebook:insert-cell-below');
+    const newCell = content.activeCell;
+    if (newCell && newCell.model.type === 'code') {
+      newCell.model.sharedModel.setSource(code);
+      if (autoRun) {
+        await this.commands.execute('notebook:run-cell');
+      }
+    }
   }
 
   /**

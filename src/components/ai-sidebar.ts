@@ -116,7 +116,7 @@ export class AiSidebar extends Widget {
         selectWrapper.appendChild(this.modeSelect);
         toolbar.appendChild(selectWrapper);
 
-        // Selection Bar (after intent selector)
+        // Selection Bar (placed below the prompt input panel)
         this.selectionBar = document.createElement('div');
         this.selectionBar.className = 'ai-selection-bar';
         const varChip = document.createElement('div');
@@ -153,8 +153,6 @@ export class AiSidebar extends Widget {
 
         this.selectionBar.appendChild(varChip);
         this.selectionBar.appendChild(algoChip);
-        toolbar.appendChild(this.selectionBar);
-        this.updateSelectionBar();
 
         // Variable Popup
         this.variablePopup = document.createElement('div');
@@ -190,6 +188,8 @@ export class AiSidebar extends Widget {
         inputContainer.appendChild(toolbar);
 
         this.node.appendChild(inputContainer);
+        this.node.appendChild(this.selectionBar);
+        this.updateSelectionBar();
     }
 
     private async toggleVariablePopup() {

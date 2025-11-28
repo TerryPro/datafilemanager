@@ -583,7 +583,10 @@ svg {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-left: 6px;
+  flex-wrap: wrap;
+  margin-left: 0;
+  margin-top: 8px;
+  width: 100%;
 }
 
 .ai-selection-chip {
@@ -604,7 +607,7 @@ svg {
 }
 
 .ai-chip-label {
-  max-width: 160px;
+  max-width: 280px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

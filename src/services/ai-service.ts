@@ -263,6 +263,22 @@ print(json.dumps(_dfs))
                 return { params: { model: 'STL' }, expectedOutput: '分解结果图' };
             case 'heatmap_distribution':
                 return { params: { x: 'date', y: 'hour' }, expectedOutput: '热力图' };
+            case 'trend_basic_stacked':
+                return { params: { layout: 'stacked' }, expectedOutput: '趋势图（分栏）' };
+            case 'trend_basic_overlay':
+                return { params: { layout: 'overlay' }, expectedOutput: '趋势图（叠加）' };
+            case 'trend_basic_grid':
+                return { params: { layout: 'grid' }, expectedOutput: '趋势图（网格）' };
+            case 'trend_ma':
+                return { params: { window: 'auto' }, expectedOutput: '移动平均趋势图' };
+            case 'trend_ewma':
+                return { params: { span: 'auto' }, expectedOutput: 'EWMA 趋势图' };
+            case 'trend_loess':
+                return { params: { frac: 'auto' }, expectedOutput: 'LOESS 趋势图' };
+            case 'trend_polyfit':
+                return { params: { degree: 1 }, expectedOutput: '多项式趋势拟合图' };
+            case 'trend_stl_trend':
+                return { params: { period: 'auto' }, expectedOutput: 'STL 趋势分量图' };
             default:
                 return { params: {}, expectedOutput: '代码与图表或统计结果' };
         }

@@ -202,6 +202,23 @@ print(json.dumps(_dfs))
     }
 
     /**
+     * 获取Python函数库元数据
+     */
+    async getFunctionLibrary(): Promise<any> {
+        try {
+            const resp = await fetch('/aiserver/function-library');
+            if (resp.ok) {
+                return await resp.json();
+            }
+            console.error('Failed to fetch function library:', resp.statusText);
+            return {};
+        } catch (error) {
+            console.error('Error fetching function library:', error);
+            return {};
+        }
+    }
+
+    /**
      * 根据 DataFrame 原始信息生成描述文本
      */
     describeVariable(df: { name: string; type: string; shape?: [number, number]; columns?: string[] }): string {

@@ -4,7 +4,7 @@ import { INotebookTracker, NotebookPanel } from '@jupyterlab/notebook';
 import { showErrorMessage, InputDialog } from '@jupyterlab/apputils';
 import { ITranslator } from '@jupyterlab/translation';
 import { Menu } from '@lumino/widgets';
-import { AiDialogManagerForAnalysis } from './ai-dialog-manager-for-analysis';
+import { AiDialogManagerForLibrary } from './ai-dialog-manager-for-library';
 
 /**
  * DataFrame 检视面板组件，显示当前笔记本中的所有 DataFrame 变量
@@ -17,7 +17,7 @@ export class DataFramePanel {
   private dfPanel: Widget;
   private list: HTMLDivElement = document.createElement('div');
   private currentDfName: string | null = null;
-  private aiDialogManager: AiDialogManagerForAnalysis;
+  private libraryDialogManager: AiDialogManagerForLibrary;
 
   constructor(
     app: JupyterFrontEnd,
@@ -29,8 +29,8 @@ export class DataFramePanel {
     this.commands = commands;
     this.trans = translator.load('jupyterlab');
     this.notebookTracker = notebookTracker;
+    this.libraryDialogManager = new AiDialogManagerForLibrary(app);
     this.dfPanel = this.createPanel();
-    this.aiDialogManager = new AiDialogManagerForAnalysis(app);
     this.setupCommands();
   }
 
@@ -67,6 +67,8 @@ export class DataFramePanel {
     refresh.addEventListener('click', () => {
       void this.refreshList();
     });
+
+    // removed library button
 
     // 绑定列表右键，展示菜单
     this.list.addEventListener('contextmenu', (event: MouseEvent) => {
@@ -306,24 +308,24 @@ export class DataFramePanel {
     // 数据分析命令
     const analysisCommand = 'datafilemanager:df-analysis';
     this.commands.addCommand(analysisCommand, {
-      label: '数据分析',
-      caption: this.trans.__('Use AI to analyze the DataFrame'),
+      label: 'Analysis',
+      caption: this.trans.__('Select algorithm template'),
       iconClass: 'jp-MaterialIcon jp-DataExplorerIcon',
       execute: async () => {
         const nb = this.getActiveNotebook();
         if (!nb) {
-          await showErrorMessage(this.trans.__('数据分析'), this.trans.__('No active notebook found.'));
+          await showErrorMessage(this.trans.__('Analysis'), this.trans.__('No active notebook found.'));
           return;
         }
         if (!this.currentDfName) {
           return;
         }
         try {
-          await this.aiDialogManager.openAnalysisDialog(nb, this.currentDfName);
+          await this.libraryDialogManager.openLibraryDialog(nb, this.currentDfName);
         } catch (error) {
           await showErrorMessage(
-            this.trans.__('数据分析'),
-            this.trans.__(`Failed to open analysis dialog: ${error instanceof Error ? error.message : 'Unknown error'}`)
+            this.trans.__('Analysis'),
+            this.trans.__(`Failed to open library dialog: ${error instanceof Error ? error.message : 'Unknown error'}`)
           );
         }
       }

@@ -26,15 +26,19 @@ export class AiButtonManager {
     if (!this.toolbarRegistry || !this.openAiDialog) {
       return;
     }
-    this.toolbarRegistry.addFactory('Notebook', 'ai-assist', (panel: NotebookPanel) => {
-      return new ToolbarButton({
-        icon: aiAssistantIcon,
-        tooltip: 'AI Assist',
-        onClick: () => {
-          void this.openAiDialog!(panel);
-        }
-      });
-    });
+    this.toolbarRegistry.addFactory(
+      'Notebook',
+      'ai-assist',
+      (panel: NotebookPanel) => {
+        return new ToolbarButton({
+          icon: aiAssistantIcon,
+          tooltip: 'AI Assist',
+          onClick: () => {
+            void this.openAiDialog!(panel);
+          }
+        });
+      }
+    );
   }
 
   /**
@@ -44,13 +48,17 @@ export class AiButtonManager {
     if (!this.openAiDialog) {
       return;
     }
-    
-    const existing = panel.toolbar.node.querySelector('[data-id="ai-assist-button"]');
+
+    const existing = panel.toolbar.node.querySelector(
+      '[data-id="ai-assist-button"]'
+    );
     if (!existing) {
       const button = new ToolbarButton({
         icon: aiAssistantIcon,
         tooltip: 'AI Assist',
-        onClick: () => { void this.openAiDialog!(panel); }
+        onClick: () => {
+          void this.openAiDialog!(panel);
+        }
       });
       (button.node as HTMLElement).setAttribute('data-id', 'ai-assist-button');
       panel.toolbar.insertItem(0, 'ai-assist', button);
@@ -66,12 +74,12 @@ export class AiButtonManager {
   initialize(): void {
     // 注册工具栏工厂
     this.registerAiToolbarFactory();
-    
+
     // 为当前存在的Notebook面板添加AI按钮
     if (this.notebookTracker && this.notebookTracker.currentWidget) {
       this.addAiButtonToPanel(this.notebookTracker.currentWidget);
     }
-    
+
     // 为新创建的Notebook面板添加AI按钮
     if (this.notebookTracker) {
       this.notebookTracker.widgetAdded.connect((sender, panel) => {

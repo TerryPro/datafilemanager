@@ -39,7 +39,9 @@ export class AiCommandManager {
     );
 
     // 设置AI对话框回调函数
-    this.aiButtonManager.setDialogCallback((panel) => this.aiDialogManager.openAiDialog(panel));
+    this.aiButtonManager.setDialogCallback(panel =>
+      this.aiDialogManager.openAiDialog(panel)
+    );
     // 初始化AI按钮功能
     this.aiButtonManager.initialize();
 
@@ -49,7 +51,9 @@ export class AiCommandManager {
       label: 'AI',
       caption: 'AI Assist',
       execute: async () => {
-        const panel = (this.notebookTracker?.currentWidget ?? (this.app.shell.currentWidget as NotebookPanel | null));
+        const panel =
+          this.notebookTracker?.currentWidget ??
+          (this.app.shell.currentWidget as NotebookPanel | null);
         if (panel) {
           await this.aiDialogManager.openAiDialog(panel);
         } else {

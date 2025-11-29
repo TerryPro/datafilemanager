@@ -124,7 +124,7 @@
     ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
-      "project": "tsconfig.json",
+      "project": "./datafilemanager/tsconfig.json",
       "sourceType": "module"
     },
     "plugins": [

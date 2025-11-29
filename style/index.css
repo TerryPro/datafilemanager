@@ -158,7 +158,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 0 8px 0;
+  padding: 0 0 8px;
   margin-bottom: 8px;
   border-bottom: 1px solid var(--jp-border-color2);
 }
@@ -232,6 +232,7 @@
 }
 
 /* 工具栏 */
+
 /* 工具栏 */
 .ai-sidebar-toolbar {
   display: flex;
@@ -244,11 +245,14 @@
   border-radius: 0 0 8px 8px;
   box-sizing: border-box;
   position: relative;
+
   /* Ensure popup is positioned relative to toolbar */
 }
 
 /* 模式选择器 */
+
 /* 模式选择器包装 */
+
 /* 通用工具栏按钮 */
 .ai-sidebar-toolbar-btn {
   display: flex;
@@ -328,6 +332,7 @@
 }
 
 /* 执行按钮 */
+
 /* 执行按钮 (复用通用按钮样式，但保留特定颜色) */
 .ai-sidebar-execute-btn {
   display: flex;
@@ -365,7 +370,7 @@
   border: 1px solid var(--jp-border-color2);
   border-radius: 6px;
   background-color: var(--jp-layout-color1);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
   overflow: hidden;
   max-width: 100%;
 }
@@ -502,7 +507,7 @@ svg {
   background-color: var(--jp-layout-color1);
   border: 1px solid var(--jp-border-color2);
   border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
   z-index: 1000;
   display: none;
   flex-direction: column;
@@ -560,10 +565,12 @@ svg {
 /* Prompt Popup */
 .ai-prompt-popup {
   width: 300px;
+
   /* Wider than variable popup */
   bottom: 100%;
   left: 0;
   margin-bottom: 4px;
+
   /* Add some spacing */
 }
 

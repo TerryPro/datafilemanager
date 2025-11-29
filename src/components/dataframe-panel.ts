@@ -4,7 +4,7 @@ import { INotebookTracker, NotebookPanel } from '@jupyterlab/notebook';
 import { showErrorMessage, InputDialog } from '@jupyterlab/apputils';
 import { ITranslator } from '@jupyterlab/translation';
 import { Menu } from '@lumino/widgets';
-import { AiDialogManagerForLibrary } from './ai-dialog-manager-for-library';
+import { AlgorithmLibraryDialogManager } from './algorithm-library-dialog';
 
 /**
  * DataFrame 检视面板组件，显示当前笔记本中的所有 DataFrame 变量
@@ -17,7 +17,7 @@ export class DataFramePanel {
   private dfPanel: Widget;
   private list: HTMLDivElement = document.createElement('div');
   private currentDfName: string | null = null;
-  private libraryDialogManager: AiDialogManagerForLibrary;
+  private libraryDialogManager: AlgorithmLibraryDialogManager;
 
   constructor(
     app: JupyterFrontEnd,
@@ -29,7 +29,7 @@ export class DataFramePanel {
     this.commands = commands;
     this.trans = translator.load('jupyterlab');
     this.notebookTracker = notebookTracker;
-    this.libraryDialogManager = new AiDialogManagerForLibrary(app);
+    this.libraryDialogManager = new AlgorithmLibraryDialogManager(app);
     this.dfPanel = this.createPanel();
     this.setupCommands();
   }
@@ -83,14 +83,18 @@ export class DataFramePanel {
    * 获取当前活动的 Notebook 面板
    */
   private getActiveNotebook(): NotebookPanel | null {
-    const panel = this.notebookTracker?.currentWidget ?? (this.app.shell.currentWidget as NotebookPanel | null);
+    const panel =
+      this.notebookTracker?.currentWidget ??
+      (this.app.shell.currentWidget as NotebookPanel | null);
     return panel ?? null;
   }
 
   /**
    * 渲染 DataFrame 列表（ListView：名称/shape/数据量）
    */
-  private renderList(items: Array<{ name: string; shape?: [number, number]; rows?: number }>): void {
+  private renderList(
+    items: Array<{ name: string; shape?: [number, number]; rows?: number }>
+  ): void {
     this.list.innerHTML = '';
     const table = document.createElement('div');
     table.className = 'df-table';
@@ -135,7 +139,12 @@ export class DataFramePanel {
 
       const rows = document.createElement('div');
       rows.className = 'df-cell df-col-rows';
-      rows.textContent = typeof it.rows === 'number' ? String(it.rows) : (it.shape ? String(it.shape[0]) : '');
+      rows.textContent =
+        typeof it.rows === 'number'
+          ? String(it.rows)
+          : it.shape
+          ? String(it.shape[0])
+          : '';
 
       row.appendChild(name);
       row.appendChild(shape);
@@ -149,7 +158,9 @@ export class DataFramePanel {
   /**
    * 从当前 Notebook 内核中获取 DataFrame 变量列表
    */
-  private async fetchDataFrames(): Promise<Array<{ name: string; shape?: [number, number]; rows?: number }>> {
+  private async fetchDataFrames(): Promise<
+    Array<{ name: string; shape?: [number, number]; rows?: number }>
+  > {
     const nb = this.getActiveNotebook();
     if (!nb || !nb.sessionContext.session?.kernel) {
       return [];
@@ -175,7 +186,10 @@ export class DataFramePanel {
       '  print(json.dumps(_meta))'
     ].join('\n');
 
-    const future = nb.sessionContext.session.kernel.requestExecute({ code, stop_on_error: true });
+    const future = nb.sessionContext.session.kernel.requestExecute({
+      code,
+      stop_on_error: true
+    });
     let output = '';
     await new Promise<void>(resolve => {
       future.onIOPub = msg => {
@@ -183,7 +197,11 @@ export class DataFramePanel {
         const c = (msg as any).content;
         if (t === 'stream' && c.text) {
           output += c.text as string;
-        } else if ((t === 'execute_result' || t === 'display_data') && c.data && c.data['text/plain']) {
+        } else if (
+          (t === 'execute_result' || t === 'display_data') &&
+          c.data &&
+          c.data['text/plain']
+        ) {
           output += c.data['text/plain'] as string;
         } else if (t === 'error') {
           output = '[]';
@@ -220,7 +238,10 @@ export class DataFramePanel {
       execute: async () => {
         const nb = this.getActiveNotebook();
         if (!nb) {
-          await showErrorMessage(this.trans.__('Describe'), this.trans.__('No active notebook found.'));
+          await showErrorMessage(
+            this.trans.__('Describe'),
+            this.trans.__('No active notebook found.')
+          );
           return;
         }
         if (!this.currentDfName) {
@@ -228,7 +249,7 @@ export class DataFramePanel {
         }
         const code = [
           `__name = r'${this.currentDfName}'`,
-          `__df = globals().get(__name)`,
+          '__df = globals().get(__name)',
           'assert __df is not None, f"DataFrame {__name} not found"',
           '__df.describe()'
         ].join('\n');
@@ -259,7 +280,10 @@ export class DataFramePanel {
       execute: async () => {
         const nb = this.getActiveNotebook();
         if (!nb) {
-          await showErrorMessage(this.trans.__('SaveFile'), this.trans.__('No active notebook found.'));
+          await showErrorMessage(
+            this.trans.__('SaveFile'),
+            this.trans.__('No active notebook found.')
+          );
           return;
         }
         if (!this.currentDfName) {
@@ -276,29 +300,35 @@ export class DataFramePanel {
         const userName = res.value;
         const code = [
           `__name = r'${this.currentDfName}'`,
-          `__df = globals().get(__name)`,
+          '__df = globals().get(__name)',
           'import pandas as pd, os',
           'assert isinstance(__df, pd.DataFrame), f"{__name} is not a DataFrame"',
           `__fname = r'${userName}'`,
-          `__fname = __fname if __fname.lower().endswith('.csv') else (__fname + '.csv')`,
-          `__dir = 'dataset'`,
-          `os.makedirs(__dir, exist_ok=True)`,
-          `__path = os.path.join(__dir, __fname)`,
-          `__i = 1`,
-          `__target = __path`,
+          "__fname = __fname if __fname.lower().endswith('.csv') else (__fname + '.csv')",
+          "__dir = 'dataset'",
+          'os.makedirs(__dir, exist_ok=True)',
+          '__path = os.path.join(__dir, __fname)',
+          '__i = 1',
+          '__target = __path',
           'root, ext = os.path.splitext(__fname)',
-          `while os.path.exists(__target):`,
-          `    __target = os.path.join(__dir, f"{root}_{__i}{ext}")`,
-          `    __i += 1`,
-          `__df.to_csv(__target, index=False)`,
-          `print(__target)`
+          'while os.path.exists(__target):',
+          '    __target = os.path.join(__dir, f"{root}_{__i}{ext}")',
+          '    __i += 1',
+          '__df.to_csv(__target, index=False)',
+          'print(__target)'
         ].join('\n');
         const session = nb.sessionContext.session;
         if (!session || !session.kernel) {
-          await showErrorMessage(this.trans.__('SaveFile'), this.trans.__('Kernel not available.'));
+          await showErrorMessage(
+            this.trans.__('SaveFile'),
+            this.trans.__('Kernel not available.')
+          );
           return;
         }
-        const future = session.kernel.requestExecute({ code, stop_on_error: true });
+        const future = session.kernel.requestExecute({
+          code,
+          stop_on_error: true
+        });
         await new Promise<void>(resolve => {
           future.onReply = () => resolve();
         });
@@ -314,18 +344,28 @@ export class DataFramePanel {
       execute: async () => {
         const nb = this.getActiveNotebook();
         if (!nb) {
-          await showErrorMessage(this.trans.__('Analysis'), this.trans.__('No active notebook found.'));
+          await showErrorMessage(
+            this.trans.__('Analysis'),
+            this.trans.__('No active notebook found.')
+          );
           return;
         }
         if (!this.currentDfName) {
           return;
         }
         try {
-          await this.libraryDialogManager.openLibraryDialog(nb, this.currentDfName);
+          await this.libraryDialogManager.openLibraryDialog(
+            nb,
+            this.currentDfName
+          );
         } catch (error) {
           await showErrorMessage(
             this.trans.__('Analysis'),
-            this.trans.__(`Failed to open library dialog: ${error instanceof Error ? error.message : 'Unknown error'}`)
+            this.trans.__(
+              `Failed to open library dialog: ${
+                error instanceof Error ? error.message : 'Unknown error'
+              }`
+            )
           );
         }
       }

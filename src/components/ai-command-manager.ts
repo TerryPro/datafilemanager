@@ -4,6 +4,7 @@ import { IToolbarWidgetRegistry } from '@jupyterlab/apputils';
 import { showErrorMessage } from '@jupyterlab/apputils';
 import { AiDialogManager } from './ai-dialog-manager';
 import { AiButtonManager } from './ai-button-manager';
+import { AlgorithmLibraryDialogManager } from './algorithm-library-dialog';
 
 /**
  * AI命令管理器
@@ -15,6 +16,7 @@ export class AiCommandManager {
   private toolbarRegistry?: IToolbarWidgetRegistry;
   private aiDialogManager: AiDialogManager;
   private aiButtonManager?: AiButtonManager;
+  private algorithmLibraryDialogManager: AlgorithmLibraryDialogManager;
 
   constructor(
     app: JupyterFrontEnd,
@@ -26,6 +28,7 @@ export class AiCommandManager {
     this.toolbarRegistry = toolbarRegistry;
     // 创建AI对话框管理器
     this.aiDialogManager = new AiDialogManager(app);
+    this.algorithmLibraryDialogManager = new AlgorithmLibraryDialogManager(app);
   }
 
   /**
@@ -42,6 +45,12 @@ export class AiCommandManager {
     this.aiButtonManager.setDialogCallback(panel =>
       this.aiDialogManager.openAiDialog(panel)
     );
+
+    // 设置Workflow Editor回调函数
+    this.aiButtonManager.setWorkflowCallback(() => {
+      this.app.commands.execute('datafilemanager:open-workflow-editor');
+    });
+
     // 初始化AI按钮功能
     this.aiButtonManager.initialize();
 
@@ -60,6 +69,24 @@ export class AiCommandManager {
           await showErrorMessage('AI Assist', '未检测到活动的Notebook');
         }
       }
+    });
+
+    // 注册打开算法库对话框的命令
+    const algoLibraryOpenCommand = 'datafilemanager:open-algorithm-library';
+    this.app.commands.addCommand(algoLibraryOpenCommand, {
+        label: 'Open Algorithm Library',
+        execute: async (args) => {
+            const panel = this.notebookTracker?.currentWidget ?? 
+                          (this.app.shell.currentWidget as NotebookPanel | null);
+            if (panel) {
+                // 可以在 args 中传入初始选中的算法ID
+                // 目前 AlgorithmLibraryDialogManager 还不支持传入ID直接打开特定算法，
+                // 这里先保留接口，后续可以增强 AlgorithmLibraryDialogManager
+                await this.algorithmLibraryDialogManager.openLibraryDialog(panel, null);
+            } else {
+                await showErrorMessage('Algorithm Library', '未检测到活动的Notebook');
+            }
+        }
     });
   }
 }

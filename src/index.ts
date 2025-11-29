@@ -8,10 +8,13 @@ import { ICommandPalette } from '@jupyterlab/apputils';
 import { ITranslator } from '@jupyterlab/translation';
 import { IFileBrowserFactory, FileBrowser } from '@jupyterlab/filebrowser';
 import { IDocumentManager } from '@jupyterlab/docmanager';
+import { ServiceManager } from '@jupyterlab/services';
 import { DataFramePanel } from './components/dataframe-panel';
 import { CsvFileManager } from './components/csv-file-manager';
 import { AiCommandManager } from './components/ai-command-manager';
 import { AiSidebar } from './components/ai-sidebar';
+import { AlgorithmLibraryPanel } from './components/algorithm-library-panel';
+import { WorkflowWidget } from './components/workflow/WorkflowWidget';
 
 // 创建一个全局变量来跟踪文件浏览器实例
 const tracker: {
@@ -81,6 +84,30 @@ const plugin: JupyterFrontEndPlugin<void> = {
     if (notebookTracker) {
       const aiSidebar = new AiSidebar(app, notebookTracker);
       app.shell.add(aiSidebar, 'right', { rank: 1000 });
+      
+      // 注册左侧算法库面板
+      const algoPanel = new AlgorithmLibraryPanel(app, notebookTracker);
+      app.shell.add(algoPanel, 'left', { rank: 103 });
+
+      // Register Workflow Editor Command
+      const workflowCommandId = 'datafilemanager:open-workflow-editor';
+      app.commands.addCommand(workflowCommandId, {
+        label: 'Open Workflow Editor',
+        execute: () => {
+          // Cast to ServiceManager because the type definition in JupyterFrontEnd might be slightly different
+          // or IManager interface is a subset.
+          const serviceManager = app.serviceManager as unknown as ServiceManager;
+          const content = new WorkflowWidget(notebookTracker, serviceManager);
+          
+          // Open in split-right mode by default to show side-by-side with notebook
+          app.shell.add(content, 'main', { mode: 'split-right' });
+          
+          // Activate the widget
+          app.shell.activateById(content.id);
+        }
+      });
+      
+      palette.addItem({ command: workflowCommandId, category: 'Workflow' });
     }
   }
 };

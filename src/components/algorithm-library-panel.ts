@@ -2,7 +2,11 @@ import { JupyterFrontEnd } from '@jupyterlab/application';
 import { INotebookTracker } from '@jupyterlab/notebook';
 import { Widget } from '@lumino/widgets';
 import { AiService } from '../services/ai-service';
-import { paletteIcon, caretDownIcon, caretRightIcon } from '@jupyterlab/ui-components';
+import {
+  paletteIcon,
+  caretDownIcon,
+  caretRightIcon
+} from '@jupyterlab/ui-components';
 import { AlgorithmInfoDialogManager } from './algorithm-info-dialog';
 
 interface IAlgorithm {
@@ -45,14 +49,14 @@ export class AlgorithmLibraryPanel extends Widget {
     toolbar.style.padding = '8px';
     toolbar.style.borderBottom = '1px solid var(--jp-border-color2)';
     toolbar.style.backgroundColor = 'var(--jp-layout-color1)';
-    
+
     this.searchInput = document.createElement('input');
     this.searchInput.className = 'jp-mod-styled';
     this.searchInput.placeholder = '搜索算法...';
     this.searchInput.style.width = '100%';
     this.searchInput.style.boxSizing = 'border-box';
     this.searchInput.addEventListener('input', () => this.filterAlgorithms());
-    
+
     toolbar.appendChild(this.searchInput);
     layout.appendChild(toolbar);
 
@@ -71,7 +75,9 @@ export class AlgorithmLibraryPanel extends Widget {
     try {
       this.algorithms = await this.aiService.getFunctionLibrary();
       // Initialize with all categories expanded by default
-      Object.keys(this.algorithms).forEach(cat => this.expandedCategories.add(cat));
+      Object.keys(this.algorithms).forEach(cat =>
+        this.expandedCategories.add(cat)
+      );
       this.renderTree();
     } catch (error) {
       console.error('Failed to load algorithms:', error);
@@ -81,18 +87,21 @@ export class AlgorithmLibraryPanel extends Widget {
     }
   }
 
-  private renderTree(filterText: string = '') {
+  private renderTree(filterText = '') {
     this.treeContainer.innerHTML = '';
     const categories = Object.keys(this.algorithms);
 
     categories.forEach(category => {
       const algos = this.algorithms[category];
-      const filteredAlgos = algos.filter(algo => 
-        algo.name.toLowerCase().includes(filterText.toLowerCase()) || 
-        algo.description.toLowerCase().includes(filterText.toLowerCase())
+      const filteredAlgos = algos.filter(
+        algo =>
+          algo.name.toLowerCase().includes(filterText.toLowerCase()) ||
+          algo.description.toLowerCase().includes(filterText.toLowerCase())
       );
 
-      if (filteredAlgos.length === 0) return;
+      if (filteredAlgos.length === 0) {
+        return;
+      }
 
       // Category Section Header
       const section = document.createElement('div');
@@ -112,18 +121,20 @@ export class AlgorithmLibraryPanel extends Widget {
       catHeader.style.fontSize = '11px'; // Matches sidebar headers usually
       catHeader.style.textTransform = 'uppercase';
       catHeader.style.letterSpacing = '1px';
-      
+
       // Icon
       const iconSpan = document.createElement('span');
       iconSpan.className = 'jp-Icon jp-Icon-16';
       iconSpan.style.marginRight = '8px';
       iconSpan.style.display = 'flex';
       iconSpan.style.alignItems = 'center';
-      
-      const isExpanded = filterText ? true : this.expandedCategories.has(category);
+
+      const isExpanded = filterText
+        ? true
+        : this.expandedCategories.has(category);
       const icon = isExpanded ? caretDownIcon : caretRightIcon;
       icon.element({ container: iconSpan });
-      
+
       catHeader.appendChild(iconSpan);
       catHeader.appendChild(document.createTextNode(category));
 
@@ -134,7 +145,7 @@ export class AlgorithmLibraryPanel extends Widget {
       algoList.style.margin = '0';
       algoList.style.display = isExpanded ? 'block' : 'none';
       algoList.style.backgroundColor = 'var(--jp-layout-color1)';
-      
+
       filteredAlgos.forEach(algo => {
         const algoItem = document.createElement('li');
         algoItem.className = 'jp-AlgorithmLibrary-item';
@@ -154,48 +165,48 @@ export class AlgorithmLibraryPanel extends Widget {
 
         // Description (optional, small)
         if (algo.description) {
-            const descSpan = document.createElement('span');
-            descSpan.textContent = algo.description;
-            descSpan.style.fontSize = '11px';
-            descSpan.style.color = 'var(--jp-ui-font-color2)';
-            descSpan.style.marginTop = '2px';
-            descSpan.style.whiteSpace = 'nowrap';
-            descSpan.style.overflow = 'hidden';
-            descSpan.style.textOverflow = 'ellipsis';
-            algoItem.appendChild(descSpan);
+          const descSpan = document.createElement('span');
+          descSpan.textContent = algo.description;
+          descSpan.style.fontSize = '11px';
+          descSpan.style.color = 'var(--jp-ui-font-color2)';
+          descSpan.style.marginTop = '2px';
+          descSpan.style.whiteSpace = 'nowrap';
+          descSpan.style.overflow = 'hidden';
+          descSpan.style.textOverflow = 'ellipsis';
+          algoItem.appendChild(descSpan);
         }
-        
+
         // Hover effect
         algoItem.onmouseenter = () => {
-            algoItem.style.backgroundColor = 'var(--jp-layout-color2)';
+          algoItem.style.backgroundColor = 'var(--jp-layout-color2)';
         };
         algoItem.onmouseleave = () => {
-            algoItem.style.backgroundColor = 'transparent';
+          algoItem.style.backgroundColor = 'transparent';
         };
 
         // Click to show info
         algoItem.onclick = () => this.openAlgorithmDialog(algo);
-        
+
         algoList.appendChild(algoItem);
       });
 
       // Toggle expand/collapse
       catHeader.onclick = () => {
-        // If searching, we might want to disable collapsing or clear search? 
+        // If searching, we might want to disable collapsing or clear search?
         // Usually in search mode, structure is fixed. But let's allow toggling if user wants.
         // If filter is active, we might not want to modify expandedCategories or we might.
         // Let's just toggle visibility.
-        
+
         if (this.expandedCategories.has(category)) {
-            this.expandedCategories.delete(category);
-            algoList.style.display = 'none';
-            iconSpan.innerHTML = '';
-            caretRightIcon.element({ container: iconSpan });
+          this.expandedCategories.delete(category);
+          algoList.style.display = 'none';
+          iconSpan.innerHTML = '';
+          caretRightIcon.element({ container: iconSpan });
         } else {
-            this.expandedCategories.add(category);
-            algoList.style.display = 'block';
-            iconSpan.innerHTML = '';
-            caretDownIcon.element({ container: iconSpan });
+          this.expandedCategories.add(category);
+          algoList.style.display = 'block';
+          iconSpan.innerHTML = '';
+          caretDownIcon.element({ container: iconSpan });
         }
       };
 

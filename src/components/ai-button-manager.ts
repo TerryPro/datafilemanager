@@ -33,37 +33,37 @@ export class AiButtonManager {
     if (!this.toolbarRegistry) {
       return;
     }
-    
+
     if (this.openAiDialog) {
-        this.toolbarRegistry.addFactory(
-          'Notebook',
-          'ai-assist',
-          (panel: NotebookPanel) => {
-            return new ToolbarButton({
-              icon: aiAssistantIcon,
-              tooltip: 'AI Assist',
-              onClick: () => {
-                void this.openAiDialog!(panel);
-              }
-            });
-          }
-        );
+      this.toolbarRegistry.addFactory(
+        'Notebook',
+        'ai-assist',
+        (panel: NotebookPanel) => {
+          return new ToolbarButton({
+            icon: aiAssistantIcon,
+            tooltip: 'AI Assist',
+            onClick: () => {
+              void this.openAiDialog!(panel);
+            }
+          });
+        }
+      );
     }
 
     if (this.openWorkflowEditor) {
-        this.toolbarRegistry.addFactory(
-          'Notebook',
-          'workflow-editor',
-          (panel: NotebookPanel) => {
-            return new ToolbarButton({
-              icon: workflowEditorIcon,
-              tooltip: 'Workflow Editor',
-              onClick: () => {
-                this.openWorkflowEditor!();
-              }
-            });
-          }
-        );
+      this.toolbarRegistry.addFactory(
+        'Notebook',
+        'workflow-editor',
+        (panel: NotebookPanel) => {
+          return new ToolbarButton({
+            icon: workflowEditorIcon,
+            tooltip: 'Workflow Editor',
+            onClick: () => {
+              this.openWorkflowEditor!();
+            }
+          });
+        }
+      );
     }
   }
 
@@ -73,45 +73,51 @@ export class AiButtonManager {
   addAiButtonToPanel(panel: NotebookPanel): void {
     // 1. Add AI Button
     if (this.openAiDialog) {
-        const existingAi = panel.toolbar.node.querySelector(
-          '[data-id="ai-assist-button"]'
+      const existingAi = panel.toolbar.node.querySelector(
+        '[data-id="ai-assist-button"]'
+      );
+      if (!existingAi) {
+        const button = new ToolbarButton({
+          icon: aiAssistantIcon,
+          tooltip: 'AI Assist',
+          onClick: () => {
+            void this.openAiDialog!(panel);
+          }
+        });
+        (button.node as HTMLElement).setAttribute(
+          'data-id',
+          'ai-assist-button'
         );
-        if (!existingAi) {
-          const button = new ToolbarButton({
-            icon: aiAssistantIcon,
-            tooltip: 'AI Assist',
-            onClick: () => {
-              void this.openAiDialog!(panel);
-            }
-          });
-          (button.node as HTMLElement).setAttribute('data-id', 'ai-assist-button');
-          panel.toolbar.insertItem(0, 'ai-assist', button);
-        }
+        panel.toolbar.insertItem(0, 'ai-assist', button);
+      }
     }
 
     // 2. Add Workflow Button after AI Button
     if (this.openWorkflowEditor) {
-        const existingWorkflow = panel.toolbar.node.querySelector(
-          '[data-id="workflow-editor-button"]'
-        );
-        if (!existingWorkflow) {
-          const button = new ToolbarButton({
-            icon: workflowEditorIcon,
-            tooltip: 'Workflow Editor',
-            onClick: () => {
-              this.openWorkflowEditor!();
-            }
-          });
-          (button.node as HTMLElement).setAttribute('data-id', 'workflow-editor-button');
-          
-          // Try to insert after 'ai-assist'
-          try {
-             panel.toolbar.insertAfter('ai-assist', 'workflow-editor', button);
-          } catch (e) {
-             // Fallback: insert at index 1 (since ai-assist is at 0)
-             panel.toolbar.insertItem(1, 'workflow-editor', button);
+      const existingWorkflow = panel.toolbar.node.querySelector(
+        '[data-id="workflow-editor-button"]'
+      );
+      if (!existingWorkflow) {
+        const button = new ToolbarButton({
+          icon: workflowEditorIcon,
+          tooltip: 'Workflow Editor',
+          onClick: () => {
+            this.openWorkflowEditor!();
           }
+        });
+        (button.node as HTMLElement).setAttribute(
+          'data-id',
+          'workflow-editor-button'
+        );
+
+        // Try to insert after 'ai-assist'
+        try {
+          panel.toolbar.insertAfter('ai-assist', 'workflow-editor', button);
+        } catch (e) {
+          // Fallback: insert at index 1 (since ai-assist is at 0)
+          panel.toolbar.insertItem(1, 'workflow-editor', button);
         }
+      }
     }
   }
 

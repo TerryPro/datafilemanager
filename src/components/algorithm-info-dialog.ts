@@ -25,13 +25,13 @@ class AlgorithmInfoBody extends Widget implements Dialog.IBodyWidget<void> {
     container.style.maxWidth = '800px';
     // Use a fixed height large enough to avoid outer scrollbar but small enough to fit screen
     // 600px is usually safe for most laptop screens
-    container.style.height = '70vh'; 
+    container.style.height = '70vh';
     container.style.overflowY = 'auto'; // Allow scrolling inside if content is very long
     container.style.padding = '0 12px 12px 4px';
     container.style.boxSizing = 'border-box';
-    
+
     this.node.appendChild(container);
-    
+
     // Disable resize on the main node to remove the handle
     this.node.style.resize = 'none';
 
@@ -113,7 +113,7 @@ class AlgorithmInfoBody extends Widget implements Dialog.IBodyWidget<void> {
       algo.args.forEach((arg: any) => {
         const tr = document.createElement('tr');
         tr.style.borderBottom = '1px solid var(--jp-border-color2)';
-        
+
         const tdName = document.createElement('td');
         tdName.textContent = arg.name;
         tdName.style.padding = '8px';
@@ -142,30 +142,30 @@ class AlgorithmInfoBody extends Widget implements Dialog.IBodyWidget<void> {
 
     // Template Preview (Optional)
     if (algo.template) {
-        const tplHeader = document.createElement('h3');
-        tplHeader.textContent = 'Code Template';
-        tplHeader.style.fontSize = '14px';
-        container.appendChild(tplHeader);
+      const tplHeader = document.createElement('h3');
+      tplHeader.textContent = 'Code Template';
+      tplHeader.style.fontSize = '14px';
+      container.appendChild(tplHeader);
 
-        const pre = document.createElement('pre');
-        pre.textContent = algo.template;
-        pre.style.backgroundColor = 'var(--jp-layout-color2)';
-        pre.style.padding = '12px';
-        pre.style.borderRadius = '4px';
-        pre.style.overflowX = 'auto';
-        pre.style.fontSize = '12px';
-        pre.style.fontFamily = 'var(--jp-code-font-family)';
-        pre.style.color = 'var(--jp-ui-font-color1)';
-        pre.style.border = '1px solid var(--jp-border-color2)';
-        pre.style.whiteSpace = 'pre-wrap'; // Wrap text to avoid horizontal scroll issues
-        pre.style.wordBreak = 'break-all';
-        pre.style.lineHeight = '1.5';
-        pre.style.minHeight = '100px'; 
-        pre.style.maxHeight = '300px'; 
-        pre.style.overflowY = 'auto';
-        pre.style.resize = 'none';
-        pre.style.margin = '0'; // Reset margin
-        container.appendChild(pre);
+      const pre = document.createElement('pre');
+      pre.textContent = algo.template;
+      pre.style.backgroundColor = 'var(--jp-layout-color2)';
+      pre.style.padding = '12px';
+      pre.style.borderRadius = '4px';
+      pre.style.overflowX = 'auto';
+      pre.style.fontSize = '12px';
+      pre.style.fontFamily = 'var(--jp-code-font-family)';
+      pre.style.color = 'var(--jp-ui-font-color1)';
+      pre.style.border = '1px solid var(--jp-border-color2)';
+      pre.style.whiteSpace = 'pre-wrap'; // Wrap text to avoid horizontal scroll issues
+      pre.style.wordBreak = 'break-all';
+      pre.style.lineHeight = '1.5';
+      pre.style.minHeight = '100px';
+      pre.style.maxHeight = '300px';
+      pre.style.overflowY = 'auto';
+      pre.style.resize = 'none';
+      pre.style.margin = '0'; // Reset margin
+      container.appendChild(pre);
     }
   }
 
@@ -181,8 +181,12 @@ export class AlgorithmInfoDialogManager {
       body: new AlgorithmInfoBody(algo),
       buttons: [Dialog.okButton({ label: 'Close' })]
     });
-    const content = dialog.node.querySelector('.jp-Dialog-content') as HTMLElement | null;
-    const bodyEl = dialog.node.querySelector('.jp-Dialog-body') as HTMLElement | null;
+    const content = dialog.node.querySelector(
+      '.jp-Dialog-content'
+    ) as HTMLElement | null;
+    const bodyEl = dialog.node.querySelector(
+      '.jp-Dialog-body'
+    ) as HTMLElement | null;
     dialog.node.style.resize = 'none';
     dialog.node.style.overflow = 'hidden';
     if (content) {

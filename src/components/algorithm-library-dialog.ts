@@ -251,7 +251,9 @@ class LibraryBodyWidget extends Widget implements Dialog.IBodyWidget<string> {
             const option = document.createElement('option');
             option.value = opt;
             option.textContent = opt;
-            if (opt === arg.default) option.selected = true;
+            if (opt === arg.default) {
+              option.selected = true;
+            }
             select.appendChild(option);
           });
           select.onchange = () => {
@@ -266,7 +268,9 @@ class LibraryBodyWidget extends Widget implements Dialog.IBodyWidget<string> {
 
           if (arg.type === 'int' || arg.type === 'float') {
             inp.type = 'number';
-            if (arg.step) inp.step = arg.step.toString();
+            if (arg.step) {
+              inp.step = arg.step.toString();
+            }
             // Removing min/max to prevent browser validation from disabling the dialog button
             // if (arg.min !== undefined) inp.min = arg.min.toString();
             // if (arg.max !== undefined) inp.max = arg.max.toString();

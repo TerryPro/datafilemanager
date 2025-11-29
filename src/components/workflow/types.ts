@@ -1,9 +1,9 @@
-export interface Port {
+export interface IPort {
   name: string;
   type: string;
 }
 
-export interface Param {
+export interface IParam {
   name: string;
   type: string; // 'int' | 'float' | 'str' | 'bool'
   label: string;
@@ -16,19 +16,20 @@ export interface Param {
   widget?: string; // e.g., 'file-selector'
 }
 
-export interface NodeSchema {
+export interface INodeSchema {
   id: string;
   name: string;
   description?: string;
   category: string;
-  inputs: Port[];
-  outputs: Port[];
-  args: Param[];
+  inputs: IPort[];
+  outputs: IPort[];
+  args: IParam[];
   template: string;
+  nodeType?: string; // 'generic' | 'csv_loader' | 'plot', default is 'generic'
 }
 
-export interface NodeData {
-  schema: NodeSchema;
+export interface INodeData {
+  schema: INodeSchema;
   parameters: Record<string, any>;
   // Runtime variables
   inputVariables?: Record<string, string>; // portName -> variableName

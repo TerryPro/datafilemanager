@@ -25,20 +25,20 @@ export class WorkflowWidget extends ReactWidget {
   }
 
   private onActiveCellChanged() {
-      const cell = this.tracker.activeCell;
-      if (cell) {
-          const data = cell.model.sharedModel.getMetadata('aiserver_workflow');
-          this.workflowData = data;
-      } else {
-          this.workflowData = null;
-      }
-      this.update();
+    const cell = this.tracker.activeCell;
+    if (cell) {
+      const data = cell.model.sharedModel.getMetadata('aiserver_workflow');
+      this.workflowData = data;
+    } else {
+      this.workflowData = null;
+    }
+    this.update();
   }
 
   render(): JSX.Element {
     return (
-      <WorkflowEditor 
-        onInjectCode={this.injectCode.bind(this)} 
+      <WorkflowEditor
+        onInjectCode={this.injectCode.bind(this)}
         serviceManager={this.serviceManager}
         initialData={this.workflowData}
       />
@@ -47,14 +47,14 @@ export class WorkflowWidget extends ReactWidget {
 
   private injectCode(code: string, workflowData: any) {
     const current = this.tracker.currentWidget;
-    
+
     if (!current) {
-      window.alert("No active notebook found! Please open a notebook first.");
+      window.alert('No active notebook found! Please open a notebook first.');
       return;
     }
 
     const notebook = current.content;
-    
+
     // Get the active cell
     let activeCell = notebook.activeCell;
 
@@ -62,14 +62,17 @@ export class WorkflowWidget extends ReactWidget {
     // Or if the user specifically requested behavior for "new file without cell" (though new files usually have 1 empty cell)
     // We'll assume if activeCell is null, we try to insert one.
     if (!activeCell) {
-        NotebookActions.insertBelow(notebook);
-        activeCell = notebook.activeCell;
+      NotebookActions.insertBelow(notebook);
+      activeCell = notebook.activeCell;
     }
-    
+
     if (activeCell) {
       activeCell.model.sharedModel.setSource(code);
       // Save workflow data to cell metadata
-      activeCell.model.sharedModel.setMetadata('aiserver_workflow', workflowData);
+      activeCell.model.sharedModel.setMetadata(
+        'aiserver_workflow',
+        workflowData
+      );
     }
   }
 }

@@ -84,7 +84,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
     if (notebookTracker) {
       const aiSidebar = new AiSidebar(app, notebookTracker);
       app.shell.add(aiSidebar, 'right', { rank: 1000 });
-      
+
       // 注册左侧算法库面板
       const algoPanel = new AlgorithmLibraryPanel(app, notebookTracker);
       app.shell.add(algoPanel, 'left', { rank: 103 });
@@ -96,17 +96,18 @@ const plugin: JupyterFrontEndPlugin<void> = {
         execute: () => {
           // Cast to ServiceManager because the type definition in JupyterFrontEnd might be slightly different
           // or IManager interface is a subset.
-          const serviceManager = app.serviceManager as unknown as ServiceManager;
+          const serviceManager =
+            app.serviceManager as unknown as ServiceManager;
           const content = new WorkflowWidget(notebookTracker, serviceManager);
-          
+
           // Open in split-right mode by default to show side-by-side with notebook
           app.shell.add(content, 'main', { mode: 'split-right' });
-          
+
           // Activate the widget
           app.shell.activateById(content.id);
         }
       });
-      
+
       palette.addItem({ command: workflowCommandId, category: 'Workflow' });
     }
   }

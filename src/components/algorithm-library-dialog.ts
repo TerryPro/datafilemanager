@@ -13,6 +13,7 @@ interface ILibraryFunction {
   docstring?: string;
   signature?: string;
   module?: string;
+  imports?: string[];
   args?: Array<{
     name: string;
     default?: any;
@@ -325,8 +326,15 @@ class LibraryBodyWidget extends Widget implements Dialog.IBodyWidget<string> {
   }
 
   private updateCode(func: ILibraryFunction) {
+    let finalCode = '';
+
+    // 1. Add Imports
+    if (func.imports && func.imports.length > 0) {
+      finalCode += func.imports.join('\n') + '\n\n';
+    }
+
     if (!func.template) {
-      this.selectedCode = `# ${func.name}\n# 暂无可用模板。`;
+      finalCode += `# ${func.name}\n# 暂无可用模板。`;
     } else {
       let code = func.template;
       const varName = this.dfName || 'df';
@@ -343,8 +351,10 @@ class LibraryBodyWidget extends Widget implements Dialog.IBodyWidget<string> {
           code = code.replace(new RegExp(placeholder, 'g'), val.toString());
         });
       }
-      this.selectedCode = code;
+      finalCode += code;
     }
+
+    this.selectedCode = finalCode;
 
     if (this.codePreElement) {
       this.codePreElement.textContent = this.selectedCode;

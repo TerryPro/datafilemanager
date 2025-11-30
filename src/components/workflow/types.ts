@@ -26,6 +26,7 @@ export interface INodeSchema {
   args: IParam[];
   template: string;
   nodeType?: string; // 'generic' | 'csv_loader' | 'plot', default is 'generic'
+  imports?: string[]; // Array of import statements, e.g., ["import pandas as pd"]
 }
 
 export interface INodeData {

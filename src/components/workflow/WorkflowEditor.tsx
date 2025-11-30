@@ -15,15 +15,19 @@ import 'reactflow/dist/style.css';
 import { ServiceManager } from '@jupyterlab/services';
 
 import { WorkflowSidebar } from './WorkflowSidebar';
+import { WorkflowToolbar } from './WorkflowToolbar';
+import { PropertyPanel } from './PropertyPanel';
 import { CSVLoaderNode } from './nodes/CSVLoaderNode';
 import { PlotNode } from './nodes/PlotNode';
 import { GenericNode } from './nodes/GenericNode';
+import { TrendNode } from './nodes/TrendNode';
 import { generateCode } from './CodeGenerator';
 
 const nodeTypes = {
   csv_loader: CSVLoaderNode,
   plot: PlotNode,
-  generic: GenericNode
+  generic: GenericNode,
+  trend: TrendNode
 };
 
 interface IWorkflowEditorProps {
@@ -319,90 +323,83 @@ const WorkflowEditorContent = ({
     onInjectCode(code, workflowData);
   };
 
+  const handleDelete = useCallback(() => {
+    const selectedNodes = nodes.filter(n => n.selected);
+    const selectedEdges = edges.filter(e => e.selected);
+    
+    if (selectedNodes.length > 0 || selectedEdges.length > 0) {
+      const nodesToDelete = new Set(selectedNodes.map(n => n.id));
+      const edgesToDelete = new Set(selectedEdges.map(e => e.id));
+
+      setNodes(nds => nds.filter(n => !nodesToDelete.has(n.id)));
+      setEdges(eds => eds.filter(e => !edgesToDelete.has(e.id)));
+    }
+  }, [nodes, edges, setNodes, setEdges]);
+
+  const handlePropertyChange = useCallback((nodeId: string, newValues: Record<string, any>) => {
+    setNodes(nds => 
+      nds.map(node => {
+        if (node.id === nodeId) {
+          // Update data.values
+          // Note: We need to create a new data object to trigger updates if needed,
+          // but for deep properties sometimes we need to be careful.
+          // ReactFlow updates node if reference changes.
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              values: newValues
+            }
+          };
+        }
+        return node;
+      })
+    );
+  }, [setNodes]);
+
+  const selectedNode = nodes.find(n => n.selected) || null;
+
   return (
     <div
       className="workflow-editor"
       style={{ display: 'flex', height: '100%', width: '100%' }}
     >
-      <WorkflowSidebar />
-      <div
-        className="reactflow-wrapper"
-        ref={reactFlowWrapper}
-        style={{ flex: 1, height: '100%', position: 'relative' }}
-      >
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onInit={setReactFlowInstance}
-          onDrop={onDrop}
-          onDragOver={onDragOver}
-          nodeTypes={nodeTypes}
-          defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-        >
-          <Controls />
-          <Background />
-          <MiniMap />
-        </ReactFlow>
-
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <WorkflowToolbar onRun={handleGenerateCode} onDelete={handleDelete} />
         <div
-          style={{
-            position: 'absolute',
-            top: '10px',
-            right: '10px',
-            zIndex: 100,
-            display: 'flex',
-            gap: '10px'
-          }}
+          className="reactflow-wrapper"
+          ref={reactFlowWrapper}
+          style={{ flex: 1, position: 'relative' }}
         >
-          <button
-            onClick={() => {
-              const selectedNodes = nodes.filter(n => n.selected);
-              const selectedEdges = edges.filter(e => e.selected);
-              if (selectedNodes.length > 0 || selectedEdges.length > 0) {
-                // React Flow doesn't expose a simple delete function on the instance directly for state managed via hooks?
-                // Actually we can just update the state.
-                // Or use deleteElements from useReactFlow if we used it.
-                // Since we manage state locally with useNodesState, we should update it.
-                const nodesToDelete = new Set(selectedNodes.map(n => n.id));
-                const edgesToDelete = new Set(selectedEdges.map(e => e.id));
-
-                setNodes(nds => nds.filter(n => !nodesToDelete.has(n.id)));
-                setEdges(eds => eds.filter(e => !edgesToDelete.has(e.id)));
-              }
-            }}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#F44336',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
-            }}
-            title="Delete selected nodes/edges (or press Backspace)"
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onInit={setReactFlowInstance}
+            onDrop={onDrop}
+            onDragOver={onDragOver}
+            nodeTypes={nodeTypes}
+            defaultViewport={{ x: 0, y: 0, zoom: 1 }}
           >
-            Delete Selected
-          </button>
-          <button
-            onClick={handleGenerateCode}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#2196F3',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
-            }}
-          >
-            Generate & Inject Code
-          </button>
+            <Controls />
+            <Background />
+            <MiniMap />
+          </ReactFlow>
         </div>
+      </div>
+      <div style={{ width: '250px', display: 'flex', flexDirection: 'column', borderLeft: '1px solid var(--jp-border-color2)', height: '100%' }}>
+          <div style={{ flex: 1, overflow: 'hidden', borderBottom: '1px solid var(--jp-border-color2)' }}>
+            <WorkflowSidebar />
+          </div>
+          <div style={{ flex: 1, overflow: 'hidden' }}>
+            <PropertyPanel 
+                selectedNode={selectedNode} 
+                onChange={handlePropertyChange}
+                serviceManager={serviceManager}
+            />
+          </div>
       </div>
     </div>
   );

@@ -1,150 +1,40 @@
 import React, { memo, useState, useEffect } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
-import { INodeSchema, IParam } from '../types';
-import { ServiceManager, Contents } from '@jupyterlab/services';
-
-// Helper to render parameter inputs
-const ParamInput = ({
-  param,
-  value,
-  onChange,
-  serviceManager
-}: {
-  param: IParam;
-  value: any;
-  onChange: (val: any) => void;
-  serviceManager?: ServiceManager;
-}) => {
-  const [files, setFiles] = useState<string[]>([]);
-
-  useEffect(() => {
-    if (param.widget === 'file-selector' && serviceManager) {
-      // Fetch files from dataset directory
-      serviceManager.contents
-        .get('dataset')
-        .then(model => {
-          if (model.content && Array.isArray(model.content)) {
-            const csvFiles = model.content
-              .filter((item: Contents.IModel) => item.name.endsWith('.csv'))
-              .map((item: Contents.IModel) => `dataset/${item.name}`);
-            setFiles(csvFiles);
-          }
-        })
-        .catch(err => console.error('Error fetching files:', err));
-    }
-  }, [param.widget, serviceManager]);
-
-  const inputStyle = {
-    width: '100%',
-    boxSizing: 'border-box' as const,
-    padding: '4px',
-    borderRadius: '4px',
-    border: '1px solid var(--jp-border-color2)',
-    backgroundColor: 'var(--jp-input-active-background)',
-    color: 'var(--jp-ui-font-color1)',
-    fontSize: '12px'
-  };
-
-  if (param.widget === 'file-selector') {
-    return (
-      <select
-        className="nodrag"
-        value={value || ''}
-        onChange={e => onChange(e.target.value)}
-        style={inputStyle}
-      >
-        <option value="" disabled>
-          Select file...
-        </option>
-        {files.map(f => (
-          <option key={f} value={f}>
-            {f}
-          </option>
-        ))}
-      </select>
-    );
-  }
-
-  if (param.options) {
-    return (
-      <select
-        className="nodrag"
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        style={inputStyle}
-      >
-        {param.options.map(opt => (
-          <option key={opt} value={opt}>
-            {opt}
-          </option>
-        ))}
-      </select>
-    );
-  }
-
-  if (param.type === 'int' || param.type === 'float') {
-    return (
-      <input
-        type="number"
-        className="nodrag"
-        value={value}
-        onChange={e =>
-          onChange(
-            param.type === 'int'
-              ? parseInt(e.target.value)
-              : parseFloat(e.target.value)
-          )
-        }
-        step={param.step || (param.type === 'float' ? 0.1 : 1)}
-        min={param.min}
-        max={param.max}
-        style={inputStyle}
-      />
-    );
-  }
-
-  return (
-    <input
-      type="text"
-      className="nodrag"
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      style={inputStyle}
-    />
-  );
-};
+import { INodeSchema, IParam, IPort } from '../types';
+import { ParamInput } from '../ParamInput';
 
 export const GenericNode = memo(({ data, selected }: NodeProps) => {
-  // data contains schema and values
-  const schema: INodeSchema = data.schema;
+  const { onFileChange } = data;
+  const schema = data.schema as INodeSchema;
+  
+  // Local state for parameter values, initialized from data.values
   const [values, setValues] = useState<Record<string, any>>(data.values || {});
 
-  // Initialize defaults
+  // Sync local state if data.values changes externally (e.g. load)
   useEffect(() => {
-    const newValues = { ...values };
-    let changed = false;
-    schema.args?.forEach(arg => {
-      if (newValues[arg.name] === undefined && arg.default !== undefined) {
-        newValues[arg.name] = arg.default;
-        changed = true;
-      }
-    });
-    if (changed) {
-      setValues(newValues);
-      data.values = newValues; // Update data reference
+    if (data.values) {
+      setValues(data.values);
     }
-  }, [schema]);
+  }, [data.values]);
 
-  const handleParamChange = (name: string, val: any) => {
-    const newValues = { ...values, [name]: val };
+  const handleParamChange = (name: string, value: any) => {
+    const newValues = { ...values, [name]: value };
     setValues(newValues);
+    
+    // Update node data reference
     data.values = newValues;
+
+    // Specific logic for CSV Loader to trigger column detection
+    if (schema.id === 'load_csv' && name === 'filepath') {
+       if (onFileChange) {
+         onFileChange(data.id, value);
+       }
+    }
   };
 
   return (
     <div
       style={{
-        padding: '0',
         border: selected
           ? '2px solid var(--jp-brand-color1)'
           : '1px solid var(--jp-border-color2)',
@@ -176,7 +66,7 @@ export const GenericNode = memo(({ data, selected }: NodeProps) => {
             zIndex: 10
           }}
         >
-          {schema.inputs.map((port, idx) => (
+          {schema.inputs.map((port: IPort, idx: number) => (
             <div
               key={`in-${idx}`}
               style={{
@@ -238,7 +128,7 @@ export const GenericNode = memo(({ data, selected }: NodeProps) => {
       <div style={{ padding: '12px' }}>
         {/* Parameters */}
         <div style={{ marginBottom: '4px' }}>
-          {schema.args?.map(arg => (
+          {schema.args?.map((arg: IParam) => (
             <div key={arg.name} style={{ marginBottom: '8px' }}>
               <label
                 style={{
@@ -274,7 +164,7 @@ export const GenericNode = memo(({ data, selected }: NodeProps) => {
             zIndex: 10
           }}
         >
-          {schema.outputs.map((port, idx) => (
+          {schema.outputs.map((port: IPort, idx: number) => (
             <div
               key={`out-${idx}`}
               style={{

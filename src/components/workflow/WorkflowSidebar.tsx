@@ -72,8 +72,7 @@ export const WorkflowSidebar = () => {
   return (
     <aside
       style={{
-        width: '250px',
-        borderRight: '1px solid var(--jp-border-color2)',
+        width: '100%',
         background: 'var(--jp-layout-color1)',
         display: 'flex',
         flexDirection: 'column',

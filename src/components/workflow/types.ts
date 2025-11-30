@@ -49,10 +49,10 @@ export interface INodeData {
   // Runtime variables
   inputVariables?: Record<string, string>; // portName -> variableName
   outputVariables?: Record<string, string>; // portName -> variableName
-  
+
   // Metadata for column propagation
   metadata?: INodeMetadata;
-  
+
   // Callbacks and Services
   onFileChange?: (nodeId: string, filepath: string) => void;
   onValuesChange?: (nodeId: string, values: Record<string, any>) => void;

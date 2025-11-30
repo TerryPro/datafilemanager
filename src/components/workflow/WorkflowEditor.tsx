@@ -329,7 +329,7 @@ const WorkflowEditorContent = ({
   const handleDelete = useCallback(() => {
     const selectedNodes = nodes.filter(n => n.selected);
     const selectedEdges = edges.filter(e => e.selected);
-    
+
     if (selectedNodes.length > 0 || selectedEdges.length > 0) {
       const nodesToDelete = new Set(selectedNodes.map(n => n.id));
       const edgesToDelete = new Set(selectedEdges.map(e => e.id));
@@ -339,26 +339,29 @@ const WorkflowEditorContent = ({
     }
   }, [nodes, edges, setNodes, setEdges]);
 
-  const handlePropertyChange = useCallback((nodeId: string, newValues: Record<string, any>) => {
-    setNodes(nds => 
-      nds.map(node => {
-        if (node.id === nodeId) {
-          // Update data.values
-          // Note: We need to create a new data object to trigger updates if needed,
-          // but for deep properties sometimes we need to be careful.
-          // ReactFlow updates node if reference changes.
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              values: newValues
-            }
-          };
-        }
-        return node;
-      })
-    );
-  }, [setNodes]);
+  const handlePropertyChange = useCallback(
+    (nodeId: string, newValues: Record<string, any>) => {
+      setNodes(nds =>
+        nds.map(node => {
+          if (node.id === nodeId) {
+            // Update data.values
+            // Note: We need to create a new data object to trigger updates if needed,
+            // but for deep properties sometimes we need to be careful.
+            // ReactFlow updates node if reference changes.
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                values: newValues
+              }
+            };
+          }
+          return node;
+        })
+      );
+    },
+    [setNodes]
+  );
 
   const selectedNode = nodes.find(n => n.selected) || null;
 
@@ -367,7 +370,14 @@ const WorkflowEditorContent = ({
       className="workflow-editor"
       style={{ display: 'flex', height: '100%', width: '100%' }}
     >
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%'
+        }}
+      >
         <WorkflowToolbar onRun={handleGenerateCode} onDelete={handleDelete} />
         <div
           className="reactflow-wrapper"
@@ -392,17 +402,31 @@ const WorkflowEditorContent = ({
           </ReactFlow>
         </div>
       </div>
-      <div style={{ width: '250px', display: 'flex', flexDirection: 'column', borderLeft: '1px solid var(--jp-border-color2)', height: '100%' }}>
-          <div style={{ flex: 1, overflow: 'hidden', borderBottom: '1px solid var(--jp-border-color2)' }}>
-            <WorkflowSidebar />
-          </div>
-          <div style={{ flex: 1, overflow: 'hidden' }}>
-            <PropertyPanel 
-                selectedNode={selectedNode} 
-                onChange={handlePropertyChange}
-                serviceManager={serviceManager}
-            />
-          </div>
+      <div
+        style={{
+          width: '250px',
+          display: 'flex',
+          flexDirection: 'column',
+          borderLeft: '1px solid var(--jp-border-color2)',
+          height: '100%'
+        }}
+      >
+        <div
+          style={{
+            flex: 1,
+            overflow: 'hidden',
+            borderBottom: '1px solid var(--jp-border-color2)'
+          }}
+        >
+          <WorkflowSidebar />
+        </div>
+        <div style={{ flex: 1, overflow: 'hidden' }}>
+          <PropertyPanel
+            selectedNode={selectedNode}
+            onChange={handlePropertyChange}
+            serviceManager={serviceManager}
+          />
+        </div>
       </div>
     </div>
   );

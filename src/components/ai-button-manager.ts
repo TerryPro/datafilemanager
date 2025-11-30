@@ -35,6 +35,7 @@ export class AiButtonManager {
     }
 
     if (this.openAiDialog) {
+      const openAiDialog = this.openAiDialog;
       this.toolbarRegistry.addFactory(
         'Notebook',
         'ai-assist',
@@ -43,7 +44,7 @@ export class AiButtonManager {
             icon: aiAssistantIcon,
             tooltip: 'AI Assist',
             onClick: () => {
-              void this.openAiDialog!(panel);
+              void openAiDialog(panel);
             }
           });
         }
@@ -51,6 +52,7 @@ export class AiButtonManager {
     }
 
     if (this.openWorkflowEditor) {
+      const openWorkflowEditor = this.openWorkflowEditor;
       this.toolbarRegistry.addFactory(
         'Notebook',
         'workflow-editor',
@@ -59,7 +61,7 @@ export class AiButtonManager {
             icon: workflowEditorIcon,
             tooltip: 'Workflow Editor',
             onClick: () => {
-              this.openWorkflowEditor!();
+              openWorkflowEditor();
             }
           });
         }
@@ -73,6 +75,7 @@ export class AiButtonManager {
   addAiButtonToPanel(panel: NotebookPanel): void {
     // 1. Add AI Button
     if (this.openAiDialog) {
+      const openAiDialog = this.openAiDialog;
       const existingAi = panel.toolbar.node.querySelector(
         '[data-id="ai-assist-button"]'
       );
@@ -81,7 +84,7 @@ export class AiButtonManager {
           icon: aiAssistantIcon,
           tooltip: 'AI Assist',
           onClick: () => {
-            void this.openAiDialog!(panel);
+            void openAiDialog(panel);
           }
         });
         (button.node as HTMLElement).setAttribute(
@@ -94,6 +97,7 @@ export class AiButtonManager {
 
     // 2. Add Workflow Button after AI Button
     if (this.openWorkflowEditor) {
+      const openWorkflowEditor = this.openWorkflowEditor;
       const existingWorkflow = panel.toolbar.node.querySelector(
         '[data-id="workflow-editor-button"]'
       );
@@ -102,7 +106,7 @@ export class AiButtonManager {
           icon: workflowEditorIcon,
           tooltip: 'Workflow Editor',
           onClick: () => {
-            this.openWorkflowEditor!();
+            openWorkflowEditor();
           }
         });
         (button.node as HTMLElement).setAttribute(

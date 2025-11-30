@@ -1,9 +1,5 @@
 import React from 'react';
-import { 
-  runIcon, 
-  cutIcon, 
-  copyIcon 
-} from '@jupyterlab/ui-components';
+import { runIcon, cutIcon, copyIcon } from '@jupyterlab/ui-components';
 
 interface IWorkflowToolbarProps {
   onRun: () => void;
@@ -11,25 +7,27 @@ interface IWorkflowToolbarProps {
   onCopy?: () => void;
 }
 
-const ToolbarButton = ({ 
-  icon, 
-  onClick, 
-  title, 
-  enabled = true 
-}: { 
-  icon: any, 
-  onClick?: () => void, 
-  title: string, 
-  enabled?: boolean 
+const ToolbarButton = ({
+  icon,
+  onClick,
+  title,
+  enabled = true
+}: {
+  icon: any;
+  onClick?: () => void;
+  title: string;
+  enabled?: boolean;
 }) => {
   return (
-    <button 
-      className={`jp-ToolbarButtonComponent jp-Button ${!enabled ? 'jp-mod-disabled' : ''}`}
+    <button
+      className={`jp-ToolbarButtonComponent jp-Button ${
+        !enabled ? 'jp-mod-disabled' : ''
+      }`}
       onClick={enabled ? onClick : undefined}
       title={title}
-      style={{ 
-        border: 'none', 
-        background: 'none', 
+      style={{
+        border: 'none',
+        background: 'none',
         padding: '0 4px',
         height: '24px',
         display: 'flex',
@@ -39,23 +37,27 @@ const ToolbarButton = ({
         opacity: enabled ? 1 : 0.5
       }}
     >
-      <icon.react 
-        tag="span" 
-        className="jp-ToolbarButtonComponent-icon" 
+      <icon.react
+        tag="span"
+        className="jp-ToolbarButtonComponent-icon"
         style={{ width: '14px', height: '14px' }}
       />
     </button>
   );
 };
 
-export const WorkflowToolbar = ({ onRun, onDelete, onCopy }: IWorkflowToolbarProps) => {
+export const WorkflowToolbar = ({
+  onRun,
+  onDelete,
+  onCopy
+}: IWorkflowToolbarProps) => {
   return (
-    <div 
-      className="jp-Toolbar" 
-      style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        padding: '4px 8px', 
+    <div
+      className="jp-Toolbar"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        padding: '4px 8px',
         borderBottom: '1px solid var(--jp-border-color2)',
         backgroundColor: 'var(--jp-layout-color1)',
         minHeight: '32px',
@@ -63,8 +65,17 @@ export const WorkflowToolbar = ({ onRun, onDelete, onCopy }: IWorkflowToolbarPro
       }}
     >
       <ToolbarButton icon={runIcon} title="Generate Code" onClick={onRun} />
-      <ToolbarButton icon={cutIcon} title="Delete Selected" onClick={onDelete} />
-      <ToolbarButton icon={copyIcon} title="Copy Selected" onClick={onCopy} enabled={!!onCopy} />
+      <ToolbarButton
+        icon={cutIcon}
+        title="Delete Selected"
+        onClick={onDelete}
+      />
+      <ToolbarButton
+        icon={copyIcon}
+        title="Copy Selected"
+        onClick={onCopy}
+        enabled={!!onCopy}
+      />
     </div>
   );
 };

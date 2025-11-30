@@ -30,7 +30,10 @@ export const generateCode = (nodes: Node[], edges: Edge[]): string => {
 
   const sortedNodes: Node[] = [];
   while (queue.length > 0) {
-    const nodeId = queue.shift()!;
+    const nodeId = queue.shift();
+    if (!nodeId) {
+      continue;
+    }
     sortedNodes.push(nodeMap[nodeId]);
 
     const neighbors = adjList[nodeId] || [];
@@ -63,18 +66,20 @@ export const generateCode = (nodes: Node[], edges: Edge[]): string => {
 
   // Add sorted unique imports
   if (allImports.size > 0) {
-    Array.from(allImports).sort().forEach(imp => lines.push(imp));
+    Array.from(allImports)
+      .sort()
+      .forEach(imp => lines.push(imp));
     lines.push('');
   }
 
   // Class Definition
   lines.push(`class ${className}:`);
-  lines.push(`    """`);
+  lines.push('    """');
   lines.push(`    Workflow Class - Generated at ${new Date().toISOString()}`);
-  lines.push(`    """`);
-  lines.push(`    def __init__(self):`);
-  lines.push(`        self.results = {}`);
-  lines.push(``);
+  lines.push('    """');
+  lines.push('    def __init__(self):');
+  lines.push('        self.results = {}');
+  lines.push('');
 
   // Track variable names for outputs and methods
   // Map: NodeID -> { PortName -> VariableName }
@@ -100,62 +105,68 @@ export const generateCode = (nodes: Node[], edges: Edge[]): string => {
       inputEdges.forEach((edge, index) => {
         const sourceNodeId = edge.source;
         const sourceOutputs = nodeOutputs[sourceNodeId];
-        if (!sourceOutputs) return;
+        if (!sourceOutputs) {
+          return;
+        }
 
         // Input argument name for the method signature
         const targetHandle = edge.targetHandle || 'df_in';
         let argName = 'df';
 
         if (inputEdges.length > 1) {
-            if (targetHandle === 'df_in') {
-                argName = `df_${index + 1}`;
-            } else if (/^df\d+$/.test(targetHandle)) {
-                // e.g. df1 -> df_1
-                argName = targetHandle.replace('df', 'df_');
-            } else {
-                argName = `df_${targetHandle}`;
-            }
+          if (targetHandle === 'df_in') {
+            argName = `df_${index + 1}`;
+          } else if (/^df\d+$/.test(targetHandle)) {
+            // e.g. df1 -> df_1
+            argName = targetHandle.replace('df', 'df_');
+          } else {
+            argName = `df_${targetHandle}`;
+          }
         }
 
         // Ensure uniqueness in methodArgs
         if (methodArgs.includes(argName)) {
-             argName = `${argName}_${index + 1}`;
+          argName = `${argName}_${index + 1}`;
         }
-        
+
         if (targetHandle) {
           inputVars[targetHandle] = argName;
         } else {
           inputVars['default'] = argName;
         }
-        
+
         methodArgs.push(argName);
       });
 
       // Method Signature
       lines.push(`    # ${schema.name} (ID: ${nodeId})`);
-      lines.push(`    def ${methodName}(self${methodArgs.length > 0 ? ', ' + methodArgs.join(', ') : ''}):`);
+      lines.push(
+        `    def ${methodName}(self${
+          methodArgs.length > 0 ? ', ' + methodArgs.join(', ') : ''
+        }):`
+      );
 
       // 2. Determine Output Variables for Current Node
       const currentOutputs: Record<string, string> = {};
-      
+
       const outputs = schema.outputs || [];
-      
+
       if (outputs.length === 0) {
-         const defaultVar = `df_${safeNodeId}`;
-         currentOutputs['default'] = defaultVar;
+        const defaultVar = `df_${safeNodeId}`;
+        currentOutputs['default'] = defaultVar;
       } else {
         outputs.forEach((port, index) => {
-           let varName = `df_${safeNodeId}`;
-           if (outputs.length > 1) {
-             varName = `${varName}_${port.name}`;
-           }
-           currentOutputs[port.name] = varName;
-           if (index === 0) {
-             currentOutputs['default'] = varName;
-           }
+          let varName = `df_${safeNodeId}`;
+          if (outputs.length > 1) {
+            varName = `${varName}_${port.name}`;
+          }
+          currentOutputs[port.name] = varName;
+          if (index === 0) {
+            currentOutputs['default'] = varName;
+          }
         });
       }
-      
+
       nodeOutputs[nodeId] = currentOutputs;
 
       // 3. Prepare Template Replacement
@@ -164,7 +175,7 @@ export const generateCode = (nodes: Node[], edges: Edge[]): string => {
       // Replace Output Placeholders
       Object.entries(currentOutputs).forEach(([portName, varName]) => {
         if (portName !== 'default') {
-            code = code.replace(new RegExp(`\\{${portName}\\}`, 'g'), varName);
+          code = code.replace(new RegExp(`\\{${portName}\\}`, 'g'), varName);
         }
       });
       if (currentOutputs['default']) {
@@ -174,15 +185,15 @@ export const generateCode = (nodes: Node[], edges: Edge[]): string => {
       // Replace Input Placeholders
       Object.entries(inputVars).forEach(([portName, varName]) => {
         if (portName !== 'default') {
-           code = code.replace(new RegExp(`\\{${portName}\\}`, 'g'), varName);
+          code = code.replace(new RegExp(`\\{${portName}\\}`, 'g'), varName);
         }
       });
-      
+
       let defaultInputVar = inputVars['default'];
       if (!defaultInputVar && Object.keys(inputVars).length > 0) {
-         defaultInputVar = Object.values(inputVars)[0];
+        defaultInputVar = Object.values(inputVars)[0];
       }
-      
+
       if (defaultInputVar) {
         code = code.replace(/\{VAR_NAME\}/g, defaultInputVar);
       }
@@ -195,97 +206,118 @@ export const generateCode = (nodes: Node[], edges: Edge[]): string => {
           val = arg.default;
         }
 
-        if (val === true) val = 'True';
-        if (val === false) val = 'False';
+        if (val === true) {
+          val = 'True';
+        }
+        if (val === false) {
+          val = 'False';
+        }
 
         if (Array.isArray(val)) {
-            const formattedItems = val.map(v => {
-                if (typeof v === 'string') return `'${v}'`;
-                return String(v);
-            });
-            val = `[${formattedItems.join(', ')}]`;
+          const formattedItems = val.map(v => {
+            if (typeof v === 'string') {
+              return `'${v}'`;
+            }
+            return String(v);
+          });
+          val = `[${formattedItems.join(', ')}]`;
         }
 
         code = code.replace(new RegExp(`\\{${arg.name}\\}`, 'g'), String(val));
       });
 
       // Indent code
-      const indentedCode = code.split('\n').map(l => `        ${l}`).join('\n');
+      const indentedCode = code
+        .split('\n')
+        .map(l => `        ${l}`)
+        .join('\n');
       lines.push(indentedCode);
 
       // Save results to self.results
-      lines.push(`        self.results['${nodeId}'] = ${currentOutputs['default'] || 'None'}`);
+      lines.push(
+        `        self.results['${nodeId}'] = ${
+          currentOutputs['default'] || 'None'
+        }`
+      );
       lines.push(`        return ${currentOutputs['default'] || 'None'}`);
-      lines.push(``);
+      lines.push('');
     }
   });
 
   // Generate Run Method
-  lines.push(`    def run(self):`);
+  lines.push('    def run(self):');
   const runVars: Record<string, string> = {}; // Map NodeID -> ResultVarName in run() scope
 
   sortedNodes.forEach(node => {
-      const nodeId = node.id;
-      const methodName = nodeMethods[nodeId];
-      const methodCallArgs: string[] = [];
+    const nodeId = node.id;
+    const methodName = nodeMethods[nodeId];
+    const methodCallArgs: string[] = [];
 
-      const inputEdges = edges.filter(e => e.target === nodeId);
-      // We need to match the order of args in the method definition: inputVars construction order
-      // Re-construct logic to find source vars
-      // Note: inputEdges might not be in the same order as the forEach above unless we sort or use a consistent iteration.
-      // The above iteration was `inputEdges.forEach`. `filter` preserves order if edge list is stable.
-      // To be safe, let's assume edges order is stable.
-      
-      inputEdges.forEach(edge => {
-          const sourceNodeId = edge.source;
-          // In run scope, the result of sourceNodeId is stored in runVars
-          const sourceVar = runVars[sourceNodeId];
-          methodCallArgs.push(sourceVar);
-      });
+    const inputEdges = edges.filter(e => e.target === nodeId);
+    // We need to match the order of args in the method definition: inputVars construction order
+    // Re-construct logic to find source vars
+    // Note: inputEdges might not be in the same order as the forEach above unless we sort or use a consistent iteration.
+    // The above iteration was `inputEdges.forEach`. `filter` preserves order if edge list is stable.
+    // To be safe, let's assume edges order is stable.
 
-      const resultVar = `res_${nodeId.replace(/-/g, '_')}`;
-      runVars[nodeId] = resultVar;
-      
-      lines.push(`        ${resultVar} = self.${methodName}(${methodCallArgs.join(', ')})`);
+    inputEdges.forEach(edge => {
+      const sourceNodeId = edge.source;
+      // In run scope, the result of sourceNodeId is stored in runVars
+      const sourceVar = runVars[sourceNodeId];
+      methodCallArgs.push(sourceVar);
+    });
+
+    const resultVar = `res_${nodeId.replace(/-/g, '_')}`;
+    runVars[nodeId] = resultVar;
+
+    lines.push(
+      `        ${resultVar} = self.${methodName}(${methodCallArgs.join(', ')})`
+    );
   });
-  
+
   // Return the last node's result
   if (sortedNodes.length > 0) {
-      const lastNode = sortedNodes[sortedNodes.length - 1];
-      lines.push(`        return ${runVars[lastNode.id]}`);
+    const lastNode = sortedNodes[sortedNodes.length - 1];
+    lines.push(`        return ${runVars[lastNode.id]}`);
   } else {
-      lines.push(`        return None`);
+    lines.push('        return None');
   }
-  lines.push(``);
+  lines.push('');
 
   // Execution Block
-  lines.push(`# =========================================`);
-  lines.push(`# Execution`);
-  lines.push(`# =========================================`);
+  lines.push('# =========================================');
+  lines.push('# Execution');
+  lines.push('# =========================================');
   lines.push(`${instanceName} = ${className}()`);
-  
+
   // Check for explicit exports
-  const exportNodes = sortedNodes.filter(n => n.data?.schema?.id === 'export_data');
-  
+  const exportNodes = sortedNodes.filter(
+    n => n.data?.schema?.id === 'export_data'
+  );
+
   if (exportNodes.length > 0) {
     lines.push(`${instanceName}.run()`);
-    lines.push(``);
-    lines.push(`# Export Variables`);
+    lines.push('');
+    lines.push('# Export Variables');
     exportNodes.forEach(node => {
-        const nodeId = node.id;
-        const values = node.data?.values || {};
-        const globalName = values['global_name'] || 'exported_data';
-        lines.push(`${globalName} = ${instanceName}.results['${nodeId}']`);
-        lines.push(`print(f"Exported variable '${globalName}' from node '${nodeId}'")`);
+      const nodeId = node.id;
+      const values = node.data?.values || {};
+      const globalName = values['global_name'] || 'exported_data';
+      lines.push(`${globalName} = ${instanceName}.results['${nodeId}']`);
+      lines.push(
+        `print(f"Exported variable '${globalName}' from node '${nodeId}'")`
+      );
     });
   } else {
     // Default behavior: just run
-    lines.push(`${instanceName}.run()`); 
-    lines.push(`print("Workflow finished.")`);
+    lines.push(`${instanceName}.run()`);
+    lines.push('print("Workflow finished.")');
   }
 
-  lines.push(``);
-  lines.push(`print(f"Intermediate results available in '${instanceName}.results'.")`);
+  lines.push('');
+  lines.push(
+    `print(f"Intermediate results available in '${instanceName}.results'.")`
+  );
 
   return lines.join('\n');
 };

@@ -23,21 +23,21 @@ export const ParamInput: React.FC<IParamInputProps> = ({
   const [loading, setLoading] = useState(false);
 
   // Detect if this param should use ColumnSelector
-  const isColumnParam = 
-    param.widget === 'column-selector' || 
+  const isColumnParam =
+    param.widget === 'column-selector' ||
     ['columns', 'by', 'on', 'subset', 'index', 'values'].includes(param.name);
-  
+
   if (isColumnParam) {
-      const isMultiple = param.type === 'list' || Array.isArray(param.default);
-      return (
-          <ColumnSelector
-            value={value}
-            onChange={onChange}
-            columns={columns || []}
-            multiple={isMultiple}
-            placeholder={param.label || param.name}
-          />
-      );
+    const isMultiple = param.type === 'list' || Array.isArray(param.default);
+    return (
+      <ColumnSelector
+        value={value}
+        onChange={onChange}
+        columns={columns || []}
+        multiple={isMultiple}
+        placeholder={param.label || param.name}
+      />
+    );
   }
 
   useEffect(() => {
@@ -69,8 +69,10 @@ export const ParamInput: React.FC<IParamInputProps> = ({
           const sessionModel = sessions[0];
 
           if (sessionModel) {
-            const sessionConnection = serviceManager.sessions.connectTo({ model: sessionModel });
-            
+            const sessionConnection = serviceManager.sessions.connectTo({
+              model: sessionModel
+            });
+
             if (sessionConnection.kernel) {
               const code = `
 import pandas as pd
@@ -78,24 +80,27 @@ import json
 print(json.dumps([v for v in globals().keys() if not v.startswith('_') and isinstance(globals()[v], pd.DataFrame)]))
 `;
               const future = sessionConnection.kernel.requestExecute({ code });
-              
+
               future.onIOPub = (msg: any) => {
-                 if (msg.header.msg_type === 'stream' && msg.content.name === 'stdout') {
-                    try {
-                      const vars = JSON.parse(msg.content.text);
-                      setVariables(vars);
-                    } catch (e) {
-                      console.error("Failed to parse variables list", e);
-                    }
-                 }
+                if (
+                  msg.header.msg_type === 'stream' &&
+                  msg.content.name === 'stdout'
+                ) {
+                  try {
+                    const vars = JSON.parse(msg.content.text);
+                    setVariables(vars);
+                  } catch (e) {
+                    console.error('Failed to parse variables list', e);
+                  }
+                }
               };
               await future.done;
             }
           } else {
-             console.warn("No active kernel session found to fetch variables.");
+            console.warn('No active kernel session found to fetch variables.');
           }
         } catch (err) {
-          console.error("Error fetching variables:", err);
+          console.error('Error fetching variables:', err);
         } finally {
           setLoading(false);
         }
@@ -117,17 +122,19 @@ print(json.dumps([v for v in globals().keys() if not v.startswith('_') and isins
   };
 
   if (param.type === 'bool') {
-      return (
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-            <input
-            type="checkbox"
-            checked={!!value}
-            onChange={e => onChange(e.target.checked)}
-            style={{ marginRight: '8px' }}
-            />
-            <span style={{ fontSize: '12px', color: 'var(--jp-ui-font-color2)' }}>{param.description}</span>
-        </div>
-      )
+    return (
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <input
+          type="checkbox"
+          checked={!!value}
+          onChange={e => onChange(e.target.checked)}
+          style={{ marginRight: '8px' }}
+        />
+        <span style={{ fontSize: '12px', color: 'var(--jp-ui-font-color2)' }}>
+          {param.description}
+        </span>
+      </div>
+    );
   }
 
   if (param.widget === 'file-selector') {
@@ -151,27 +158,29 @@ print(json.dumps([v for v in globals().keys() if not v.startswith('_') and isins
   }
 
   if (param.widget === 'variable-selector') {
-     return (
+    return (
       <div style={{ position: 'relative' }}>
-      <select
-        className="nodrag"
-        value={value || ''}
-        onChange={e => onChange(e.target.value)}
-        style={inputStyle}
-        disabled={loading}
-      >
-        <option value="" disabled>
-          {loading ? "Loading..." : "Select variable..."}
-        </option>
-        {variables.map(v => (
-          <option key={v} value={v}>
-            {v}
+        <select
+          className="nodrag"
+          value={value || ''}
+          onChange={e => onChange(e.target.value)}
+          style={inputStyle}
+          disabled={loading}
+        >
+          <option value="" disabled>
+            {loading ? 'Loading...' : 'Select variable...'}
           </option>
-        ))}
-      </select>
-       {!loading && variables.length === 0 && (
-         <div style={{fontSize: '10px', color: 'orange'}}>No DataFrame vars found</div>
-       )}
+          {variables.map(v => (
+            <option key={v} value={v}>
+              {v}
+            </option>
+          ))}
+        </select>
+        {!loading && variables.length === 0 && (
+          <div style={{ fontSize: '10px', color: 'orange' }}>
+            No DataFrame vars found
+          </div>
+        )}
       </div>
     );
   }

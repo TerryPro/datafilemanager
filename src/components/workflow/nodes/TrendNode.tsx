@@ -38,35 +38,45 @@ export const TrendNode = memo(({ data, selected }: NodeProps) => {
       {/* Input Handle (Top) */}
       <div
         style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-            zIndex: 10
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'center',
+          zIndex: 10
         }}
       >
-         <div style={{ position: 'relative', width: '1px', height: '1px' }}>
-            <Handle
-                type="target"
-                position={Position.Top}
-                id="df_in"
-                style={{
-                  background: 'var(--jp-brand-color1)',
-                  width: '10px',
-                  height: '10px',
-                  top: '-6px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  border: '2px solid var(--jp-layout-color1)',
-                  zIndex: 10
-                }}
-            />
-            <span style={{ position: 'absolute', top: '-22px', color: 'var(--jp-ui-font-color2)', fontSize: '10px', whiteSpace: 'nowrap', pointerEvents: 'none', left: '-12px' }}>
-                df_in
-            </span>
-         </div>
+        <div style={{ position: 'relative', width: '1px', height: '1px' }}>
+          <Handle
+            type="target"
+            position={Position.Top}
+            id="df_in"
+            style={{
+              background: 'var(--jp-brand-color1)',
+              width: '10px',
+              height: '10px',
+              top: '-6px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              border: '2px solid var(--jp-layout-color1)',
+              zIndex: 10
+            }}
+          />
+          <span
+            style={{
+              position: 'absolute',
+              top: '-22px',
+              color: 'var(--jp-ui-font-color2)',
+              fontSize: '10px',
+              whiteSpace: 'nowrap',
+              pointerEvents: 'none',
+              left: '-12px'
+            }}
+          >
+            df_in
+          </span>
+        </div>
       </div>
 
       {/* Header */}
@@ -87,49 +97,83 @@ export const TrendNode = memo(({ data, selected }: NodeProps) => {
 
       {/* Content */}
       <div style={{ padding: '12px' }}>
-        <div style={{ marginBottom: '6px', fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <div
+          style={{
+            marginBottom: '6px',
+            fontSize: '11px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}
+        >
           <strong>标题:</strong> {mergedValues.title || '未命名'}
         </div>
-        <div style={{ marginBottom: '6px', fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            <strong>X轴:</strong> {mergedValues.x_column || '(使用索引)'}
+        <div
+          style={{
+            marginBottom: '6px',
+            fontSize: '11px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          <strong>X轴:</strong> {mergedValues.x_column || '(使用索引)'}
         </div>
-        <div style={{ marginBottom: '12px', fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            <strong>Y轴:</strong> {mergedValues.y_columns || '(所有数值列)'}
+        <div
+          style={{
+            marginBottom: '12px',
+            fontSize: '11px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          <strong>Y轴:</strong> {mergedValues.y_columns || '(所有数值列)'}
         </div>
       </div>
 
       {/* Output Handle (Bottom) - Pass-through */}
       <div
         style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-            zIndex: 10
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'center',
+          zIndex: 10
         }}
       >
-         <div style={{ position: 'relative', width: '1px', height: '1px' }}>
-            <span style={{ position: 'absolute', bottom: '-22px', color: 'var(--jp-ui-font-color2)', fontSize: '10px', whiteSpace: 'nowrap', pointerEvents: 'none', left: '-15px' }}>
-                df_out
-            </span>
-            <Handle
-                type="source"
-                position={Position.Bottom}
-                id="df_out"
-                style={{
-                  background: 'var(--jp-brand-color1)',
-                  width: '10px',
-                  height: '10px',
-                  bottom: '-6px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  border: '2px solid var(--jp-layout-color1)',
-                  zIndex: 10
-                }}
-            />
-         </div>
+        <div style={{ position: 'relative', width: '1px', height: '1px' }}>
+          <span
+            style={{
+              position: 'absolute',
+              bottom: '-22px',
+              color: 'var(--jp-ui-font-color2)',
+              fontSize: '10px',
+              whiteSpace: 'nowrap',
+              pointerEvents: 'none',
+              left: '-15px'
+            }}
+          >
+            df_out
+          </span>
+          <Handle
+            type="source"
+            position={Position.Bottom}
+            id="df_out"
+            style={{
+              background: 'var(--jp-brand-color1)',
+              width: '10px',
+              height: '10px',
+              bottom: '-6px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              border: '2px solid var(--jp-layout-color1)',
+              zIndex: 10
+            }}
+          />
+        </div>
       </div>
     </div>
   );

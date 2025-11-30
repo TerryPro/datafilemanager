@@ -16,17 +16,24 @@ export const PropertyPanel: React.FC<IPropertyPanelProps> = ({
   serviceManager
 }) => {
   const inputColumns = React.useMemo(() => {
-      if (!selectedNode?.data.metadata?.inputColumns) return [];
-      const allCols: IColumn[] = [];
-      const seen = new Set<string>();
-      const inputCols = selectedNode.data.metadata.inputColumns as Record<string, IColumn[]>;
-      Object.values(inputCols).flat().forEach(col => {
-          if (!seen.has(col.name)) {
-              seen.add(col.name);
-              allCols.push(col);
-          }
+    if (!selectedNode?.data.metadata?.inputColumns) {
+      return [];
+    }
+    const allCols: IColumn[] = [];
+    const seen = new Set<string>();
+    const inputCols = selectedNode.data.metadata.inputColumns as Record<
+      string,
+      IColumn[]
+    >;
+    Object.values(inputCols)
+      .flat()
+      .forEach(col => {
+        if (!seen.has(col.name)) {
+          seen.add(col.name);
+          allCols.push(col);
+        }
       });
-      return allCols;
+    return allCols;
   }, [selectedNode?.data.metadata]);
 
   if (!selectedNode) {
@@ -46,7 +53,9 @@ export const PropertyPanel: React.FC<IPropertyPanelProps> = ({
           textAlign: 'center'
         }}
       >
-        <div style={{ marginBottom: '8px', fontSize: '24px', opacity: 0.3 }}>🖱️</div>
+        <div style={{ marginBottom: '8px', fontSize: '24px', opacity: 0.3 }}>
+          🖱️
+        </div>
         请选择一个节点以配置其属性
       </div>
     );
@@ -89,10 +98,27 @@ export const PropertyPanel: React.FC<IPropertyPanelProps> = ({
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
         <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--jp-ui-font-color2)', marginBottom: '4px' }}>
+          <label
+            style={{
+              display: 'block',
+              fontSize: '11px',
+              fontWeight: 600,
+              color: 'var(--jp-ui-font-color2)',
+              marginBottom: '4px'
+            }}
+          >
             节点 ID
           </label>
-          <div style={{ fontSize: '12px', color: 'var(--jp-ui-font-color1)', fontFamily: 'monospace', background: 'var(--jp-layout-color2)', padding: '4px', borderRadius: '4px' }}>
+          <div
+            style={{
+              fontSize: '12px',
+              color: 'var(--jp-ui-font-color1)',
+              fontFamily: 'monospace',
+              background: 'var(--jp-layout-color2)',
+              padding: '4px',
+              borderRadius: '4px'
+            }}
+          >
             {selectedNode.id}
           </div>
         </div>
@@ -115,18 +141,33 @@ export const PropertyPanel: React.FC<IPropertyPanelProps> = ({
                 param={arg}
                 value={values[arg.name]}
                 onChange={val => handleParamChange(arg.name, val)}
-                serviceManager={selectedNode.data.serviceManager || serviceManager}
+                serviceManager={
+                  selectedNode.data.serviceManager || serviceManager
+                }
                 columns={inputColumns}
               />
               {arg.description && (
-                <div style={{ fontSize: '11px', color: 'var(--jp-ui-font-color2)', marginTop: '4px', lineHeight: '1.4' }}>
+                <div
+                  style={{
+                    fontSize: '11px',
+                    color: 'var(--jp-ui-font-color2)',
+                    marginTop: '4px',
+                    lineHeight: '1.4'
+                  }}
+                >
                   {arg.description}
                 </div>
               )}
             </div>
           ))
         ) : (
-          <div style={{ fontSize: '13px', color: 'var(--jp-ui-font-color2)', fontStyle: 'italic' }}>
+          <div
+            style={{
+              fontSize: '13px',
+              color: 'var(--jp-ui-font-color2)',
+              fontStyle: 'italic'
+            }}
+          >
             该节点无可用配置参数。
           </div>
         )}

@@ -30,7 +30,7 @@ const ToolbarButton = ({
       style={{ 
         border: 'none', 
         background: 'none', 
-        padding: '0 6px',
+        padding: '0 4px',
         height: '24px',
         display: 'flex',
         alignItems: 'center',
@@ -42,7 +42,7 @@ const ToolbarButton = ({
       <icon.react 
         tag="span" 
         className="jp-ToolbarButtonComponent-icon" 
-        style={{ width: '16px', height: '16px' }}
+        style={{ width: '14px', height: '14px' }}
       />
     </button>
   );

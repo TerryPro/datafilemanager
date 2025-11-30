@@ -1,10 +1,10 @@
-import React, { memo, useState, useEffect } from 'react';
+import React, { memo, useState, useEffect, useMemo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
-import { INodeSchema, IParam, IPort } from '../types';
+import { INodeSchema, IParam, IPort, IColumn, INodeData } from '../types';
 import { ParamInput } from '../ParamInput';
 
-export const GenericNode = memo(({ data, selected }: NodeProps) => {
-  const { onFileChange } = data;
+export const GenericNode = memo(({ id, data, selected }: NodeProps<INodeData>) => {
+  const { onFileChange, onValuesChange } = data;
   const schema = data.schema as INodeSchema;
   
   // Local state for parameter values, initialized from data.values
@@ -17,6 +17,24 @@ export const GenericNode = memo(({ data, selected }: NodeProps) => {
     }
   }, [data.values]);
 
+  // Extract available columns from metadata
+  const inputColumns = useMemo(() => {
+      if (!data.metadata?.inputColumns) return [];
+      // Flatten all input port columns
+      // Use Set to remove duplicates if any (though same name from different ports is possible)
+      const allCols: IColumn[] = [];
+      const seen = new Set<string>();
+      
+      const colsArrays = Object.values(data.metadata.inputColumns) as IColumn[][];
+      colsArrays.flat().forEach((col: IColumn) => {
+          if (!seen.has(col.name)) {
+              seen.add(col.name);
+              allCols.push(col);
+          }
+      });
+      return allCols;
+  }, [data.metadata]);
+
   const handleParamChange = (name: string, value: any) => {
     const newValues = { ...values, [name]: value };
     setValues(newValues);
@@ -24,10 +42,15 @@ export const GenericNode = memo(({ data, selected }: NodeProps) => {
     // Update node data reference
     data.values = newValues;
 
-    // Specific logic for CSV Loader to trigger column detection
+    // Notify parent to trigger ReactFlow update (essential for propagation hook)
+    if (onValuesChange) {
+        onValuesChange(id, newValues);
+    }
+
+    // Specific logic for CSV Loader to trigger column detection (Legacy? Kept for safety)
     if (schema.id === 'load_csv' && name === 'filepath') {
        if (onFileChange) {
-         onFileChange(data.id, value);
+         onFileChange(id, value);
        }
     }
   };
@@ -50,7 +73,8 @@ export const GenericNode = memo(({ data, selected }: NodeProps) => {
         alignItems: 'stretch',
         position: 'relative', // Ensure absolute children are relative to this
         overflow: 'visible',
-        color: 'var(--jp-ui-font-color1)'
+        color: 'var(--jp-ui-font-color1)',
+        cursor: 'move'
       }}
     >
       {/* Inputs (Top Edge) */}
@@ -145,6 +169,7 @@ export const GenericNode = memo(({ data, selected }: NodeProps) => {
                 value={values[arg.name]}
                 onChange={val => handleParamChange(arg.name, val)}
                 serviceManager={data.serviceManager}
+                columns={inputColumns}
               />
             </div>
           ))}

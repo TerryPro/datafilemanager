@@ -8,8 +8,7 @@ import ReactFlow, {
   Background,
   MiniMap,
   Connection,
-  Node,
-  useReactFlow
+  Node
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { ServiceManager } from '@jupyterlab/services';
@@ -22,6 +21,8 @@ import { PlotNode } from './nodes/PlotNode';
 import { GenericNode } from './nodes/GenericNode';
 import { TrendNode } from './nodes/TrendNode';
 import { generateCode } from './CodeGenerator';
+import { useColumnPropagation } from './hooks/useColumnPropagation';
+import { metadataService } from './services/MetadataService';
 
 const nodeTypes = {
   csv_loader: CSVLoaderNode,
@@ -48,7 +49,6 @@ const WorkflowEditorContent = ({
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
   const [library, setLibrary] = useState<any>(null);
-  const { getEdges } = useReactFlow();
 
   // Use a ref to track the next node ID to avoid duplicates
   const nodeIdCounter = useRef(0);
@@ -70,6 +70,18 @@ const WorkflowEditorContent = ({
     fetchLibrary();
   }, []);
 
+  // Initialize metadata service
+  useEffect(() => {
+    if (serviceManager) {
+      metadataService.setServiceManager(serviceManager);
+    }
+  }, [serviceManager]);
+
+  // Enable column name propagation system
+  // This hook automatically calculates and propagates column metadata
+  // based on node connections and configurations
+  useColumnPropagation(nodes, edges, setNodes);
+
   // Helper function to update node data
   const updateNodeData = (nodeId: string, newData: any) => {
     setNodes(nds =>
@@ -83,44 +95,14 @@ const WorkflowEditorContent = ({
   };
 
   // Handle file selection changes from CSV Loader
-  // Use getEdges() to avoid dependency on edges state, making this callback stable
   const handleFileChange = useCallback(
     async (nodeId: string, filepath: string) => {
       console.log(`File changed in node ${nodeId}: ${filepath}`);
-
-      // 1. Fetch columns from the file
-      try {
-        const fileContent = await serviceManager.contents.get(filepath);
-        if (fileContent.content) {
-          const content = fileContent.content as string;
-          const lines = content.split('\n');
-          if (lines.length > 0) {
-            // Assume first line is header
-            const header = lines[0].trim();
-            const columns = header.split(',').map(c => c.trim());
-            console.log('Detected columns:', columns);
-
-            // 2. Propagate columns to downstream nodes
-            // Get current edges directly
-            const currentEdges = getEdges();
-            // Find all edges starting from this node
-            const connectedEdges = currentEdges.filter(
-              e => e.source === nodeId
-            );
-            connectedEdges.forEach(edge => {
-              const targetNodeId = edge.target;
-              console.log(
-                `Propagating columns to target node: ${targetNodeId}`
-              );
-              updateNodeData(targetNodeId, { columns: columns });
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Error reading file columns:', error);
-      }
+      // Update the node data with the new file path
+      // The useColumnPropagation hook will detect this change and fetch columns automatically
+      updateNodeData(nodeId, { filepath, values: { filepath } });
     },
-    [serviceManager, getEdges, setNodes]
+    [setNodes]
   );
 
   // Track the last loaded data to prevent re-loading same data
@@ -181,6 +163,27 @@ const WorkflowEditorContent = ({
           if (schema) {
             baseData.schema = schema;
             baseData.label = schema.name;
+          }
+        }
+
+        // Inject schema for built-in nodes if not present (required for column propagation)
+        if (!baseData.schema) {
+          if (node.type === 'csv_loader') {
+            baseData.schema = {
+              id: 'load_csv',
+              category: 'source',
+              name: 'CSV Loader',
+              inputs: [],
+              outputs: [{ name: 'df_out', type: 'DataFrame' }]
+            };
+          } else if (node.type === 'plot') {
+            baseData.schema = {
+              id: 'plot_chart',
+              category: 'visualization',
+              name: 'Plot',
+              inputs: [{ name: 'df_in', type: 'DataFrame' }],
+              outputs: []
+            };
           }
         }
 

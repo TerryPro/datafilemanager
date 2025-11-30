@@ -46,7 +46,8 @@ export const PlotNode = memo(
           alignItems: 'stretch',
           position: 'relative',
           overflow: 'visible',
-          color: 'var(--jp-ui-font-color1)'
+          color: 'var(--jp-ui-font-color1)',
+          cursor: 'move'
         }}
       >
         {/* Input Handle (Top Edge) */}

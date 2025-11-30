@@ -91,7 +91,8 @@ export const CSVLoaderNode = memo(
           alignItems: 'stretch',
           position: 'relative',
           overflow: 'visible',
-          color: 'var(--jp-ui-font-color1)'
+          color: 'var(--jp-ui-font-color1)',
+          cursor: 'move'
         }}
       >
         <div
@@ -106,7 +107,7 @@ export const CSVLoaderNode = memo(
             color: 'var(--jp-ui-font-color0)'
           }}
         >
-          CSV Loader
+          CSV加载器
         </div>
         <div style={{ padding: '12px' }}>
           <label
@@ -117,10 +118,10 @@ export const CSVLoaderNode = memo(
               fontSize: '10px'
             }}
           >
-            File:
+            文件:
           </label>
           {loading ? (
-            <div style={{ color: 'var(--jp-ui-font-color2)' }}>Loading...</div>
+            <div style={{ color: 'var(--jp-ui-font-color2)' }}>加载中...</div>
           ) : (
             <select
               className="nodrag"
@@ -129,7 +130,7 @@ export const CSVLoaderNode = memo(
               style={inputStyle}
             >
               <option value="" disabled>
-                Select...
+                请选择...
               </option>
               {files.map(file => (
                 <option key={file} value={file}>

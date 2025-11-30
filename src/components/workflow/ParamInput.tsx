@@ -1,23 +1,44 @@
 import React, { useState, useEffect } from 'react';
 import { ServiceManager, Contents } from '@jupyterlab/services';
-import { IParam } from './types';
+import { IParam, IColumn } from './types';
+import { ColumnSelector } from './ColumnSelector';
 
 interface IParamInputProps {
   param: IParam;
   value: any;
   onChange: (val: any) => void;
   serviceManager?: ServiceManager;
+  columns?: IColumn[]; // Available input columns
 }
 
 export const ParamInput: React.FC<IParamInputProps> = ({
   param,
   value,
   onChange,
-  serviceManager
+  serviceManager,
+  columns
 }) => {
   const [files, setFiles] = useState<string[]>([]);
   const [variables, setVariables] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Detect if this param should use ColumnSelector
+  const isColumnParam = 
+    param.widget === 'column-selector' || 
+    ['columns', 'by', 'on', 'subset', 'index', 'values'].includes(param.name);
+  
+  if (isColumnParam) {
+      const isMultiple = param.type === 'list' || Array.isArray(param.default);
+      return (
+          <ColumnSelector
+            value={value}
+            onChange={onChange}
+            columns={columns || []}
+            multiple={isMultiple}
+            placeholder={param.label || param.name}
+          />
+      );
+  }
 
   useEffect(() => {
     if (param.widget === 'file-selector' && serviceManager) {

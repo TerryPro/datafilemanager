@@ -46,8 +46,11 @@ export const generateCode = (nodes: Node[], edges: Edge[]): string => {
     return '# Error: Cycle detected in workflow!';
   }
 
-  // 3. Generate Code
+  // 3. Generate Code with Class Wrapper
   const lines: string[] = [];
+  const timestamp = Math.floor(Date.now() / 1000);
+  const className = `Workflow_${timestamp}`;
+  const instanceName = `wf_${timestamp}`;
 
   // Collect imports from all nodes
   const allImports = new Set<string>();
@@ -64,54 +67,77 @@ export const generateCode = (nodes: Node[], edges: Edge[]): string => {
     lines.push('');
   }
 
-  // Track variable names for outputs
+  // Class Definition
+  lines.push(`class ${className}:`);
+  lines.push(`    """`);
+  lines.push(`    Workflow Class - Generated at ${new Date().toISOString()}`);
+  lines.push(`    """`);
+  lines.push(`    def __init__(self):`);
+  lines.push(`        self.results = {}`);
+  lines.push(``);
+
+  // Track variable names for outputs and methods
   // Map: NodeID -> { PortName -> VariableName }
   const nodeOutputs: Record<string, Record<string, string>> = {};
+  // Map: NodeID -> MethodName
+  const nodeMethods: Record<string, string> = {};
 
+  // Generate Methods for each node
   sortedNodes.forEach(node => {
     const nodeId = node.id;
     const data = node.data || {};
     const schema: INodeSchema | undefined = data.schema;
+    const safeNodeId = nodeId.replace(/-/g, '_');
+    const methodName = `step_${safeNodeId}`;
+    nodeMethods[nodeId] = methodName;
 
     if (schema) {
-      lines.push(`# ${schema.name}`);
-
       // 1. Determine Input Variables from Incoming Edges
       const inputEdges = edges.filter(e => e.target === nodeId);
       const inputVars: Record<string, string> = {};
+      const methodArgs: string[] = [];
 
-      inputEdges.forEach(edge => {
+      inputEdges.forEach((edge, index) => {
         const sourceNodeId = edge.source;
         const sourceOutputs = nodeOutputs[sourceNodeId];
-        if (!sourceOutputs) return; 
+        if (!sourceOutputs) return;
 
-        // Determine which output of source node to use
-        const sourceHandle = edge.sourceHandle;
-        let sourceVarName = '';
+        // Input argument name for the method signature
+        const targetHandle = edge.targetHandle || 'df_in';
+        let argName = 'df';
+
+        if (inputEdges.length > 1) {
+            if (targetHandle === 'df_in') {
+                argName = `df_${index + 1}`;
+            } else if (/^df\d+$/.test(targetHandle)) {
+                // e.g. df1 -> df_1
+                argName = targetHandle.replace('df', 'df_');
+            } else {
+                argName = `df_${targetHandle}`;
+            }
+        }
+
+        // Ensure uniqueness in methodArgs
+        if (methodArgs.includes(argName)) {
+             argName = `${argName}_${index + 1}`;
+        }
         
-        if (sourceHandle && sourceOutputs[sourceHandle]) {
-          sourceVarName = sourceOutputs[sourceHandle];
-        } else {
-           // Fallback to 'default' or the first key
-           sourceVarName = sourceOutputs['default'] || Object.values(sourceOutputs)[0];
-        }
-
-        // Determine which input port of current node this maps to
-        const targetHandle = edge.targetHandle;
         if (targetHandle) {
-          inputVars[targetHandle] = sourceVarName;
+          inputVars[targetHandle] = argName;
         } else {
-          // Legacy or Default input
-          inputVars['default'] = sourceVarName;
+          inputVars['default'] = argName;
         }
+        
+        methodArgs.push(argName);
       });
+
+      // Method Signature
+      lines.push(`    # ${schema.name} (ID: ${nodeId})`);
+      lines.push(`    def ${methodName}(self${methodArgs.length > 0 ? ', ' + methodArgs.join(', ') : ''}):`);
 
       // 2. Determine Output Variables for Current Node
       const currentOutputs: Record<string, string> = {};
-      const safeNodeId = nodeId.replace(/-/g, '_');
       
-      // If schema doesn't define outputs explicitly, assume a single default output
-      // This handles legacy nodes or implicit single-output nodes
       const outputs = schema.outputs || [];
       
       if (outputs.length === 0) {
@@ -119,14 +145,11 @@ export const generateCode = (nodes: Node[], edges: Edge[]): string => {
          currentOutputs['default'] = defaultVar;
       } else {
         outputs.forEach((port, index) => {
-           // If single output, keep it simple `df_nodeId`
-           // If multiple, append port name `df_nodeId_portName`
            let varName = `df_${safeNodeId}`;
            if (outputs.length > 1) {
              varName = `${varName}_${port.name}`;
            }
            currentOutputs[port.name] = varName;
-           // Also map 'default' to the first one for legacy compatibility
            if (index === 0) {
              currentOutputs['default'] = varName;
            }
@@ -139,30 +162,24 @@ export const generateCode = (nodes: Node[], edges: Edge[]): string => {
       let code = schema.template;
 
       // Replace Output Placeholders
-      // Standard: {portName} -> varName
       Object.entries(currentOutputs).forEach(([portName, varName]) => {
         if (portName !== 'default') {
             code = code.replace(new RegExp(`\\{${portName}\\}`, 'g'), varName);
         }
       });
-      // Legacy: {OUTPUT_VAR} -> default output
       if (currentOutputs['default']) {
         code = code.replace(/\{OUTPUT_VAR\}/g, currentOutputs['default']);
       }
 
       // Replace Input Placeholders
-      // Standard: {portName} -> sourceVarName
       Object.entries(inputVars).forEach(([portName, varName]) => {
         if (portName !== 'default') {
            code = code.replace(new RegExp(`\\{${portName}\\}`, 'g'), varName);
         }
       });
       
-      // Legacy: {VAR_NAME} -> default input
       let defaultInputVar = inputVars['default'];
       if (!defaultInputVar && Object.keys(inputVars).length > 0) {
-         // Use the first available input if no default specific mapping found
-         // But prioritize one named 'df_in' if it exists? No, just take first.
          defaultInputVar = Object.values(inputVars)[0];
       }
       
@@ -181,14 +198,94 @@ export const generateCode = (nodes: Node[], edges: Edge[]): string => {
         if (val === true) val = 'True';
         if (val === false) val = 'False';
 
+        if (Array.isArray(val)) {
+            const formattedItems = val.map(v => {
+                if (typeof v === 'string') return `'${v}'`;
+                return String(v);
+            });
+            val = `[${formattedItems.join(', ')}]`;
+        }
+
         code = code.replace(new RegExp(`\\{${arg.name}\\}`, 'g'), String(val));
       });
 
-      lines.push(code);
-    }
+      // Indent code
+      const indentedCode = code.split('\n').map(l => `        ${l}`).join('\n');
+      lines.push(indentedCode);
 
-    lines.push('');
+      // Save results to self.results
+      lines.push(`        self.results['${nodeId}'] = ${currentOutputs['default'] || 'None'}`);
+      lines.push(`        return ${currentOutputs['default'] || 'None'}`);
+      lines.push(``);
+    }
   });
+
+  // Generate Run Method
+  lines.push(`    def run(self):`);
+  const runVars: Record<string, string> = {}; // Map NodeID -> ResultVarName in run() scope
+
+  sortedNodes.forEach(node => {
+      const nodeId = node.id;
+      const methodName = nodeMethods[nodeId];
+      const methodCallArgs: string[] = [];
+
+      const inputEdges = edges.filter(e => e.target === nodeId);
+      // We need to match the order of args in the method definition: inputVars construction order
+      // Re-construct logic to find source vars
+      // Note: inputEdges might not be in the same order as the forEach above unless we sort or use a consistent iteration.
+      // The above iteration was `inputEdges.forEach`. `filter` preserves order if edge list is stable.
+      // To be safe, let's assume edges order is stable.
+      
+      inputEdges.forEach(edge => {
+          const sourceNodeId = edge.source;
+          // In run scope, the result of sourceNodeId is stored in runVars
+          const sourceVar = runVars[sourceNodeId];
+          methodCallArgs.push(sourceVar);
+      });
+
+      const resultVar = `res_${nodeId.replace(/-/g, '_')}`;
+      runVars[nodeId] = resultVar;
+      
+      lines.push(`        ${resultVar} = self.${methodName}(${methodCallArgs.join(', ')})`);
+  });
+  
+  // Return the last node's result
+  if (sortedNodes.length > 0) {
+      const lastNode = sortedNodes[sortedNodes.length - 1];
+      lines.push(`        return ${runVars[lastNode.id]}`);
+  } else {
+      lines.push(`        return None`);
+  }
+  lines.push(``);
+
+  // Execution Block
+  lines.push(`# =========================================`);
+  lines.push(`# Execution`);
+  lines.push(`# =========================================`);
+  lines.push(`${instanceName} = ${className}()`);
+  
+  // Check for explicit exports
+  const exportNodes = sortedNodes.filter(n => n.data?.schema?.id === 'export_data');
+  
+  if (exportNodes.length > 0) {
+    lines.push(`${instanceName}.run()`);
+    lines.push(``);
+    lines.push(`# Export Variables`);
+    exportNodes.forEach(node => {
+        const nodeId = node.id;
+        const values = node.data?.values || {};
+        const globalName = values['global_name'] || 'exported_data';
+        lines.push(`${globalName} = ${instanceName}.results['${nodeId}']`);
+        lines.push(`print(f"Exported variable '${globalName}' from node '${nodeId}'")`);
+    });
+  } else {
+    // Default behavior: just run
+    lines.push(`${instanceName}.run()`); 
+    lines.push(`print("Workflow finished.")`);
+  }
+
+  lines.push(``);
+  lines.push(`print(f"Intermediate results available in '${instanceName}.results'.")`);
 
   return lines.join('\n');
 };

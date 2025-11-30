@@ -1,12 +1,9 @@
 import React, { memo, useState } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { INodeSchema } from '../types';
-import { TrendSettingsModal } from './TrendSettingsModal';
-
 export const TrendNode = memo(({ data, selected }: NodeProps) => {
   const schema = data.schema as INodeSchema;
-  const [values, setValues] = useState<Record<string, any>>(data.values || {});
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [values] = useState<Record<string, any>>(data.values || {});
 
   // Initialize defaults if missing
   // Note: We don't force update `data.values` here to avoid loops, just use merged for display
@@ -16,11 +13,6 @@ export const TrendNode = memo(({ data, selected }: NodeProps) => {
       mergedValues[arg.name] = arg.default;
     }
   });
-
-  const handleSave = (newValues: Record<string, any>) => {
-    setValues(newValues);
-    data.values = newValues; // Update reference for code generation
-  };
 
   return (
     <div
@@ -39,7 +31,8 @@ export const TrendNode = memo(({ data, selected }: NodeProps) => {
         display: 'flex',
         flexDirection: 'column',
         position: 'relative',
-        overflow: 'visible'
+        overflow: 'visible',
+        cursor: 'move'
       }}
     >
       {/* Input Handle (Top) */}
@@ -103,23 +96,6 @@ export const TrendNode = memo(({ data, selected }: NodeProps) => {
         <div style={{ marginBottom: '12px', fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             <strong>Y轴:</strong> {mergedValues.y_columns || '(所有数值列)'}
         </div>
-        
-        <button
-          className="nodrag"
-          onClick={() => setIsModalOpen(true)}
-          style={{
-            width: '100%',
-            padding: '8px',
-            background: 'var(--jp-brand-color1)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontWeight: 500
-          }}
-        >
-          配置图表
-        </button>
       </div>
 
       {/* Output Handle (Bottom) - Pass-through */}
@@ -155,15 +131,6 @@ export const TrendNode = memo(({ data, selected }: NodeProps) => {
             />
          </div>
       </div>
-
-      {/* Settings Modal */}
-      <TrendSettingsModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSave}
-        initialValues={mergedValues}
-        params={schema.args || []}
-      />
     </div>
   );
 });

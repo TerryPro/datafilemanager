@@ -1,6 +1,6 @@
 import React from 'react';
 import { Node } from 'reactflow';
-import { INodeSchema, IParam } from './types';
+import { INodeSchema, IParam, IColumn } from './types';
 import { ParamInput } from './ParamInput';
 import { ServiceManager } from '@jupyterlab/services';
 
@@ -15,6 +15,20 @@ export const PropertyPanel: React.FC<IPropertyPanelProps> = ({
   onChange,
   serviceManager
 }) => {
+  const inputColumns = React.useMemo(() => {
+      if (!selectedNode?.data.metadata?.inputColumns) return [];
+      const allCols: IColumn[] = [];
+      const seen = new Set<string>();
+      const inputCols = selectedNode.data.metadata.inputColumns as Record<string, IColumn[]>;
+      Object.values(inputCols).flat().forEach(col => {
+          if (!seen.has(col.name)) {
+              seen.add(col.name);
+              allCols.push(col);
+          }
+      });
+      return allCols;
+  }, [selectedNode?.data.metadata]);
+
   if (!selectedNode) {
     return (
       <div
@@ -33,7 +47,7 @@ export const PropertyPanel: React.FC<IPropertyPanelProps> = ({
         }}
       >
         <div style={{ marginBottom: '8px', fontSize: '24px', opacity: 0.3 }}>🖱️</div>
-        Select a node to configure its properties
+        请选择一个节点以配置其属性
       </div>
     );
   }
@@ -70,13 +84,13 @@ export const PropertyPanel: React.FC<IPropertyPanelProps> = ({
         }}
       >
         <div style={{ marginRight: '8px' }}>⚙️</div>
-        {schema.name || 'Node Properties'}
+        {schema.name || '节点属性'}
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
         <div style={{ marginBottom: '16px' }}>
           <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--jp-ui-font-color2)', marginBottom: '4px' }}>
-            NODE ID
+            节点 ID
           </label>
           <div style={{ fontSize: '12px', color: 'var(--jp-ui-font-color1)', fontFamily: 'monospace', background: 'var(--jp-layout-color2)', padding: '4px', borderRadius: '4px' }}>
             {selectedNode.id}
@@ -102,6 +116,7 @@ export const PropertyPanel: React.FC<IPropertyPanelProps> = ({
                 value={values[arg.name]}
                 onChange={val => handleParamChange(arg.name, val)}
                 serviceManager={selectedNode.data.serviceManager || serviceManager}
+                columns={inputColumns}
               />
               {arg.description && (
                 <div style={{ fontSize: '11px', color: 'var(--jp-ui-font-color2)', marginTop: '4px', lineHeight: '1.4' }}>
@@ -112,7 +127,7 @@ export const PropertyPanel: React.FC<IPropertyPanelProps> = ({
           ))
         ) : (
           <div style={{ fontSize: '13px', color: 'var(--jp-ui-font-color2)', fontStyle: 'italic' }}>
-            No configuration parameters available for this node.
+            该节点无可用配置参数。
           </div>
         )}
       </div>

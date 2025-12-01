@@ -16,7 +16,7 @@ export interface IAlgorithmInfo {
 
 /**
  * AI Service to handle backend interactions and notebook context logic.
- * Independent of AiDialogManager to avoid modifying existing code.
+ * Provides functionality for AI-powered code generation and analysis.
  */
 export class AiService {
   /**

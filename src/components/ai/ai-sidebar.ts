@@ -1,8 +1,15 @@
 import { Widget } from '@lumino/widgets';
 import { INotebookTracker, NotebookPanel } from '@jupyterlab/notebook';
 import { JupyterFrontEnd } from '@jupyterlab/application';
-import { AiService } from '../services/ai-service';
-import { aiAssistantIcon } from './ai-button-manager';
+import { LabIcon } from '@jupyterlab/ui-components';
+import { AiService } from '../../services/ai-service';
+
+// AI助手图标
+export const aiAssistantIcon = new LabIcon({
+  name: 'datafilemanager:ai',
+  svgstr:
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="7" width="16" height="10" rx="3" stroke="currentColor" stroke-width="1.5"/><circle cx="9" cy="12" r="1.5" fill="currentColor"/><circle cx="15" cy="12" r="1.5" fill="currentColor"/><path d="M12 4v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M8 20h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
+});
 
 /**
  * AI Sidebar Widget

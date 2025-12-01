@@ -1,7 +1,7 @@
 import { JupyterFrontEnd } from '@jupyterlab/application';
 import { INotebookTracker } from '@jupyterlab/notebook';
 import { Widget } from '@lumino/widgets';
-import { AiService } from '../services/ai-service';
+import { AiService } from '../../services/ai-service';
 import {
   paletteIcon,
   caretDownIcon,

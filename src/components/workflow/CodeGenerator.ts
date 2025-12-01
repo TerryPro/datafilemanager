@@ -179,7 +179,7 @@ export const generateCode = (
       // Replace Output Placeholders
       Object.entries(currentOutputs).forEach(([portName, varName]) => {
         if (portName !== 'default') {
-          code = code.replace(new RegExp(`\\{${portName}\\}`, 'g'), varName);
+          code = code.replace(new RegExp(`{${portName}}`, 'g'), varName);
         }
       });
       if (currentOutputs['default']) {
@@ -189,7 +189,7 @@ export const generateCode = (
       // Replace Input Placeholders
       Object.entries(inputVars).forEach(([portName, varName]) => {
         if (portName !== 'default') {
-          code = code.replace(new RegExp(`\\{${portName}\\}`, 'g'), varName);
+          code = code.replace(new RegExp(`{${portName}}`, 'g'), varName);
         }
       });
 
@@ -250,7 +250,7 @@ export const generateCode = (
           val = valNorm;
         }
 
-        code = code.replace(new RegExp(`\{${arg.name}\}`, 'g'), String(val));
+        code = code.replace(new RegExp(`{${arg.name}}`, 'g'), String(val));
       });
 
       // Indent code
@@ -260,13 +260,15 @@ export const generateCode = (
         .join('\n');
       lines.push(indentedCode);
 
-      // Save results to self.results
-      lines.push(
-        `        self.results['${nodeId}'] = ${
-          currentOutputs['default'] || 'None'
-        }`
-      );
-      lines.push(`        return ${currentOutputs['default'] || 'None'}`);
+      // Save results to self.results only if the algorithm has outputs
+      if (outputs.length > 0) {
+        lines.push(
+          `        self.results['${nodeId}'] = ${
+            currentOutputs['default'] || 'None'
+          }`
+        );
+        lines.push(`        return ${currentOutputs['default'] || 'None'}`);
+      }
       lines.push('');
     }
   });
@@ -277,6 +279,7 @@ export const generateCode = (
 
   sortedNodes.forEach(node => {
     const nodeId = node.id;
+    const schema: INodeSchema | undefined = node.data?.schema;
     const methodName = nodeMethods[nodeId];
     const methodCallArgs: string[] = [];
 
@@ -294,18 +297,32 @@ export const generateCode = (
       methodCallArgs.push(sourceVar);
     });
 
-    const resultVar = `res_${nodeId.replace(/-/g, '_')}`;
-    runVars[nodeId] = resultVar;
+    // Only create result variable if the node has outputs
+    const outputs = schema?.outputs || [];
+    if (outputs.length > 0) {
+      const resultVar = `res_${nodeId.replace(/-/g, '_')}`;
+      runVars[nodeId] = resultVar;
 
-    lines.push(
-      `        ${resultVar} = self.${methodName}(${methodCallArgs.join(', ')})`
-    );
+      lines.push(
+        `        ${resultVar} = self.${methodName}(${methodCallArgs.join(
+          ', '
+        )})`
+      );
+    } else {
+      // For nodes without outputs (like export_data), call method without capturing return value
+      lines.push(`        self.${methodName}(${methodCallArgs.join(', ')})`);
+    }
   });
 
-  // Return the last node's result
-  if (sortedNodes.length > 0) {
-    const lastNode = sortedNodes[sortedNodes.length - 1];
-    lines.push(`        return ${runVars[lastNode.id]}`);
+  // Return the last node's result that has outputs
+  const nodesWithOutputs = sortedNodes.filter(node => {
+    const schema: INodeSchema | undefined = node.data?.schema;
+    return schema && (schema.outputs || []).length > 0;
+  });
+
+  if (nodesWithOutputs.length > 0) {
+    const lastNodeWithOutputs = nodesWithOutputs[nodesWithOutputs.length - 1];
+    lines.push(`        return ${runVars[lastNodeWithOutputs.id]}`);
   } else {
     lines.push('        return None');
   }
@@ -330,9 +347,12 @@ export const generateCode = (
       const nodeId = node.id;
       const values = node.data?.values || {};
       const globalName = values['global_name'] || 'exported_data';
-      lines.push(`${globalName} = ${instanceName}.results['${nodeId}']`);
+      // Note: export_data nodes use globals() directly, not self.results
       lines.push(
-        `print(f"Exported variable '${globalName}' from node '${nodeId}'")`
+        `# Variable '${globalName}' has been exported to global namespace by node '${nodeId}'`
+      );
+      lines.push(
+        `print(f"Variable '${globalName}' exported successfully from node '${nodeId}'")`
       );
     });
   } else {

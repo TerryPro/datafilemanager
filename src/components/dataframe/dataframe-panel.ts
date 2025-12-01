@@ -4,7 +4,7 @@ import { INotebookTracker, NotebookPanel } from '@jupyterlab/notebook';
 import { showErrorMessage, InputDialog } from '@jupyterlab/apputils';
 import { ITranslator } from '@jupyterlab/translation';
 import { Menu } from '@lumino/widgets';
-import { AlgorithmLibraryDialogManager } from './algorithm-library-dialog';
+import { AlgorithmLibraryDialogManager } from '../algorithm/algorithm-library-dialog';
 
 /**
  * DataFrame 检视面板组件，显示当前笔记本中的所有 DataFrame 变量
@@ -68,9 +68,6 @@ export class DataFramePanel {
       void this.refreshList();
     });
 
-    // removed library button
-
-    // 绑定列表右键，展示菜单
     this.list.addEventListener('contextmenu', (event: MouseEvent) => {
       this.handleContextMenu(event);
     });
@@ -90,7 +87,7 @@ export class DataFramePanel {
   }
 
   /**
-   * 渲染 DataFrame 列表（ListView：名称/shape/数据量）
+   * 渲染 DataFrame 列表
    */
   private renderList(
     items: Array<{ name: string; shape?: [number, number]; rows?: number }>
@@ -229,7 +226,6 @@ export class DataFramePanel {
    * 设置右键菜单命令
    */
   private setupCommands(): void {
-    // 右键菜单：Describe 显示所选 DataFrame 的统计信息
     const describeCommand = 'datafilemanager:df-describe';
     this.commands.addCommand(describeCommand, {
       label: 'Describe',
@@ -271,7 +267,6 @@ export class DataFramePanel {
       }
     });
 
-    // 保存 DataFrame 到 dataset 目录的 CSV 文件
     const saveDfCommand = 'datafilemanager:df-savefile';
     this.commands.addCommand(saveDfCommand, {
       label: 'SaveFile',
@@ -302,7 +297,7 @@ export class DataFramePanel {
           `__name = r'${this.currentDfName}'`,
           '__df = globals().get(__name)',
           'import pandas as pd, os',
-          'assert isinstance(__df, pd.DataFrame), f"{__name} is not a DataFrame"',
+          'assert isinstance(__df, pd.DataFrame), f"${__name} is not a DataFrame"',
           `__fname = r'${userName}'`,
           "__fname = __fname if __fname.lower().endswith('.csv') else (__fname + '.csv')",
           "__dir = 'dataset'",
@@ -335,7 +330,6 @@ export class DataFramePanel {
       }
     });
 
-    // 数据分析命令
     const analysisCommand = 'datafilemanager:df-analysis';
     this.commands.addCommand(analysisCommand, {
       label: 'Analysis',
@@ -392,9 +386,7 @@ export class DataFramePanel {
     menu.open(event.clientX, event.clientY);
   }
 
-  /**
-   * 获取面板实例
-   */
+  /** 获取面板实例 */
   get panel(): Widget {
     return this.dfPanel;
   }

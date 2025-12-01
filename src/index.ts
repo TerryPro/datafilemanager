@@ -9,11 +9,11 @@ import { ITranslator } from '@jupyterlab/translation';
 import { IFileBrowserFactory, FileBrowser } from '@jupyterlab/filebrowser';
 import { IDocumentManager } from '@jupyterlab/docmanager';
 import { ServiceManager } from '@jupyterlab/services';
-import { DataFramePanel } from './components/dataframe-panel';
-import { CsvFileManager } from './components/csv-file-manager';
-import { AiCommandManager } from './components/ai-command-manager';
-import { AiSidebar } from './components/ai-sidebar';
-import { AlgorithmLibraryPanel } from './components/algorithm-library-panel';
+import { DataFramePanel } from './components/dataframe/dataframe-panel';
+import { CsvFileManager } from './components/file/csv-file-manager';
+import { CommandManager } from './components/core/command-manager';
+import { AiSidebar } from './components/ai/ai-sidebar';
+import { AlgorithmLibraryPanel } from './components/algorithm/algorithm-library-panel';
 import { WorkflowWidget } from './components/workflow/WorkflowWidget';
 
 // 创建一个全局变量来跟踪文件浏览器实例
@@ -71,8 +71,8 @@ const plugin: JupyterFrontEndPlugin<void> = {
     );
     app.shell.add(dfPanelComponent.panel, 'left', { rank: 102 });
 
-    // 创建AI命令管理器，它会自动初始化所有AI相关组件
-    const aiCommandManager = new AiCommandManager(
+    // 创建命令管理器，它会自动初始化所有组件
+    const aiCommandManager = new CommandManager(
       app,
       notebookTracker,
       toolbarRegistry
@@ -86,34 +86,34 @@ const plugin: JupyterFrontEndPlugin<void> = {
       app.shell.add(aiSidebar, 'right', { rank: 1000 });
 
       // 注册左侧算法库面板
-    const algoPanel = new AlgorithmLibraryPanel(app, notebookTracker);
-    app.shell.add(algoPanel, 'left', { rank: 103 });
+      const algoPanel = new AlgorithmLibraryPanel(app, notebookTracker);
+      app.shell.add(algoPanel, 'left', { rank: 103 });
 
-    // Restrict default file browser to 'notebook' directory
-    const defaultBrowser = browserFactory.tracker?.currentWidget || null;
-    if (defaultBrowser) {
-      // Initial navigation
-      void defaultBrowser.model.cd('notebook');
+      // Restrict default file browser to 'notebook' directory
+      const defaultBrowser = browserFactory.tracker?.currentWidget || null;
+      if (defaultBrowser) {
+        // Initial navigation
+        void defaultBrowser.model.cd('notebook');
 
-      // Observer to hide ".." when at 'notebook' root
-      const observer = new MutationObserver(() => {
-        if (defaultBrowser.model.path === 'notebook') {
-          const upDirItem = defaultBrowser.node.querySelector(
-            '.jp-DirListing-item[data-isdir="true"]:first-child'
-          );
-          if (upDirItem && upDirItem.textContent?.includes('..')) {
-            (upDirItem as HTMLElement).style.display = 'none';
+        // Observer to hide ".." when at 'notebook' root
+        const observer = new MutationObserver(() => {
+          if (defaultBrowser.model.path === 'notebook') {
+            const upDirItem = defaultBrowser.node.querySelector(
+              '.jp-DirListing-item[data-isdir="true"]:first-child'
+            );
+            if (upDirItem && upDirItem.textContent?.includes('..')) {
+              (upDirItem as HTMLElement).style.display = 'none';
+            }
           }
-        }
-      });
+        });
 
-      observer.observe(defaultBrowser.node, {
-        childList: true,
-        subtree: true
-      });
-    }
+        observer.observe(defaultBrowser.node, {
+          childList: true,
+          subtree: true
+        });
+      }
 
-    // Register Workflow Editor Command
+      // Register Workflow Editor Command
       const workflowCommandId = 'datafilemanager:open-workflow-editor';
       app.commands.addCommand(workflowCommandId, {
         label: 'Open Workflow Editor',

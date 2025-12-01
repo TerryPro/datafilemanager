@@ -260,6 +260,24 @@ print(json.dumps(_dfs))
   }
 
   /**
+   * 获取服务器根目录绝对路径
+   */
+  async getServerRoot(): Promise<string> {
+    try {
+      const resp = await fetch('/aiserver/get-server-root');
+      if (resp.ok) {
+        const data = await resp.json();
+        return data.serverRoot || '';
+      }
+      console.error('Failed to fetch server root:', resp.statusText);
+      return '';
+    } catch (error) {
+      console.error('Error fetching server root:', error);
+      return '';
+    }
+  }
+
+  /**
    * 根据 DataFrame 原始信息生成描述文本
    */
   describeVariable(df: {

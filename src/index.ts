@@ -86,10 +86,34 @@ const plugin: JupyterFrontEndPlugin<void> = {
       app.shell.add(aiSidebar, 'right', { rank: 1000 });
 
       // 注册左侧算法库面板
-      const algoPanel = new AlgorithmLibraryPanel(app, notebookTracker);
-      app.shell.add(algoPanel, 'left', { rank: 103 });
+    const algoPanel = new AlgorithmLibraryPanel(app, notebookTracker);
+    app.shell.add(algoPanel, 'left', { rank: 103 });
 
-      // Register Workflow Editor Command
+    // Restrict default file browser to 'notebook' directory
+    const defaultBrowser = browserFactory.tracker?.currentWidget || null;
+    if (defaultBrowser) {
+      // Initial navigation
+      void defaultBrowser.model.cd('notebook');
+
+      // Observer to hide ".." when at 'notebook' root
+      const observer = new MutationObserver(() => {
+        if (defaultBrowser.model.path === 'notebook') {
+          const upDirItem = defaultBrowser.node.querySelector(
+            '.jp-DirListing-item[data-isdir="true"]:first-child'
+          );
+          if (upDirItem && upDirItem.textContent?.includes('..')) {
+            (upDirItem as HTMLElement).style.display = 'none';
+          }
+        }
+      });
+
+      observer.observe(defaultBrowser.node, {
+        childList: true,
+        subtree: true
+      });
+    }
+
+    // Register Workflow Editor Command
       const workflowCommandId = 'datafilemanager:open-workflow-editor';
       app.commands.addCommand(workflowCommandId, {
         label: 'Open Workflow Editor',

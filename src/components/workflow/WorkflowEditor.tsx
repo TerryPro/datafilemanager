@@ -21,6 +21,7 @@ import { PlotNode } from './nodes/PlotNode';
 import { GenericNode } from './nodes/GenericNode';
 import { TrendNode } from './nodes/TrendNode';
 import { generateCode } from './CodeGenerator';
+import { AiService } from '../../services/ai-service';
 import { useColumnPropagation } from './hooks/useColumnPropagation';
 import { metadataService } from './services/MetadataService';
 
@@ -288,8 +289,10 @@ const WorkflowEditorContent = ({
     [reactFlowInstance, setNodes, serviceManager, handleFileChange]
   );
 
-  const handleGenerateCode = () => {
-    const code = generateCode(nodes, edges);
+  const handleGenerateCode = async () => {
+    const ai = new AiService();
+    const serverRoot = await ai.getServerRoot();
+    const code = generateCode(nodes, edges, serverRoot);
     console.log('Generated Code:', code);
 
     // Prepare workflow data for persistence

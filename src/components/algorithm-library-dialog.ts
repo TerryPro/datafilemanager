@@ -43,11 +43,13 @@ class LibraryBodyWidget extends Widget implements Dialog.IBodyWidget<string> {
   private selectedFunctionId: string | null = null;
   private currentParams: { [key: string]: any } = {};
   private codePreElement: HTMLPreElement | null = null;
+  private serverRoot: string;
 
-  constructor(libraryData: ILibraryMetadata, dfName: string) {
+  constructor(libraryData: ILibraryMetadata, dfName: string, serverRoot: string) {
     super();
     this.libraryData = libraryData;
     this.dfName = dfName;
+    this.serverRoot = serverRoot;
     this.addClass('jp-LibraryBody');
     this.node.style.resize = 'none';
     this.node.style.overflow = 'hidden';
@@ -214,9 +216,12 @@ class LibraryBodyWidget extends Widget implements Dialog.IBodyWidget<string> {
       paramContainer.style.border = '1px solid var(--jp-border-color2)';
 
       func.args.forEach(arg => {
-        // Set default value
-        this.currentParams[arg.name] =
-          arg.default !== undefined ? arg.default : '';
+        let initial = arg.default !== undefined ? arg.default : '';
+        if (arg.name === 'filepath' && typeof initial === 'string') {
+          const parts = initial.split(/[\\/]/);
+          initial = parts[parts.length - 1];
+        }
+        this.currentParams[arg.name] = initial;
 
         const row = document.createElement('div');
         row.style.marginBottom = '12px';
@@ -248,13 +253,16 @@ class LibraryBodyWidget extends Widget implements Dialog.IBodyWidget<string> {
           const select = document.createElement('select');
           select.className = 'jp-mod-styled';
           select.style.width = '100%';
+          const defaultBase =
+            typeof arg.default === 'string'
+              ? arg.default.split(/[\\/]/).pop() || ''
+              : '';
           arg.options.forEach(opt => {
             const option = document.createElement('option');
-            option.value = opt;
-            option.textContent = opt;
-            if (opt === arg.default) {
-              option.selected = true;
-            }
+            const base = opt.split(/[\\/]/).pop() || opt;
+            option.value = base;
+            option.textContent = base;
+            if (base === defaultBase) option.selected = true;
             select.appendChild(option);
           });
           select.onchange = () => {
@@ -283,7 +291,12 @@ class LibraryBodyWidget extends Widget implements Dialog.IBodyWidget<string> {
             };
           } else {
             inp.type = 'text';
-            inp.value = arg.default ? arg.default.toString() : '';
+            let dv = arg.default ? arg.default.toString() : '';
+            if (arg.name === 'filepath' && typeof dv === 'string') {
+              const parts = dv.split(/[\\/]/);
+              dv = parts[parts.length - 1];
+            }
+            inp.value = dv;
             inp.oninput = () => {
               this.currentParams[arg.name] = inp.value;
               this.updateCode(func);
@@ -347,6 +360,55 @@ class LibraryBodyWidget extends Widget implements Dialog.IBodyWidget<string> {
           if (val === undefined || val === null) {
             val = '';
           }
+          
+          // Handle absolute path for filepath parameter
+          if (arg.name === 'filepath' && typeof val === 'string' && this.serverRoot) {
+             // Normalize separators
+             const isWin = this.serverRoot.includes('\\');
+             const sep = isWin ? '\\' : '/';
+             let valNorm = val.replace(/\//g, sep).replace(/\\/g, sep);
+             
+             // If value is just a filename (no separators), assume it's in dataset folder
+             if (!valNorm.includes(sep)) {
+                 valNorm = `dataset${sep}${valNorm}`;
+             }
+
+             // Check if it's already absolute
+             // Simple check: Win (X:\ or \\) or Unix (/)
+             const isAbs = isWin 
+                ? /^[a-zA-Z]:\\/.test(valNorm) || valNorm.startsWith('\\\\')
+                : valNorm.startsWith('/');
+             
+             if (!isAbs) {
+                 // Remove leading slash/backslash from val if present to avoid double separators
+                 let cleanVal = valNorm;
+                 if (cleanVal.startsWith(sep)) {
+                     cleanVal = cleanVal.substring(1);
+                 }
+                 
+                 // If serverRoot ends with separator, don't add another
+                 let root = this.serverRoot;
+                 if (root.endsWith(sep)) {
+                     root = root.substring(0, root.length - 1);
+                 }
+                 
+                 val = `${root}${sep}${cleanVal}`;
+                 
+                 // Escape backslashes for Python string if on Windows
+                 // Python string literal: "C:\\Path" or r"C:\Path"
+                 // The template usually uses simple quotes.
+                 // If we use raw string in template r'{filepath}', single backslashes are fine.
+                 // But if template is '{filepath}', we need double backslashes.
+                 // Let's look at the template.
+                 // load_csv template: filepath = '{filepath}'
+                 // It is NOT a raw string in the template definition in Python file: filepath = '{filepath}'
+                 // So we MUST escape backslashes.
+                 if (isWin) {
+                     val = val.replace(/\\/g, '\\\\');
+                 }
+             }
+          }
+
           const placeholder = `{${arg.name}}`;
           code = code.replace(new RegExp(placeholder, 'g'), val.toString());
         });
@@ -382,8 +444,11 @@ export class AlgorithmLibraryDialogManager {
     panel: NotebookPanel,
     currentDfName: string | null
   ): Promise<void> {
-    const libraryData = await this.aiService.getFunctionLibrary();
-    const body = new LibraryBodyWidget(libraryData, currentDfName || 'df');
+    const [libraryData, serverRoot] = await Promise.all([
+      this.aiService.getFunctionLibrary(),
+      this.aiService.getServerRoot()
+    ]);
+    const body = new LibraryBodyWidget(libraryData, currentDfName || 'df', serverRoot);
     const dialog = new Dialog({
       title: '算法函数库',
       body: body,

@@ -1,7 +1,11 @@
 import { Node, Edge } from 'reactflow';
 import { INodeSchema } from './types';
 
-export const generateCode = (nodes: Node[], edges: Edge[]): string => {
+export const generateCode = (
+  nodes: Node[],
+  edges: Edge[],
+  serverRoot?: string
+): string => {
   // 1. Build Adjacency List and In-Degree map for Topological Sort
   const adjList: Record<string, string[]> = {};
   const inDegree: Record<string, number> = {};
@@ -223,7 +227,30 @@ export const generateCode = (nodes: Node[], edges: Edge[]): string => {
           val = `[${formattedItems.join(', ')}]`;
         }
 
-        code = code.replace(new RegExp(`\\{${arg.name}\\}`, 'g'), String(val));
+        if (arg.name === 'filepath' && typeof val === 'string' && serverRoot) {
+          const isWin = serverRoot.includes('\\');
+          const sep = isWin ? '\\' : '/';
+          let valNorm = val.replace(/\//g, sep).replace(/\\/g, sep);
+          const isAbs = isWin
+            ? /^[a-zA-Z]:\\/.test(valNorm) || valNorm.startsWith('\\\\')
+            : valNorm.startsWith('/');
+          if (!isAbs) {
+            let root = serverRoot;
+            if (root.endsWith(sep)) {
+              root = root.substring(0, root.length - 1);
+            }
+            if (!valNorm.includes(sep)) {
+              valNorm = `dataset${sep}${valNorm}`;
+            }
+            valNorm = `${root}${sep}${valNorm}`;
+            if (isWin) {
+              valNorm = valNorm.replace(/\\/g, '\\');
+            }
+          }
+          val = valNorm;
+        }
+
+        code = code.replace(new RegExp(`\{${arg.name}\}`, 'g'), String(val));
       });
 
       // Indent code

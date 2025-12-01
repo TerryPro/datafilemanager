@@ -19,6 +19,7 @@ import { ITranslator } from '@jupyterlab/translation';
 import { Menu } from '@lumino/widgets';
 import { PageConfig, URLExt, PathExt } from '@jupyterlab/coreutils';
 import { INotebookTracker, NotebookPanel } from '@jupyterlab/notebook';
+import { AiService } from '../services/ai-service';
 
 // 创建一个全局变量来跟踪文件浏览器实例
 const tracker: {
@@ -36,6 +37,7 @@ export class CsvFileManager {
   private fileBrowser: FileBrowser;
   private widget: MainAreaWidget<FileBrowser>;
   private commands: any;
+  private aiService: AiService;
 
   constructor(
     app: JupyterFrontEnd,
@@ -51,6 +53,7 @@ export class CsvFileManager {
     this.translator = translator;
     this.notebookTracker = notebookTracker;
     this.commands = app.commands;
+    this.aiService = new AiService();
 
     // 创建一个自定义文件浏览器模型，专门用于管理dataset目录
     const model = new FilterFileBrowserModel({
@@ -231,7 +234,12 @@ export class CsvFileManager {
         }
 
         // 获取服务器根目录并构造文件的绝对路径
-        const serverRoot = PageConfig.getOption('serverRoot') || '.';
+        // const serverRoot = PageConfig.getOption('serverRoot') || '.';
+        let serverRoot = await this.aiService.getServerRoot();
+        if (!serverRoot) {
+           serverRoot = PageConfig.getOption('serverRoot') || '.';
+        }
+        
         const csvRelativePath = item.path.replace(/\\/g, '/');
         const csvAbsolutePath = PathExt.join(
           serverRoot,
@@ -514,11 +522,13 @@ export class CsvFileManager {
       });
 
       // 隐藏向上导航的".."目录项
-      const upDirItem = this.fileBrowser.node.querySelector(
-        '.jp-DirListing-item[data-isdir="true"]:first-child'
-      );
-      if (upDirItem) {
-        (upDirItem as HTMLElement).style.display = 'none';
+      if (this.fileBrowser.model.path === 'dataset') {
+        const upDirItem = this.fileBrowser.node.querySelector(
+          '.jp-DirListing-item[data-isdir="true"]:first-child'
+        );
+        if (upDirItem && upDirItem.textContent?.includes('..')) {
+          (upDirItem as HTMLElement).style.display = 'none';
+        }
       }
     });
 

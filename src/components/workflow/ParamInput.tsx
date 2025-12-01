@@ -49,7 +49,7 @@ export const ParamInput: React.FC<IParamInputProps> = ({
           if (model.content && Array.isArray(model.content)) {
             const csvFiles = model.content
               .filter((item: Contents.IModel) => item.name.endsWith('.csv'))
-              .map((item: Contents.IModel) => `dataset/${item.name}`);
+              .map((item: Contents.IModel) => item.name);
             setFiles(csvFiles);
           }
         })

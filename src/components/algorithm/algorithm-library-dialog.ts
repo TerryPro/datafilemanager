@@ -2,7 +2,7 @@ import { JupyterFrontEnd } from '@jupyterlab/application';
 import { NotebookPanel } from '@jupyterlab/notebook';
 import { Dialog } from '@jupyterlab/apputils';
 import { Widget } from '@lumino/widgets';
-import { AiService } from '../services/ai-service';
+import { AiService } from '../../services/ai-service';
 
 interface ILibraryFunction {
   id: string;
@@ -45,7 +45,11 @@ class LibraryBodyWidget extends Widget implements Dialog.IBodyWidget<string> {
   private codePreElement: HTMLPreElement | null = null;
   private serverRoot: string;
 
-  constructor(libraryData: ILibraryMetadata, dfName: string, serverRoot: string) {
+  constructor(
+    libraryData: ILibraryMetadata,
+    dfName: string,
+    serverRoot: string
+  ) {
     super();
     this.libraryData = libraryData;
     this.dfName = dfName;
@@ -262,7 +266,9 @@ class LibraryBodyWidget extends Widget implements Dialog.IBodyWidget<string> {
             const base = opt.split(/[\\/]/).pop() || opt;
             option.value = base;
             option.textContent = base;
-            if (base === defaultBase) option.selected = true;
+            if (base === defaultBase) {
+              option.selected = true;
+            }
             select.appendChild(option);
           });
           select.onchange = () => {
@@ -360,53 +366,57 @@ class LibraryBodyWidget extends Widget implements Dialog.IBodyWidget<string> {
           if (val === undefined || val === null) {
             val = '';
           }
-          
-          // Handle absolute path for filepath parameter
-          if (arg.name === 'filepath' && typeof val === 'string' && this.serverRoot) {
-             // Normalize separators
-             const isWin = this.serverRoot.includes('\\');
-             const sep = isWin ? '\\' : '/';
-             let valNorm = val.replace(/\//g, sep).replace(/\\/g, sep);
-             
-             // If value is just a filename (no separators), assume it's in dataset folder
-             if (!valNorm.includes(sep)) {
-                 valNorm = `dataset${sep}${valNorm}`;
-             }
 
-             // Check if it's already absolute
-             // Simple check: Win (X:\ or \\) or Unix (/)
-             const isAbs = isWin 
-                ? /^[a-zA-Z]:\\/.test(valNorm) || valNorm.startsWith('\\\\')
-                : valNorm.startsWith('/');
-             
-             if (!isAbs) {
-                 // Remove leading slash/backslash from val if present to avoid double separators
-                 let cleanVal = valNorm;
-                 if (cleanVal.startsWith(sep)) {
-                     cleanVal = cleanVal.substring(1);
-                 }
-                 
-                 // If serverRoot ends with separator, don't add another
-                 let root = this.serverRoot;
-                 if (root.endsWith(sep)) {
-                     root = root.substring(0, root.length - 1);
-                 }
-                 
-                 val = `${root}${sep}${cleanVal}`;
-                 
-                 // Escape backslashes for Python string if on Windows
-                 // Python string literal: "C:\\Path" or r"C:\Path"
-                 // The template usually uses simple quotes.
-                 // If we use raw string in template r'{filepath}', single backslashes are fine.
-                 // But if template is '{filepath}', we need double backslashes.
-                 // Let's look at the template.
-                 // load_csv template: filepath = '{filepath}'
-                 // It is NOT a raw string in the template definition in Python file: filepath = '{filepath}'
-                 // So we MUST escape backslashes.
-                 if (isWin) {
-                     val = val.replace(/\\/g, '\\\\');
-                 }
-             }
+          // Handle absolute path for filepath parameter
+          if (
+            arg.name === 'filepath' &&
+            typeof val === 'string' &&
+            this.serverRoot
+          ) {
+            // Normalize separators
+            const isWin = this.serverRoot.includes('\\');
+            const sep = isWin ? '\\' : '/';
+            let valNorm = val.replace(/\//g, sep).replace(/\\/g, sep);
+
+            // If value is just a filename (no separators), assume it's in dataset folder
+            if (!valNorm.includes(sep)) {
+              valNorm = `dataset${sep}${valNorm}`;
+            }
+
+            // Check if it's already absolute
+            // Simple check: Win (X:\ or \\) or Unix (/)
+            const isAbs = isWin
+              ? /^[a-zA-Z]:\\/.test(valNorm) || valNorm.startsWith('\\\\')
+              : valNorm.startsWith('/');
+
+            if (!isAbs) {
+              // Remove leading slash/backslash from val if present to avoid double separators
+              let cleanVal = valNorm;
+              if (cleanVal.startsWith(sep)) {
+                cleanVal = cleanVal.substring(1);
+              }
+
+              // If serverRoot ends with separator, don't add another
+              let root = this.serverRoot;
+              if (root.endsWith(sep)) {
+                root = root.substring(0, root.length - 1);
+              }
+
+              val = `${root}${sep}${cleanVal}`;
+
+              // Escape backslashes for Python string if on Windows
+              // Python string literal: "C:\\Path" or r"C:\Path"
+              // The template usually uses simple quotes.
+              // If we use raw string in template r'{filepath}', single backslashes are fine.
+              // But if template is '{filepath}', we need double backslashes.
+              // Let's look at the template.
+              // load_csv template: filepath = '{filepath}'
+              // It is NOT a raw string in the template definition in Python file: filepath = '{filepath}'
+              // So we MUST escape backslashes.
+              if (isWin) {
+                val = val.replace(/\\/g, '\\\\');
+              }
+            }
           }
 
           const placeholder = `{${arg.name}}`;
@@ -448,7 +458,11 @@ export class AlgorithmLibraryDialogManager {
       this.aiService.getFunctionLibrary(),
       this.aiService.getServerRoot()
     ]);
-    const body = new LibraryBodyWidget(libraryData, currentDfName || 'df', serverRoot);
+    const body = new LibraryBodyWidget(
+      libraryData,
+      currentDfName || 'df',
+      serverRoot
+    );
     const dialog = new Dialog({
       title: '算法函数库',
       body: body,

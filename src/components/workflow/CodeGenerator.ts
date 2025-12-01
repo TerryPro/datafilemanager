@@ -179,7 +179,7 @@ export const generateCode = (
       // Replace Output Placeholders
       Object.entries(currentOutputs).forEach(([portName, varName]) => {
         if (portName !== 'default') {
-          code = code.replace(new RegExp(`\\{${portName}\\}`, 'g'), varName);
+          code = code.replace(new RegExp(`{${portName}}`, 'g'), varName);
         }
       });
       if (currentOutputs['default']) {
@@ -189,7 +189,7 @@ export const generateCode = (
       // Replace Input Placeholders
       Object.entries(inputVars).forEach(([portName, varName]) => {
         if (portName !== 'default') {
-          code = code.replace(new RegExp(`\\{${portName}\\}`, 'g'), varName);
+          code = code.replace(new RegExp(`{${portName}}`, 'g'), varName);
         }
       });
 
@@ -250,7 +250,7 @@ export const generateCode = (
           val = valNorm;
         }
 
-        code = code.replace(new RegExp(`\{${arg.name}\}`, 'g'), String(val));
+        code = code.replace(new RegExp(`{${arg.name}}`, 'g'), String(val));
       });
 
       // Indent code

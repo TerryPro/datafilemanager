@@ -19,9 +19,8 @@ import { ITranslator } from '@jupyterlab/translation';
 import { Menu } from '@lumino/widgets';
 import { PageConfig, URLExt, PathExt } from '@jupyterlab/coreutils';
 import { INotebookTracker, NotebookPanel } from '@jupyterlab/notebook';
-import { AiService } from '../services/ai-service';
+import { AiService } from '../../services/ai-service';
 
-// 创建一个全局变量来跟踪文件浏览器实例
 const tracker: {
   currentWidget: FileBrowser | null;
 } = {
@@ -55,14 +54,12 @@ export class CsvFileManager {
     this.commands = app.commands;
     this.aiService = new AiService();
 
-    // 创建一个自定义文件浏览器模型，专门用于管理dataset目录
     const model = new FilterFileBrowserModel({
       manager: docManager,
       driveName: '',
-      refreshInterval: 300000 // 5分钟刷新一次
+      refreshInterval: 300000
     });
 
-    // 创建文件浏览器实例
     this.fileBrowser = new FileBrowser({
       id: 'datafilemanager',
       model,
@@ -74,34 +71,29 @@ export class CsvFileManager {
     });
 
     this.widget.id = 'datafilemanager-file-browser';
-    // 使用图标代替中文标题
-    this.widget.title.iconClass = 'jp-MaterialIcon jp-FolderIcon'; // 使用文件夹图标
-    this.widget.title.label = ''; // 清空标签文本
-    this.widget.title.caption = 'CSV Data File Manager'; // 保持悬停提示
+    this.widget.title.iconClass = 'jp-MaterialIcon jp-FolderIcon';
+    this.widget.title.label = '';
+    this.widget.title.caption = 'CSV Data File Manager';
 
-    // 设置文件浏览器的根目录为dataset
     model.cd('dataset').catch(reason => {
       console.error('Failed to change directory to dataset:', reason);
     });
 
-    // 添加到左侧边栏
-    app.shell.add(this.widget, 'left', { rank: 100 });
+    this.app.shell.add(this.widget, 'left', { rank: 100 });
 
-    // 设置tracker
     tracker.currentWidget = this.fileBrowser;
 
-    // 初始化命令
     this.initializeCommands();
-
-    // 注册右键菜单和删除面包屑
     this.registerContextMenuHook();
     this.removeBreadcrumbs();
   }
 
+  /**
+   * 初始化并注册命令
+   */
   private initializeCommands(): void {
     const trans = this.translator.load('jupyterlab');
 
-    // 添加命令到命令面板
     const openCommand = 'datafilemanager:open';
     this.commands.addCommand(openCommand, {
       label: 'Open Data File Manager',
@@ -110,20 +102,17 @@ export class CsvFileManager {
         this.app.shell.activateById(this.widget.id);
       }
     });
-
     this.palette.addItem({
       command: openCommand,
       category: 'Data File Manager'
     });
 
-    // 添加上传命令
     const uploadCommand = 'datafilemanager:upload';
     this.commands.addCommand(uploadCommand, {
       label: trans.__('Upload'),
       caption: trans.__('Upload files to the dataset directory'),
       iconClass: 'jp-MaterialIcon jp-UploadIcon',
       execute: () => {
-        // 触发文件浏览器的上传功能
         this.fileBrowser.node.click();
         const uploadInput = document.createElement('input');
         uploadInput.type = 'file';
@@ -131,7 +120,6 @@ export class CsvFileManager {
         uploadInput.onchange = (event: Event) => {
           const target = event.target as HTMLInputElement;
           if (target.files && target.files.length > 0) {
-            // 使用fileBrowser.model.upload方法上传文件
             const files = Array.from(target.files);
             files.forEach(file => {
               this.fileBrowser.model.upload(file, this.fileBrowser.model.path);
@@ -142,7 +130,6 @@ export class CsvFileManager {
       }
     });
 
-    // 添加删除命令
     const deleteCommand = 'datafilemanager:delete';
     this.commands.addCommand(deleteCommand, {
       label: trans.__('Delete'),
@@ -151,9 +138,7 @@ export class CsvFileManager {
       execute: () => {
         const widget = tracker.currentWidget;
         if (widget) {
-          // 获取选中的项目
           const selectedItems = widget.selectedItems();
-          // 删除选中的项目
           return Promise.all(
             Array.from(selectedItems).map(item =>
               this.docManager.deleteFile(item.path)
@@ -163,7 +148,6 @@ export class CsvFileManager {
       }
     });
 
-    // 添加重命名命令
     const renameCommand = 'datafilemanager:rename';
     this.commands.addCommand(renameCommand, {
       label: trans.__('Rename'),
@@ -177,7 +161,6 @@ export class CsvFileManager {
       }
     });
 
-    // 添加打开条目命令（文件或文件夹）
     const openEntryCommand = 'datafilemanager:open-entry';
     this.commands.addCommand(openEntryCommand, {
       label: trans.__('Open'),
@@ -201,7 +184,6 @@ export class CsvFileManager {
       }
     });
 
-    // 加载数据到当前Notebook命令
     const loadDataCommand = 'datafilemanager:load-data';
     this.commands.addCommand(loadDataCommand, {
       label: 'LoadData',
@@ -233,13 +215,11 @@ export class CsvFileManager {
           return;
         }
 
-        // 获取服务器根目录并构造文件的绝对路径
-        // const serverRoot = PageConfig.getOption('serverRoot') || '.';
         let serverRoot = await this.aiService.getServerRoot();
         if (!serverRoot) {
-           serverRoot = PageConfig.getOption('serverRoot') || '.';
+          serverRoot = PageConfig.getOption('serverRoot') || '.';
         }
-        
+
         const csvRelativePath = item.path.replace(/\\/g, '/');
         const csvAbsolutePath = PathExt.join(
           serverRoot,
@@ -267,12 +247,10 @@ export class CsvFileManager {
           'globals()[__name].head()'
         ].join('\n');
 
-        // 将代码应用到Notebook：若当前单元格为空则直接写入并执行，否则在下一单元插入后写入并执行
         await this.applyCodeToNotebook(panel, code, true);
       }
     });
 
-    // 添加复制副本命令（文件或文件夹），弹框输入新名称
     const duplicateCommand = 'datafilemanager:duplicate';
     this.commands.addCommand(duplicateCommand, {
       label: trans.__('Duplicate'),
@@ -317,7 +295,9 @@ export class CsvFileManager {
           } catch (e) {
             const model = await this.docManager.services.contents.get(
               item.path,
-              { content: true }
+              {
+                content: true
+              }
             );
             await this.docManager.services.contents.save(targetPath, {
               type: model.type,
@@ -330,7 +310,6 @@ export class CsvFileManager {
       }
     });
 
-    // 添加复制路径命令
     const copyPathCommand = 'datafilemanager:copy-path';
     this.commands.addCommand(copyPathCommand, {
       label: trans.__('Copy Path'),
@@ -354,7 +333,6 @@ export class CsvFileManager {
       }
     });
 
-    // 添加下载命令（仅文件）
     const downloadCommand = 'datafilemanager:download';
     this.commands.addCommand(downloadCommand, {
       label: trans.__('Download'),
@@ -382,9 +360,7 @@ export class CsvFileManager {
   }
 
   /**
-   * 将生成的代码应用到当前Notebook。
-   * 若当前活动单元格存在且为空，则直接写入并执行；
-   * 若当前活动单元格不为空或不存在，则在其下方新建代码单元并写入、执行。
+   * 将生成的代码应用到当前Notebook
    */
   private async applyCodeToNotebook(
     panel: NotebookPanel,
@@ -414,7 +390,7 @@ export class CsvFileManager {
   }
 
   /**
-   * 右键菜单事件处理：阻止默认上下文菜单，并显示精简菜单
+   * 右键菜单处理
    */
   private handleContextMenu(event: MouseEvent): void {
     event.preventDefault();
@@ -430,7 +406,6 @@ export class CsvFileManager {
       Array.from(this.fileBrowser.selectedItems()).length > 0;
 
     if (itemNode) {
-      // 针对文件或文件夹条目
       menu.addItem({ command: 'datafilemanager:open-entry' });
       menu.addItem({ type: 'separator' });
       if (hasSelection) {
@@ -453,7 +428,7 @@ export class CsvFileManager {
   }
 
   /**
-   * 注册右键监听到文件列表容器，生效于扩展的文件浏览器
+   * 注册右键监听
    */
   private registerContextMenuHook(): void {
     const listing = this.fileBrowser.node.querySelector(
@@ -468,7 +443,7 @@ export class CsvFileManager {
   }
 
   /**
-   * 删除文件浏览器头部的路径面包屑显示，并监听后续DOM变更保持删除
+   * 移除面包屑导航并持续隐藏相关元素
    */
   private removeBreadcrumbs(): void {
     const bc = this.fileBrowser.node.querySelector(
@@ -478,30 +453,14 @@ export class CsvFileManager {
       bc.remove();
     }
 
-    // 添加全局CSS样式来隐藏所有可能的目录选择UI元素
     const style = document.createElement('style');
     style.textContent = `
-      /* 隐藏面包屑导航 */
-      .jp-BreadCrumbs {
-        display: none !important;
-      }
-      /* 隐藏可能的目录选择下拉菜单 */
+      .jp-BreadCrumbs { display: none !important; }
       .jp-DirListing-header select,
-      .jp-DirListing-header .jp-DropdownButton {
-        display: none !important;
-      }
-      /* 确保文件列表占满空间 */
-      .jp-DirListing {
-        top: 0 !important;
-      }
-      /* 隐藏可能的向上导航按钮 */
-      .jp-DirListing-item[data-isdir="true"]:first-child {
-        display: none !important;
-      }
-      /* 防止通过URL导航离开notebook目录 */
-      .jp-DirListing-item[data-path^="/"]:not([data-path^="/notebook"]) {
-        display: none !important;
-      }
+      .jp-DirListing-header .jp-DropdownButton { display: none !important; }
+      .jp-DirListing { top: 0 !important; }
+      .jp-DirListing-item[data-isdir="true"]:first-child { display: none !important; }
+      .jp-DirListing-item[data-path^="/"]:not([data-path^="/notebook"]) { display: none !important; }
     `;
     document.head.appendChild(style);
 
@@ -513,7 +472,6 @@ export class CsvFileManager {
         node.remove();
       }
 
-      // 隐藏任何新出现的目录选择元素
       const directorySelects = this.fileBrowser.node.querySelectorAll(
         '.jp-DirListing-header select, .jp-DirListing-header .jp-DropdownButton'
       );
@@ -521,7 +479,6 @@ export class CsvFileManager {
         (el as HTMLElement).style.display = 'none';
       });
 
-      // 隐藏向上导航的".."目录项
       if (this.fileBrowser.model.path === 'dataset') {
         const upDirItem = this.fileBrowser.node.querySelector(
           '.jp-DirListing-item[data-isdir="true"]:first-child'
@@ -540,9 +497,7 @@ export class CsvFileManager {
     });
   }
 
-  /**
-   * 获取文件浏览器实例
-   */
+  /** 获取文件浏览器实例 */
   getFileBrowser(): FileBrowser {
     return this.fileBrowser;
   }

@@ -11,8 +11,8 @@ import { IDocumentManager } from '@jupyterlab/docmanager';
 import { ServiceManager } from '@jupyterlab/services';
 import { DataFramePanel } from './components/dataframe/dataframe-panel';
 import { CsvFileManager } from './components/file/csv-file-manager';
-import { CommandManager } from './components/command-manager';
-import { AiSidebar } from './components/ai-sidebar';
+import { CommandManager } from './components/core/command-manager';
+import { AiSidebar } from './components/ai/ai-sidebar';
 import { AlgorithmLibraryPanel } from './components/algorithm/algorithm-library-panel';
 import { WorkflowWidget } from './components/workflow/WorkflowWidget';
 

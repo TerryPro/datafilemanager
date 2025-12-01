@@ -2,7 +2,7 @@ import { Widget } from '@lumino/widgets';
 import { INotebookTracker, NotebookPanel } from '@jupyterlab/notebook';
 import { JupyterFrontEnd } from '@jupyterlab/application';
 import { LabIcon } from '@jupyterlab/ui-components';
-import { AiService } from '../services/ai-service';
+import { AiService } from '../../services/ai-service';
 
 // AI助手图标
 export const aiAssistantIcon = new LabIcon({

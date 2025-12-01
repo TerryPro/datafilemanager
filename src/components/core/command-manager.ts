@@ -2,8 +2,8 @@ import { JupyterFrontEnd } from '@jupyterlab/application';
 import { INotebookTracker, NotebookPanel } from '@jupyterlab/notebook';
 import { IToolbarWidgetRegistry } from '@jupyterlab/apputils';
 import { showErrorMessage } from '@jupyterlab/apputils';
-import { AlgorithmLibraryDialogManager } from './algorithm/algorithm-library-dialog';
-import { WorkflowButtonManager } from './workflow-button-manager';
+import { AlgorithmLibraryDialogManager } from '../algorithm/algorithm-library-dialog';
+import { WorkflowButtonManager } from '../workflow/workflow-button-manager';
 
 /**
  * 命令管理器

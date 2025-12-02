@@ -98,7 +98,7 @@ export const ColumnSelector: React.FC<IColumnSelectorProps> = ({
       )}
       {columns.map(col => (
         <option key={col.name} value={col.name}>
-          {col.name} {col.type ? `(${col.type})` : ''}
+          {col.name} {col.type && col.type !== 'unknown' ? `(${col.type})` : ''}
         </option>
       ))}
     </select>

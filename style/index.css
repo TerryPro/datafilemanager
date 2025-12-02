@@ -46,7 +46,7 @@
   background: var(--jp-layout-color2);
 }
 
-.df-refresh .jp-icon {
+.df-refresh .jp-Icon {
   display: inline-block;
 }
 
@@ -145,7 +145,7 @@
 }
 
 /* AI Sidebar 样式 */
-.jp-ai-sidebar {
+.jp-AiSidebar {
   display: flex;
   flex-direction: column;
   padding: 12px;
@@ -172,6 +172,10 @@
   color: var(--jp-ui-font-color0);
   text-transform: uppercase;
   letter-spacing: 1px;
+}
+
+.ai-sidebar-title svg {
+  color: var(--jp-brand-color1);
 }
 
 .ai-sidebar-clear-btn {
@@ -269,6 +273,11 @@
   background-color: var(--jp-layout-color2);
 }
 
+.ai-sidebar-toolbar-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
 /* 模式选择器包装 */
 .ai-sidebar-select-wrapper {
   position: relative;
@@ -350,6 +359,11 @@
   cursor: not-allowed;
 }
 
+.ai-sidebar-execute-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
 /* 消息容器基础样式 - 统一卡片风格 */
 .ai-sidebar-message {
   margin-bottom: 16px;
@@ -381,6 +395,14 @@
   color: var(--jp-ui-font-color1);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.ai-sidebar-message-ai .ai-message-label svg {
+  color: var(--jp-brand-color1);
+}
+
+.ai-sidebar-message-user .ai-message-label svg {
+  color: var(--jp-ui-font-color2);
 }
 
 /* 消息内容 */
@@ -467,31 +489,9 @@
   color: var(--jp-success-color1);
 }
 
-/* 按特异性顺序定义SVG图标样式，符合no-descending-specificity规则 */
+/* SVG 图标通用样式 */
 svg {
   display: block;
-  color: var(--jp-brand-color1);
-}
-
-.ai-sidebar-title svg,
-.ai-sidebar-toolbar-btn svg,
-.ai-sidebar-execute-btn svg {
-  width: 16px;
-  height: 16px;
-  color: var(--jp-brand-color1);
-}
-
-.ai-sidebar-message-user .ai-message-label svg,
-.ai-selection-chip .ai-chip-icon svg {
-  width: 14px;
-  height: 14px;
-  color: var(--jp-ui-font-color1);
-}
-
-.ai-sidebar-message-ai .ai-message-label svg {
-  width: 14px;
-  height: 14px;
-  color: var(--jp-brand-color1);
 }
 
 /* 保持扩展样式入口 */
@@ -606,6 +606,11 @@ svg {
   background-color: var(--jp-layout-color2);
   font-size: 11px;
   color: var(--jp-ui-font-color1);
+}
+
+.ai-selection-chip .ai-chip-icon svg {
+  width: 14px;
+  height: 14px;
 }
 
 .ai-chip-label {

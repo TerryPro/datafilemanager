@@ -71,6 +71,7 @@ export const GenericNode = memo(
           borderRadius: '8px',
           background: 'var(--jp-layout-color1)',
           minWidth: '200px',
+          maxWidth: '300px',
           fontSize: '12px',
           boxShadow: selected
             ? '0 0 0 2px rgba(33, 150, 243, 0.3)'
@@ -81,7 +82,8 @@ export const GenericNode = memo(
           position: 'relative', // Ensure absolute children are relative to this
           overflow: 'visible',
           color: 'var(--jp-ui-font-color1)',
-          cursor: 'move'
+          cursor: 'move',
+          transition: 'all 0.2s ease'
         }}
       >
         {/* Inputs (Top Edge) */}
@@ -159,27 +161,52 @@ export const GenericNode = memo(
         <div style={{ padding: '12px' }}>
           {/* Parameters */}
           <div style={{ marginBottom: '4px' }}>
-            {schema.args?.map((arg: IParam) => (
-              <div key={arg.name} style={{ marginBottom: '8px' }}>
-                <label
-                  style={{
-                    display: 'block',
-                    color: 'var(--jp-ui-font-color2)',
-                    fontSize: '10px',
-                    marginBottom: '2px'
-                  }}
-                >
-                  {arg.label}
-                </label>
-                <ParamInput
-                  param={arg}
-                  value={values[arg.name]}
-                  onChange={val => handleParamChange(arg.name, val)}
-                  serviceManager={data.serviceManager}
-                  columns={inputColumns}
-                />
-              </div>
-            ))}
+            {schema.args && schema.args.length > 0 && (
+              <>              
+                {/* Filter parameters based on count and priority */}
+                {(() => {
+                  let displayArgs = schema.args;
+                  if (schema.args.length > 3) {
+                    // If more than 3 args, only show critical ones
+                    displayArgs = schema.args.filter(arg => arg.priority === 'critical');
+                  }
+                  return displayArgs;
+                })().map((arg: IParam) => (
+                  <div key={arg.name} style={{ marginBottom: '8px' }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        color: 'var(--jp-ui-font-color2)',
+                        fontSize: '10px',
+                        marginBottom: '2px'
+                      }}
+                    >
+                      {arg.label}
+                    </label>
+                    <ParamInput
+                      param={arg}
+                      value={values[arg.name]}
+                      onChange={val => handleParamChange(arg.name, val)}
+                      serviceManager={data.serviceManager}
+                      columns={inputColumns}
+                    />
+                  </div>
+                ))}
+                {/* Show info if some args are hidden */}
+                {schema.args.length > 3 && (
+                  <div
+                    style={{
+                      fontSize: '9px',
+                      color: 'var(--jp-ui-font-color2)',
+                      marginTop: '4px',
+                      fontStyle: 'italic'
+                    }}
+                  >
+                    点击右侧属性面板查看更多配置选项
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
 

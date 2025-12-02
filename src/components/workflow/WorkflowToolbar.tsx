@@ -1,10 +1,12 @@
 import React from 'react';
-import { runIcon, cutIcon, copyIcon } from '@jupyterlab/ui-components';
+import { runIcon, cutIcon, copyIcon, searchIcon } from '@jupyterlab/ui-components';
 
 interface IWorkflowToolbarProps {
   onRun: () => void;
   onDelete: () => void;
   onCopy?: () => void;
+  onToggleMiniMap?: () => void;
+  showMiniMap?: boolean;
 }
 
 const ToolbarButton = ({
@@ -49,7 +51,9 @@ const ToolbarButton = ({
 export const WorkflowToolbar = ({
   onRun,
   onDelete,
-  onCopy
+  onCopy,
+  onToggleMiniMap,
+  showMiniMap = false
 }: IWorkflowToolbarProps) => {
   return (
     <div
@@ -76,6 +80,13 @@ export const WorkflowToolbar = ({
         onClick={onCopy}
         enabled={!!onCopy}
       />
+      {onToggleMiniMap && (
+        <ToolbarButton
+          icon={searchIcon}
+          title={showMiniMap ? "隐藏迷你地图" : "显示迷你地图"}
+          onClick={onToggleMiniMap}
+        />
+      )}
     </div>
   );
 };

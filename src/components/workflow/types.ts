@@ -14,6 +14,7 @@ export interface IParam {
   max?: number;
   step?: number;
   widget?: string; // e.g., 'file-selector'
+  priority?: string; // 'critical' or 'non-critical', default is 'non-critical'
 }
 
 export interface INodeSchema {

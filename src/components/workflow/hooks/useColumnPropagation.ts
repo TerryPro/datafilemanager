@@ -110,6 +110,8 @@ export const useColumnPropagation = (
 
           if (schema.id === 'load_csv') {
             const filepath = node.data.values?.['filepath'];
+            // Check both node.data.timeIndex and node.data.values.timeIndex
+            const timeIndex = node.data.timeIndex || node.data.values?.['timeIndex'];
             if (filepath) {
               // We can't await async here easily for all nodes in sequence without slowing UI.
               // But we need the columns for downstream.
@@ -123,7 +125,19 @@ export const useColumnPropagation = (
 
               // For this implementation, we will do it async one by one.
               const cols = await metadataService.fetchCSVColumns(filepath);
-              outputColumns = { df_out: cols };
+              
+              // If timeIndex is set, remove it from the output columns
+              // because it will be used as index, not as a regular column
+              let filteredCols = cols;
+              const timeIndexValue = timeIndex?.trim();
+              if (timeIndexValue) {
+                filteredCols = cols.filter(col => {
+                  // Use case-insensitive comparison to handle possible case differences
+                  return col.name.toLowerCase() !== timeIndexValue.toLowerCase();
+                });
+              }
+              
+              outputColumns = { df_out: filteredCols };
             }
           } else if (schema.id === 'import_variable') {
             const varName = node.data.values?.['variable_name'];

@@ -50,6 +50,7 @@ const WorkflowEditorContent = ({
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
   const [library, setLibrary] = useState<any>(null);
+  const [showMiniMap, setShowMiniMap] = useState(false); // 默认不显示mini map
 
   // Use a ref to track the next node ID to avoid duplicates
   const nodeIdCounter = useRef(0);
@@ -374,37 +375,42 @@ const WorkflowEditorContent = ({
       style={{ display: 'flex', height: '100%', width: '100%' }}
     >
       <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100%'
-        }}
-      >
-        <WorkflowToolbar onRun={handleGenerateCode} onDelete={handleDelete} />
-        <div
-          className="reactflow-wrapper"
-          ref={reactFlowWrapper}
-          style={{ flex: 1, position: 'relative' }}
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%'
+          }}
         >
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            onInit={setReactFlowInstance}
-            onDrop={onDrop}
-            onDragOver={onDragOver}
-            nodeTypes={nodeTypes}
-            defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+          <WorkflowToolbar 
+            onRun={handleGenerateCode} 
+            onDelete={handleDelete} 
+            onToggleMiniMap={() => setShowMiniMap(!showMiniMap)} 
+            showMiniMap={showMiniMap} 
+          />
+          <div
+            className="reactflow-wrapper"
+            ref={reactFlowWrapper}
+            style={{ flex: 1, position: 'relative' }}
           >
-            <Controls />
-            <Background />
-            <MiniMap />
-          </ReactFlow>
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnect={onConnect}
+              onInit={setReactFlowInstance}
+              onDrop={onDrop}
+              onDragOver={onDragOver}
+              nodeTypes={nodeTypes}
+              defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+            >
+              <Controls />
+              <Background />
+              {showMiniMap && <MiniMap />}
+            </ReactFlow>
+          </div>
         </div>
-      </div>
       <div
         style={{
           width: '250px',

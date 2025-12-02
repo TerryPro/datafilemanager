@@ -7,16 +7,21 @@ import { INodeSchema } from '../types';
 interface ICSVLoaderNodeData {
   id: string;
   filepath: string;
+  timeIndex: string;
   serviceManager?: ServiceManager;
   onFileChange?: (nodeId: string, filepath: string) => void;
+  onTimeIndexChange?: (nodeId: string, timeIndex: string) => void;
   values?: Record<string, any>;
   schema?: INodeSchema;
+  columns?: string[];
 }
 
 export const CSVLoaderNode = memo(
   ({ data, selected }: { data: ICSVLoaderNodeData; selected?: boolean }) => {
     const [files, setFiles] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
+    const [columns, setColumns] = useState<string[]>([]);
+    const [loadingColumns, setLoadingColumns] = useState(false);
     // Force update to ensure UI reflects data changes if needed
     const [, forceUpdate] = useState({});
 
@@ -46,7 +51,67 @@ export const CSVLoaderNode = memo(
       fetchFiles();
     }, [data.serviceManager]);
 
-    const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const fetchColumns = async (filepath: string) => {
+      if (!data.serviceManager || !filepath) {
+        return;
+      }
+
+      try {
+        setLoadingColumns(true);
+        // Use the server API to get columns from CSV file
+        const fileResponse = await fetch(`/api/contents/${filepath}?content=1&format=text`);
+        if (fileResponse.ok) {
+          const jsonData = await fileResponse.json();
+          // Extract the content from the JSON response
+          const content = jsonData.content;
+          if (content) {
+            const firstLine = content.split('\n')[0];
+            const csvColumns = firstLine.split(',').map((col: string) => col.trim());
+            setColumns(csvColumns);
+            // Update data.columns for external use
+            data.columns = csvColumns;
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch columns:', error);
+      } finally {
+        setLoadingColumns(false);
+      }
+    };
+
+    // Fetch columns when filepath changes
+    useEffect(() => {
+      if (data.filepath) {
+        fetchColumns(data.filepath);
+      }
+    }, [data.filepath, data.serviceManager]);
+
+    // Sync timeIndex and filepath to values whenever they change, including initial load
+    useEffect(() => {
+      if (!data.values) {
+        data.values = {};
+      }
+      
+      // Ensure bidirectional sync between data.timeIndex and data.values['timeIndex']
+      // If data.timeIndex is set but values['timeIndex'] is not, sync to values
+      if (data.timeIndex !== undefined && data.values['timeIndex'] !== data.timeIndex) {
+        data.values['timeIndex'] = data.timeIndex;
+      }
+      // If values['timeIndex'] is set but data.timeIndex is not, sync to data
+      else if (data.values['timeIndex'] !== undefined && data.timeIndex !== data.values['timeIndex']) {
+        data.timeIndex = data.values['timeIndex'];
+      }
+      
+      // Ensure bidirectional sync between data.filepath and data.values['filepath']
+      if (data.filepath !== undefined && data.values['filepath'] !== data.filepath) {
+        data.values['filepath'] = data.filepath;
+      }
+      else if (data.values['filepath'] !== undefined && data.filepath !== data.values['filepath']) {
+        data.filepath = data.values['filepath'];
+      }
+    }, [data.timeIndex, data.filepath, data.values]);
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
       const newVal = event.target.value;
       data.filepath = newVal;
       // Sync to values for CodeGenerator
@@ -57,6 +122,21 @@ export const CSVLoaderNode = memo(
 
       if (data.onFileChange) {
         data.onFileChange(data.id, newVal);
+      }
+      forceUpdate({});
+    };
+
+    const handleTimeIndexChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+      const newVal = event.target.value;
+      data.timeIndex = newVal;
+      // Sync to values for CodeGenerator
+      if (!data.values) {
+        data.values = {};
+      }
+      data.values['timeIndex'] = newVal;
+
+      if (data.onTimeIndexChange) {
+        data.onTimeIndexChange(data.id, newVal);
       }
       forceUpdate({});
     };
@@ -126,7 +206,7 @@ export const CSVLoaderNode = memo(
             <select
               className="nodrag"
               defaultValue={data.filepath || ''}
-              onChange={handleChange}
+              onChange={handleFileChange}
               style={inputStyle}
             >
               <option value="" disabled>
@@ -135,6 +215,37 @@ export const CSVLoaderNode = memo(
               {files.map(file => (
                 <option key={file} value={file}>
                   {file.split('/').pop()}
+                </option>
+              ))}
+            </select>
+          )}
+
+          <label
+            style={{
+              display: 'block',
+              marginTop: '12px',
+              marginBottom: '2px',
+              color: 'var(--jp-ui-font-color2)',
+              fontSize: '10px'
+            }}
+          >
+            时间索引列:
+          </label>
+          {loadingColumns ? (
+            <div style={{ color: 'var(--jp-ui-font-color2)' }}>加载列中...</div>
+          ) : (
+            <select
+              className="nodrag"
+              defaultValue={data.timeIndex || ''}
+              onChange={handleTimeIndexChange}
+              style={inputStyle}
+            >
+              <option value="">
+                无（普通DataFrame）
+              </option>
+              {columns.map(col => (
+                <option key={col} value={col}>
+                  {col}
                 </option>
               ))}
             </select>

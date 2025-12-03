@@ -298,7 +298,7 @@ export const CSVLoaderNode = memo(
                 pointerEvents: 'none'
               }}
             >
-              DF
+              df_out
             </span>
             <Handle
               type="source"

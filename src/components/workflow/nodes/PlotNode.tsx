@@ -96,7 +96,7 @@ export const PlotNode = memo(
                 pointerEvents: 'none'
               }}
             >
-              DF
+              df
             </span>
           </div>
         </div>

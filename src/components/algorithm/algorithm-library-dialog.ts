@@ -358,6 +358,10 @@ class LibraryBodyWidget extends Widget implements Dialog.IBodyWidget<string> {
       let code = func.template;
       const varName = this.dfName || 'df';
       code = code.replace(/{VAR_NAME}/g, varName);
+      
+      // Generate output variable name
+      const outputVarName = varName + '_out';
+      code = code.replace(/{OUTPUT_VAR}/g, outputVarName);
 
       // Replace parameters
       if (func.args) {

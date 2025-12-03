@@ -162,13 +162,15 @@ export const GenericNode = memo(
           {/* Parameters */}
           <div style={{ marginBottom: '4px' }}>
             {schema.args && schema.args.length > 0 && (
-              <>              
+              <>
                 {/* Filter parameters based on count and priority */}
                 {(() => {
                   let displayArgs = schema.args;
                   if (schema.args.length > 3) {
                     // If more than 3 args, only show critical ones
-                    displayArgs = schema.args.filter(arg => arg.priority === 'critical');
+                    displayArgs = schema.args.filter(
+                      arg => arg.priority === 'critical'
+                    );
                   }
                   return displayArgs;
                 })().map((arg: IParam) => (

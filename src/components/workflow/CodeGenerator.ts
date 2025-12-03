@@ -61,6 +61,19 @@ export const generateCode = (
 
   // Collect imports from all nodes
   const allImports = new Set<string>();
+
+  // For function templates, we need to import from workflow_lib
+  // Check if any node uses library (has a schema)
+  const useWorkflowLib = sortedNodes.some(node => {
+    return !!node.data?.schema;
+  });
+
+  // If there are library algorithms, add the workflow_lib import
+  if (useWorkflowLib) {
+    allImports.add('from aiserver.workflow_lib import *');
+  }
+
+  // Always add explicit imports from schema if defined
   sortedNodes.forEach(node => {
     const schema: INodeSchema | undefined = node.data?.schema;
     if (schema && schema.imports) {
@@ -173,51 +186,45 @@ export const generateCode = (
 
       nodeOutputs[nodeId] = currentOutputs;
 
-      // 3. Prepare Template Replacement
-      let code = schema.template;
+      // 3. Generate Function Call Dynamically
+      const funcName = schema.id; // Assuming Algorithm ID is the function name
+      const callArgs: string[] = [];
 
-      // Replace Output Placeholders
-      Object.entries(currentOutputs).forEach(([portName, varName]) => {
-        if (portName !== 'default') {
-          code = code.replace(new RegExp(`{${portName}}`, 'g'), varName);
-        }
-      });
-      if (currentOutputs['default']) {
-        code = code.replace(/\{OUTPUT_VAR\}/g, currentOutputs['default']);
-      }
-
-      // Replace Input Placeholders
+      // Handle Input DataFrames (df, df1, df2, left, right, etc.)
       Object.entries(inputVars).forEach(([portName, varName]) => {
-        if (portName !== 'default') {
-          code = code.replace(new RegExp(`{${portName}}`, 'g'), varName);
+        let paramName = portName;
+        // Map standard port names to function parameter names
+        if (portName === 'default' || portName === 'df_in') {
+          paramName = 'df';
         }
+        callArgs.push(`${paramName}=${varName}`);
       });
 
-      let defaultInputVar = inputVars['default'];
-      if (!defaultInputVar && Object.keys(inputVars).length > 0) {
-        defaultInputVar = Object.values(inputVars)[0];
-      }
-
-      if (defaultInputVar) {
-        code = code.replace(/\{VAR_NAME\}/g, defaultInputVar);
-      }
-
-      // Replace Parameters
+      // Handle Parameters
       const values = data.values || {};
       schema.args?.forEach(arg => {
+        // Skip input/output parameters as they are handled separately
+        if (arg.role === 'input' || arg.role === 'output') {
+          return;
+        }
+
         let val = values[arg.name];
         if (val === undefined) {
           val = arg.default;
         }
 
+        // Handle Booleans
         if (val === true) {
           val = 'True';
-        }
-        if (val === false) {
+        } else if (val === false) {
           val = 'False';
         }
-
-        if (Array.isArray(val)) {
+        // Handle Null
+        else if (val === null) {
+          val = 'None';
+        }
+        // Handle Arrays
+        else if (Array.isArray(val)) {
           const formattedItems = val.map(v => {
             if (typeof v === 'string') {
               return `'${v}'`;
@@ -226,32 +233,53 @@ export const generateCode = (
           });
           val = `[${formattedItems.join(', ')}]`;
         }
-
-        if (arg.name === 'filepath' && typeof val === 'string' && serverRoot) {
-          const isWin = serverRoot.includes('\\');
-          const sep = isWin ? '\\' : '/';
-          let valNorm = val.replace(/\//g, sep).replace(/\\/g, sep);
-          const isAbs = isWin
-            ? /^[a-zA-Z]:\\/.test(valNorm) || valNorm.startsWith('\\\\')
-            : valNorm.startsWith('/');
-          if (!isAbs) {
-            let root = serverRoot;
-            if (root.endsWith(sep)) {
-              root = root.substring(0, root.length - 1);
+        // Handle Strings (based on type or if it's a string value that isn't a variable/number)
+        else if (arg.type === 'str' || typeof val === 'string') {
+          // Ensure we don't double quote if it's already quoted (though usually val is raw string)
+          // Also handle path normalization if it's a filepath
+          if (arg.name === 'filepath' && serverRoot) {
+            const isWin = serverRoot.includes('\\');
+            const sep = isWin ? '\\' : '/';
+            let valNorm = val.replace(/\//g, sep).replace(/\\/g, sep);
+            const isAbs = isWin
+              ? /^[a-zA-Z]:\\/.test(valNorm) || valNorm.startsWith('\\\\')
+              : valNorm.startsWith('/');
+            if (!isAbs) {
+              let root = serverRoot;
+              if (root.endsWith(sep)) {
+                root = root.substring(0, root.length - 1);
+              }
+              if (!valNorm.includes(sep)) {
+                valNorm = `dataset${sep}${valNorm}`;
+              }
+              valNorm = `${root}${sep}${valNorm}`;
+              if (isWin) {
+                valNorm = valNorm.replace(/\\/g, '\\');
+              }
             }
-            if (!valNorm.includes(sep)) {
-              valNorm = `dataset${sep}${valNorm}`;
-            }
-            valNorm = `${root}${sep}${valNorm}`;
-            if (isWin) {
-              valNorm = valNorm.replace(/\\/g, '\\');
-            }
+            val = valNorm;
           }
-          val = valNorm;
+
+          // Check if it looks like a number but is a string? No, type check handles that.
+          // Just wrap in quotes.
+          val = `'${val}'`;
         }
 
-        code = code.replace(new RegExp(`{${arg.name}}`, 'g'), String(val));
+        callArgs.push(`${arg.name}=${val}`);
       });
+
+      // Handle Output Variable
+      // if (currentOutputs['default']) {
+      //   callArgs.push(`output_var='${currentOutputs['default']}'`);
+      // }
+
+      const code = `${
+        currentOutputs['default'] || 'res'
+      } = ${funcName}(${callArgs.join(', ')})
+
+# Display results
+if ${currentOutputs['default'] || 'res'} is not None:
+    display(${currentOutputs['default'] || 'res'}.head())`;
 
       // Indent code
       const indentedCode = code

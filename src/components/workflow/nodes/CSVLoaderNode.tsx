@@ -59,14 +59,18 @@ export const CSVLoaderNode = memo(
       try {
         setLoadingColumns(true);
         // Use the server API to get columns from CSV file
-        const fileResponse = await fetch(`/api/contents/${filepath}?content=1&format=text`);
+        const fileResponse = await fetch(
+          `/api/contents/${filepath}?content=1&format=text`
+        );
         if (fileResponse.ok) {
           const jsonData = await fileResponse.json();
           // Extract the content from the JSON response
           const content = jsonData.content;
           if (content) {
             const firstLine = content.split('\n')[0];
-            const csvColumns = firstLine.split(',').map((col: string) => col.trim());
+            const csvColumns = firstLine
+              .split(',')
+              .map((col: string) => col.trim());
             setColumns(csvColumns);
             // Update data.columns for external use
             data.columns = csvColumns;
@@ -91,22 +95,33 @@ export const CSVLoaderNode = memo(
       if (!data.values) {
         data.values = {};
       }
-      
+
       // Ensure bidirectional sync between data.timeIndex and data.values['timeIndex']
       // If data.timeIndex is set but values['timeIndex'] is not, sync to values
-      if (data.timeIndex !== undefined && data.values['timeIndex'] !== data.timeIndex) {
+      if (
+        data.timeIndex !== undefined &&
+        data.values['timeIndex'] !== data.timeIndex
+      ) {
         data.values['timeIndex'] = data.timeIndex;
       }
       // If values['timeIndex'] is set but data.timeIndex is not, sync to data
-      else if (data.values['timeIndex'] !== undefined && data.timeIndex !== data.values['timeIndex']) {
+      else if (
+        data.values['timeIndex'] !== undefined &&
+        data.timeIndex !== data.values['timeIndex']
+      ) {
         data.timeIndex = data.values['timeIndex'];
       }
-      
+
       // Ensure bidirectional sync between data.filepath and data.values['filepath']
-      if (data.filepath !== undefined && data.values['filepath'] !== data.filepath) {
+      if (
+        data.filepath !== undefined &&
+        data.values['filepath'] !== data.filepath
+      ) {
         data.values['filepath'] = data.filepath;
-      }
-      else if (data.values['filepath'] !== undefined && data.filepath !== data.values['filepath']) {
+      } else if (
+        data.values['filepath'] !== undefined &&
+        data.filepath !== data.values['filepath']
+      ) {
         data.filepath = data.values['filepath'];
       }
     }, [data.timeIndex, data.filepath, data.values]);
@@ -126,7 +141,9 @@ export const CSVLoaderNode = memo(
       forceUpdate({});
     };
 
-    const handleTimeIndexChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const handleTimeIndexChange = (
+      event: React.ChangeEvent<HTMLSelectElement>
+    ) => {
       const newVal = event.target.value;
       data.timeIndex = newVal;
       // Sync to values for CodeGenerator
@@ -240,9 +257,7 @@ export const CSVLoaderNode = memo(
               onChange={handleTimeIndexChange}
               style={inputStyle}
             >
-              <option value="">
-                无（普通DataFrame）
-              </option>
+              <option value="">无（普通DataFrame）</option>
               {columns.map(col => (
                 <option key={col} value={col}>
                   {col}

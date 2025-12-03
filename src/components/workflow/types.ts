@@ -15,6 +15,7 @@ export interface IParam {
   step?: number;
   widget?: string; // e.g., 'file-selector'
   priority?: string; // 'critical' or 'non-critical', default is 'non-critical'
+  role?: 'input' | 'output' | 'parameter';
 }
 
 export interface INodeSchema {

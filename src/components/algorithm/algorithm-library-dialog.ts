@@ -14,6 +14,8 @@ interface ILibraryFunction {
   signature?: string;
   module?: string;
   imports?: string[];
+  inputs?: Array<{ name: string; type?: string }>;
+  outputs?: Array<{ name: string; type?: string }>;
   args?: Array<{
     name: string;
     default?: any;
@@ -21,10 +23,12 @@ interface ILibraryFunction {
     label?: string;
     description?: string;
     type?: string;
+    widget?: string;
     min?: number;
     max?: number;
     step?: number;
     options?: string[];
+    role?: 'input' | 'output' | 'parameter';
   }>;
 }
 
@@ -44,16 +48,19 @@ class LibraryBodyWidget extends Widget implements Dialog.IBodyWidget<string> {
   private currentParams: { [key: string]: any } = {};
   private codePreElement: HTMLPreElement | null = null;
   private serverRoot: string;
+  private source: string; // 'dataframe_panel' or 'workflow'
 
   constructor(
     libraryData: ILibraryMetadata,
     dfName: string,
-    serverRoot: string
+    serverRoot: string,
+    source = 'dataframe_panel'
   ) {
     super();
     this.libraryData = libraryData;
     this.dfName = dfName;
     this.serverRoot = serverRoot;
+    this.source = source;
     this.addClass('jp-LibraryBody');
     this.node.style.resize = 'none';
     this.node.style.overflow = 'hidden';
@@ -196,7 +203,8 @@ class LibraryBodyWidget extends Widget implements Dialog.IBodyWidget<string> {
     this.rightPanel.appendChild(descLabel);
 
     const descContent = document.createElement('div');
-    descContent.textContent = func.description;
+    const varName = this.dfName || 'df';
+    descContent.textContent = func.description.replace(/{VAR_NAME}/g, varName);
     descContent.style.marginBottom = '24px';
     descContent.style.lineHeight = '1.5';
     this.rightPanel.appendChild(descContent);
@@ -220,6 +228,11 @@ class LibraryBodyWidget extends Widget implements Dialog.IBodyWidget<string> {
       paramContainer.style.border = '1px solid var(--jp-border-color2)';
 
       func.args.forEach(arg => {
+        // Skip input and output parameters in UI
+        if (arg.role === 'input' || arg.role === 'output') {
+          return;
+        }
+
         let initial = arg.default !== undefined ? arg.default : '';
         if (arg.name === 'filepath' && typeof initial === 'string') {
           const parts = initial.split(/[\\/]/);
@@ -276,6 +289,76 @@ class LibraryBodyWidget extends Widget implements Dialog.IBodyWidget<string> {
             this.updateCode(func);
           };
           input = select;
+        } else if (
+          arg.type === 'bool' ||
+          arg.widget === 'checkbox' ||
+          typeof arg.default === 'boolean'
+        ) {
+          const wrapper = document.createElement('div');
+          wrapper.style.display = 'flex';
+          wrapper.style.alignItems = 'center';
+          wrapper.style.minHeight = '24px';
+
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.style.margin = '0 8px 0 0';
+
+          const isChecked =
+            initial === true || initial === 'True' || initial === 'true';
+          checkbox.checked = isChecked;
+          this.currentParams[arg.name] = isChecked;
+
+          const cbLabel = document.createElement('span');
+          cbLabel.textContent = isChecked ? 'True' : 'False';
+          cbLabel.style.fontSize = '12px';
+
+          checkbox.onchange = () => {
+            this.currentParams[arg.name] = checkbox.checked;
+            cbLabel.textContent = checkbox.checked ? 'True' : 'False';
+            this.updateCode(func);
+          };
+
+          wrapper.appendChild(checkbox);
+          wrapper.appendChild(cbLabel);
+          input = wrapper;
+        } else if (
+          arg.type === 'list' ||
+          (arg.widget === 'column-selector' && arg.type !== 'str') ||
+          Array.isArray(arg.default)
+        ) {
+          const inp = document.createElement('input');
+          inp.className = 'jp-mod-styled';
+          inp.style.width = '100%';
+          inp.type = 'text';
+          inp.placeholder = '列名1, 列名2 (逗号分隔)';
+
+          let displayVal = '';
+          if (Array.isArray(initial)) {
+            displayVal = initial.join(', ');
+          } else if (typeof initial === 'string') {
+            displayVal = initial.replace(/[[\]']/g, '');
+          }
+          inp.value = displayVal;
+
+          const updateListParam = () => {
+            const raw = inp.value;
+            const parts = raw
+              .split(/[,，]/)
+              .map(s => s.trim())
+              .filter(s => s);
+            if (parts.length === 0) {
+              this.currentParams[arg.name] = '[]';
+            } else {
+              this.currentParams[arg.name] = "['" + parts.join("', '") + "']";
+            }
+            this.updateCode(func);
+          };
+
+          // Initialize with formatted value if not already
+          updateListParam();
+
+          inp.oninput = updateListParam;
+          input = inp;
         } else {
           const inp = document.createElement('input');
           inp.className = 'jp-mod-styled';
@@ -289,7 +372,10 @@ class LibraryBodyWidget extends Widget implements Dialog.IBodyWidget<string> {
             // Removing min/max to prevent browser validation from disabling the dialog button
             // if (arg.min !== undefined) inp.min = arg.min.toString();
             // if (arg.max !== undefined) inp.max = arg.max.toString();
-            inp.value = arg.default.toString();
+            inp.value =
+              arg.default !== undefined && arg.default !== null
+                ? arg.default.toString()
+                : '';
             inp.onchange = () => {
               const val = parseFloat(inp.value);
               this.currentParams[arg.name] = isNaN(val) ? arg.default : val;
@@ -297,7 +383,10 @@ class LibraryBodyWidget extends Widget implements Dialog.IBodyWidget<string> {
             };
           } else {
             inp.type = 'text';
-            let dv = arg.default ? arg.default.toString() : '';
+            let dv =
+              arg.default !== undefined && arg.default !== null
+                ? arg.default.toString()
+                : '';
             if (arg.name === 'filepath' && typeof dv === 'string') {
               const parts = dv.split(/[\\/]/);
               dv = parts[parts.length - 1];
@@ -347,87 +436,147 @@ class LibraryBodyWidget extends Widget implements Dialog.IBodyWidget<string> {
   private updateCode(func: ILibraryFunction) {
     let finalCode = '';
 
-    // 1. Add Imports
-    if (func.imports && func.imports.length > 0) {
-      finalCode += func.imports.join('\n') + '\n\n';
-    }
+    // Common: Generate Function Call Dynamically
+    const funcName = func.id;
+    const callArgs: string[] = [];
+    const varName = this.dfName || 'df';
 
-    if (!func.template) {
-      finalCode += `# ${func.name}\n# 暂无可用模板。`;
-    } else {
-      let code = func.template;
-      const varName = this.dfName || 'df';
-      code = code.replace(/{VAR_NAME}/g, varName);
-      
-      // Generate output variable name
-      const outputVarName = varName + '_out';
-      code = code.replace(/{OUTPUT_VAR}/g, outputVarName);
+    // 1. Input DataFrame (mapped to 'df' or first input port)
+    // Legacy check for input ports (keeping variable for reference if needed, or we can remove it)
+    // const hasInputPorts = func.inputs && func.inputs.length > 0;
 
-      // Replace parameters
-      if (func.args) {
-        func.args.forEach(arg => {
-          let val = this.currentParams[arg.name];
-          if (val === undefined || val === null) {
-            val = '';
+    // 2. Other Parameters
+    if (func.args) {
+      func.args.forEach(arg => {
+        // Handle Inputs
+        if (arg.role === 'input' || arg.name === 'df') {
+          callArgs.push(`${arg.name}=${varName}`);
+          return;
+        }
+
+        // Handle Outputs
+        if (arg.role === 'output' || arg.name === 'output_var') {
+          // Will be handled by appending output_var arg later, but we need to respect the param name
+          // If the param name is NOT output_var, we should pass the output name to it.
+          // BUT, standard convention in this project is `output_var` param name.
+          // For now, let's assume the standard pattern where output_var is the param name.
+          return;
+        }
+
+        let val = this.currentParams[arg.name];
+        let isNone = false;
+
+        if (
+          arg.default === undefined &&
+          (val === '' || val === null || val === undefined)
+        ) {
+          isNone = true;
+          val = 'None';
+        } else if (val === undefined || val === null) {
+          val = arg.default; // Use default if available
+          if (val === undefined) {
+            val = ''; // Should not happen if default exists
           }
+        }
 
-          // Handle absolute path for filepath parameter
-          if (
-            arg.name === 'filepath' &&
-            typeof val === 'string' &&
-            this.serverRoot
-          ) {
-            // Normalize separators
-            const isWin = this.serverRoot.includes('\\');
-            const sep = isWin ? '\\' : '/';
-            let valNorm = val.replace(/\//g, sep).replace(/\\/g, sep);
+        if (typeof val === 'boolean') {
+          val = val ? 'True' : 'False';
+        } else if (val === null) {
+          val = 'None';
+        }
 
-            // If value is just a filename (no separators), assume it's in dataset folder
-            if (!valNorm.includes(sep)) {
-              valNorm = `dataset${sep}${valNorm}`;
-            }
+        // Handle string quoting logic
+        if (
+          typeof val === 'string' &&
+          !isNone &&
+          val !== 'True' &&
+          val !== 'False' &&
+          val !== 'None'
+        ) {
+          const isStructure =
+            (val.trim().startsWith('[') && val.trim().endsWith(']')) ||
+            (val.trim().startsWith('(') && val.trim().endsWith(')')) ||
+            (val.trim().startsWith('{') && val.trim().endsWith('}'));
 
-            // Check if it's already absolute
-            // Simple check: Win (X:\ or \\) or Unix (/)
-            const isAbs = isWin
-              ? /^[a-zA-Z]:\\/.test(valNorm) || valNorm.startsWith('\\\\')
-              : valNorm.startsWith('/');
+          const noQuoteTypes = [
+            'int',
+            'float',
+            'bool',
+            'list',
+            'tuple',
+            'dict',
+            'figsize'
+          ];
+          const shouldNotQuote =
+            noQuoteTypes.includes(arg.type || '') || isStructure;
 
-            if (!isAbs) {
-              // Remove leading slash/backslash from val if present to avoid double separators
-              let cleanVal = valNorm;
-              if (cleanVal.startsWith(sep)) {
-                cleanVal = cleanVal.substring(1);
+          if (!shouldNotQuote) {
+            // Handle filepath normalization
+            if (arg.name === 'filepath' && this.serverRoot) {
+              const isWin = this.serverRoot.includes('\\');
+              const sep = isWin ? '\\' : '/';
+              const valNorm = val.replace(/\//g, sep).replace(/\\/g, sep);
+              const isAbs = isWin
+                ? /^[a-zA-Z]:\\/.test(valNorm) || valNorm.startsWith('\\\\')
+                : valNorm.startsWith('/');
+              if (!isAbs) {
+                let cleanVal = valNorm;
+                if (cleanVal.startsWith(sep)) {
+                  cleanVal = cleanVal.substring(1);
+                }
+                let root = this.serverRoot;
+                if (root.endsWith(sep)) {
+                  root = root.substring(0, root.length - 1);
+                }
+                val = `${root}${sep}${cleanVal}`;
               }
-
-              // If serverRoot ends with separator, don't add another
-              let root = this.serverRoot;
-              if (root.endsWith(sep)) {
-                root = root.substring(0, root.length - 1);
-              }
-
-              val = `${root}${sep}${cleanVal}`;
-
-              // Escape backslashes for Python string if on Windows
-              // Python string literal: "C:\\Path" or r"C:\Path"
-              // The template usually uses simple quotes.
-              // If we use raw string in template r'{filepath}', single backslashes are fine.
-              // But if template is '{filepath}', we need double backslashes.
-              // Let's look at the template.
-              // load_csv template: filepath = '{filepath}'
-              // It is NOT a raw string in the template definition in Python file: filepath = '{filepath}'
-              // So we MUST escape backslashes.
               if (isWin) {
                 val = val.replace(/\\/g, '\\\\');
               }
             }
+            val = `'${val}'`;
           }
+        } else if (Array.isArray(val)) {
+          const formattedItems = val.map(v => {
+            if (typeof v === 'string') {
+              return `'${v}'`;
+            }
+            return String(v);
+          });
+          val = `[${formattedItems.join(', ')}]`;
+        }
 
-          const placeholder = `{${arg.name}}`;
-          code = code.replace(new RegExp(placeholder, 'g'), val.toString());
-        });
+        callArgs.push(`${arg.name}=${val}`);
+      });
+    }
+
+    // 3. Output Variable
+    const outputVarName = varName + '_out';
+
+    // Construct Call Code
+    const callCode = `# ${func.name}
+${outputVarName} = ${funcName}(${callArgs.join(', ')})
+
+# Display results
+if ${outputVarName} is not None:
+    display(${outputVarName}.head())`;
+
+    // Final Assembly based on Source
+    if (this.source === 'workflow') {
+      finalCode = callCode;
+    } else {
+      // Notebook Mode: Add imports and function definition
+      if (func.imports && func.imports.length > 0) {
+        finalCode += func.imports.join('\n') + '\n\n';
       }
-      finalCode += code;
+
+      if (func.template) {
+        finalCode += func.template + '\n\n';
+      } else {
+        finalCode += `# ${func.name}\n# Source not available\n\n`;
+      }
+
+      finalCode += callCode;
     }
 
     this.selectedCode = finalCode;
@@ -456,7 +605,8 @@ export class AlgorithmLibraryDialogManager {
 
   async openLibraryDialog(
     panel: NotebookPanel,
-    currentDfName: string | null
+    currentDfName: string | null,
+    source = 'dataframe_panel' // 'dataframe_panel' or 'workflow'
   ): Promise<void> {
     const [libraryData, serverRoot] = await Promise.all([
       this.aiService.getFunctionLibrary(),
@@ -465,7 +615,8 @@ export class AlgorithmLibraryDialogManager {
     const body = new LibraryBodyWidget(
       libraryData,
       currentDfName || 'df',
-      serverRoot
+      serverRoot,
+      source
     );
     const dialog = new Dialog({
       title: '算法函数库',

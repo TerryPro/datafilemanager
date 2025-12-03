@@ -46,8 +46,14 @@
   background: var(--jp-layout-color2);
 }
 
+/* stylelint-disable-next-line selector-class-pattern */
 .df-refresh .jp-Icon {
   display: inline-block;
+}
+
+/* SVG 图标通用样式 */
+svg {
+  display: block;
 }
 
 .df-panel-list {
@@ -145,6 +151,7 @@
 }
 
 /* AI Sidebar 样式 */
+/* stylelint-disable-next-line selector-class-pattern */
 .jp-AiSidebar {
   display: flex;
   flex-direction: column;
@@ -487,11 +494,6 @@
 
 .ai-sidebar-message-system.success {
   color: var(--jp-success-color1);
-}
-
-/* SVG 图标通用样式 */
-svg {
-  display: block;
 }
 
 /* 保持扩展样式入口 */

@@ -1,5 +1,10 @@
 import React from 'react';
-import { runIcon, cutIcon, copyIcon, searchIcon } from '@jupyterlab/ui-components';
+import {
+  runIcon,
+  cutIcon,
+  copyIcon,
+  searchIcon
+} from '@jupyterlab/ui-components';
 
 interface IWorkflowToolbarProps {
   onRun: () => void;
@@ -83,7 +88,7 @@ export const WorkflowToolbar = ({
       {onToggleMiniMap && (
         <ToolbarButton
           icon={searchIcon}
-          title={showMiniMap ? "隐藏迷你地图" : "显示迷你地图"}
+          title={showMiniMap ? '隐藏迷你地图' : '显示迷你地图'}
           onClick={onToggleMiniMap}
         />
       )}

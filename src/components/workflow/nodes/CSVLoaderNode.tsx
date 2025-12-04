@@ -179,6 +179,7 @@ export const CSVLoaderNode = memo(
           borderRadius: '8px',
           background: 'var(--jp-layout-color1)',
           minWidth: '200px',
+          maxWidth: '300px',
           fontSize: '12px',
           boxShadow: selected
             ? '0 0 0 2px rgba(33, 150, 243, 0.3)'

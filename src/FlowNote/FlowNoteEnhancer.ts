@@ -53,7 +53,10 @@ export class FlowNoteEnhancer {
 
     // Create Flow Panel wrapper
     const flowWidget = ReactWidget.create(
-      React.createElement(FlowNotePanel, { notebook: panel })
+      React.createElement(FlowNotePanel, {
+        notebook: panel,
+        serviceManager: (panel.context as any)?.manager?.services
+      })
     );
     flowWidget.addClass('jp-FlowNote-Panel');
     // Do not hide by default, handle visibility in checkMetadata immediately

@@ -17,9 +17,7 @@ import { WorkflowSidebar } from './WorkflowSidebar';
 import { WorkflowToolbar } from './WorkflowToolbar';
 import { PropertyPanel } from './PropertyPanel';
 import { CSVLoaderNode } from './nodes/CSVLoaderNode';
-import { PlotNode } from './nodes/PlotNode';
 import { GenericNode } from './nodes/GenericNode';
-import { TrendNode } from './nodes/TrendNode';
 import { generateCode } from './CodeGenerator';
 import { AiService } from '../../services/ai-service';
 import { useColumnPropagation } from './hooks/useColumnPropagation';
@@ -27,9 +25,9 @@ import { metadataService } from './services/MetadataService';
 
 const nodeTypes = {
   csv_loader: CSVLoaderNode,
-  plot: PlotNode,
+  plot: GenericNode,
   generic: GenericNode,
-  trend: TrendNode
+  trend: GenericNode
 };
 
 interface IWorkflowEditorProps {
@@ -184,7 +182,27 @@ const WorkflowEditorContent = ({
               category: 'visualization',
               name: 'Plot',
               inputs: [{ name: 'df_in', type: 'DataFrame' }],
-              outputs: []
+              outputs: [],
+              args: [
+                {
+                  name: 'plot_type',
+                  type: 'str',
+                  label: 'Type',
+                  default: 'line',
+                  options: ['line', 'bar', 'scatter'],
+                  description: 'Plot type',
+                  priority: 'critical'
+                },
+                {
+                  name: 'column',
+                  type: 'str',
+                  label: 'Column',
+                  default: '',
+                  widget: 'column-selector',
+                  description: 'Column to plot',
+                  priority: 'critical'
+                }
+              ]
             };
           }
         }

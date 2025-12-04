@@ -150,8 +150,13 @@ export const FlowGenericNode = memo(
 
     const inputColumns = useMemo(() => {
       if (!data.metadata?.inputColumns) {
+        console.log('FlowGenericNode: No inputColumns in metadata', id);
         return [];
       }
+      console.log(
+        'FlowGenericNode: inputColumns raw:',
+        data.metadata.inputColumns
+      );
       const allCols: IColumn[] = [];
       const seen = new Set<string>();
       const colsArrays = Object.values(
@@ -163,8 +168,9 @@ export const FlowGenericNode = memo(
           allCols.push(col);
         }
       });
+      console.log('FlowGenericNode: inputColumns flattened:', allCols);
       return allCols;
-    }, [data.metadata]);
+    }, [data.metadata, id]);
 
     const handleParamChange = (name: string, value: any) => {
       const newValues = { ...values, [name]: value };
@@ -286,7 +292,10 @@ export const FlowGenericNode = memo(
                     pointerEvents: 'none'
                   }}
                 >
-                  {port.name}
+                  {(() => {
+                    const varName = (data as any).inputVariables?.[port.name];
+                    return varName ? `${port.name} (${varName})` : port.name;
+                  })()}
                 </span>
               </div>
             ))}

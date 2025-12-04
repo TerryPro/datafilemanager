@@ -1,3 +1,5 @@
+import { ServiceManager } from '@jupyterlab/services';
+
 export interface IPort {
   name: string;
   type: string;
@@ -57,5 +59,5 @@ export interface INodeData {
   onSelectAlgorithm?: (nodeId: string, schema: INodeSchema) => void;
   onSelectFreeCell?: (nodeId: string) => void;
   onRunNode?: (nodeId: string) => void;
-  serviceManager?: any;
+  serviceManager?: ServiceManager;
 }

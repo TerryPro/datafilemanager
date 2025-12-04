@@ -28,7 +28,12 @@ export const ColumnSelector: React.FC<IColumnSelectorProps> = ({
     }
   };
 
+  // Handle case where value is not in columns (allow manual override via text input?)
+  // For now, we provide a hybrid: a select with an "Other" option or just a select.
+  // If columns are empty, show text input.
+
   if (!columns || columns.length === 0) {
+    // Fallback to text/json input
     return (
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         <input
@@ -38,6 +43,7 @@ export const ColumnSelector: React.FC<IColumnSelectorProps> = ({
           onChange={e => {
             const val = e.target.value;
             if (multiple) {
+              // Simple CSV parse for manual list
               onChange(
                 val
                   .split(',')

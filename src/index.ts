@@ -15,6 +15,7 @@ import { CommandManager } from './components/core/command-manager';
 import { AiSidebar } from './components/ai/ai-sidebar';
 import { AlgorithmLibraryPanel } from './components/algorithm/algorithm-library-panel';
 import { WorkflowWidget } from './components/workflow/WorkflowWidget';
+import flowNotePlugin from './FlowNote';
 
 // 创建一个全局变量来跟踪文件浏览器实例
 const tracker: {
@@ -137,4 +138,4 @@ const plugin: JupyterFrontEndPlugin<void> = {
   }
 };
 
-export default plugin;
+export default [plugin, flowNotePlugin];

@@ -1,6 +1,7 @@
-import React, { memo, useEffect, useState } from 'react';
+import React, { memo, useState } from 'react';
 import { NodeProps } from 'reactflow';
 import { INodeData, INodeSchema } from '../types';
+import { useAlgorithmLibrary } from './components';
 
 /**
  * 空节点组件：用于表示 Notebook 中的空 Cell
@@ -8,38 +9,13 @@ import { INodeData, INodeSchema } from '../types';
  * - 选择算法后触发回调以将 Cell 转换为具体算法节点
  */
 export const FlowEmptyNode = memo(({ id, data }: NodeProps<INodeData>) => {
-  const [library, setLibrary] = useState<Record<string, INodeSchema[]>>({});
-  const [loading, setLoading] = useState(true);
+  const { library, allSchemas, loading } = useAlgorithmLibrary();
   const [selected, setSelected] = useState<string>('');
-
-  useEffect(() => {
-    const fetchLibrary = async () => {
-      try {
-        const response = await fetch('/aiserver/function-library');
-        if (response.ok) {
-          const json = await response.json();
-          setLibrary(json);
-        } else {
-          console.error(
-            'FlowEmptyNode: fetch library failed',
-            response.statusText
-          );
-        }
-      } catch (e) {
-        console.error('FlowEmptyNode: error fetching library', e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchLibrary();
-  }, []);
-
-  const allSchemas: INodeSchema[] = Object.values(library).flat();
 
   const handleSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
     setSelected(val);
-    const schema = allSchemas.find(s => s.id === val);
+    const schema = allSchemas.find((s: INodeSchema) => s.id === val);
     if (schema && typeof data.onSelectAlgorithm === 'function') {
       data.onSelectAlgorithm(id, schema);
     }
@@ -88,7 +64,7 @@ export const FlowEmptyNode = memo(({ id, data }: NodeProps<INodeData>) => {
               </option>
               {Object.entries(library).map(([category, nodes]) => (
                 <optgroup key={category} label={category}>
-                  {nodes.map(n => (
+                  {(nodes as INodeSchema[]).map((n: INodeSchema) => (
                     <option key={n.id} value={n.id}>
                       {n.name}
                     </option>

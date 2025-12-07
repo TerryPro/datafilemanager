@@ -8,7 +8,7 @@ import { IDocumentManager } from '@jupyterlab/docmanager';
 import { IDefaultFileBrowser } from '@jupyterlab/filebrowser';
 import { ICommandPalette } from '@jupyterlab/apputils';
 import { notebookIcon } from '@jupyterlab/ui-components';
-import { FlowNoteEnhancer } from './FlowNoteEnhancer';
+import { FlowNoteIntegration } from '../../flownote/integration/FlowNoteIntegration';
 
 const flowNotePlugin: JupyterFrontEndPlugin<void> = {
   id: 'datafilemanager:flownote',
@@ -32,12 +32,12 @@ const flowNotePlugin: JupyterFrontEndPlugin<void> = {
     console.log('FlowNote extension is activated!');
 
     tracker.widgetAdded.connect((sender, panel) => {
-      FlowNoteEnhancer.manage(panel);
+      FlowNoteIntegration.manage(panel);
     });
 
     // Also attach to existing widgets if any
     tracker.forEach(panel => {
-      FlowNoteEnhancer.manage(panel);
+      FlowNoteIntegration.manage(panel);
     });
 
     // Add Command to create new FlowNote

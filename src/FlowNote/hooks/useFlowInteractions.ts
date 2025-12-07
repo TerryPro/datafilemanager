@@ -4,7 +4,7 @@ import { NotebookPanel } from '@jupyterlab/notebook';
 import { UUID } from '@lumino/coreutils';
 import * as nbformat from '@jupyterlab/nbformat';
 import { AiService } from '../../services/ai-service';
-import { updateCellSourceForNode } from '../services/CodeGenerator';
+import { CellUpdater } from '../codegen';
 
 export const useFlowInteractions = (
   notebook: NotebookPanel,
@@ -197,7 +197,7 @@ export const useFlowInteractions = (
 
       (async () => {
         const root = serverRoot || (await new AiService().getServerRoot());
-        updateCellSourceForNode(notebook, nodeId, root);
+        new CellUpdater(notebook, root).updateCellForNode(nodeId);
       })();
     },
     [notebook, reactFlowInstance, reactFlowWrapper, serverRoot]

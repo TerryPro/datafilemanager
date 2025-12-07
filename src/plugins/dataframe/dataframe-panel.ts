@@ -4,7 +4,7 @@ import { INotebookTracker, NotebookPanel } from '@jupyterlab/notebook';
 import { showErrorMessage, InputDialog } from '@jupyterlab/apputils';
 import { ITranslator } from '@jupyterlab/translation';
 import { Menu } from '@lumino/widgets';
-import { AlgorithmLibraryDialogManager } from '../algorithm/algorithm-library-dialog';
+import { AlgorithmLibraryDialogManager } from './algorithm-library-dialog';
 
 /**
  * DataFrame 检视面板组件，显示当前笔记本中的所有 DataFrame 变量

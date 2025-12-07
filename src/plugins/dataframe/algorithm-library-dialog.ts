@@ -599,7 +599,7 @@ if ${outputVarName} is not None:
 export class AlgorithmLibraryDialogManager {
   private aiService: AiService;
 
-  constructor(app: JupyterFrontEnd) {
+  constructor(_app: JupyterFrontEnd) {
     this.aiService = new AiService();
   }
 

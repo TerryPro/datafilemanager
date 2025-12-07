@@ -5,8 +5,8 @@ import { NotebookPanel } from '@jupyterlab/notebook';
 import { ServiceManager } from '@jupyterlab/services';
 import { FlowGenericNode } from './nodes/FlowGenericNode';
 import { FlowEmptyNode } from './nodes/FlowEmptyNode';
-import { FlowSidebar } from './components/FlowSidebar';
-import { FlowPropertyPanel } from './components/FlowPropertyPanel';
+import { AlgorithmLibrary } from './panels/AlgorithmLibrary';
+import { PropertyPanel } from './panels/PropertyPanel';
 import { AiService } from '../services/ai-service';
 import { useFlowState } from './hooks/useFlowState';
 import { useFlowActions } from './hooks/useFlowActions';
@@ -178,10 +178,10 @@ export const FlowNotePanel: React.FC<IFlowNotePanelProps> = ({
             borderBottom: '1px solid var(--jp-border-color2)'
           }}
         >
-          <FlowSidebar />
+          <AlgorithmLibrary />
         </div>
         <div style={{ flex: 1, overflow: 'hidden' }}>
-          <FlowPropertyPanel
+          <PropertyPanel
             selectedNode={selectedNode}
             onChange={actions.handlePropertyChange}
             serviceManager={

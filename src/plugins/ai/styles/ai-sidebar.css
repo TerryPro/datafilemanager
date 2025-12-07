@@ -1,0 +1,85 @@
+/**
+ * AI Sidebar Styles
+ * 
+ * CSS styles for the AI sidebar components.
+ * TODO: Migrate inline styles from ai-sidebar.ts to this file.
+ */
+
+/* Main Container */
+.ai-sidebar-container {
+  /* TODO: Add container styles */
+}
+
+/* Header */
+.ai-sidebar-header {
+  /* TODO: Add header styles */
+}
+
+/* Chat History */
+.ai-sidebar-chat-history {
+  /* TODO: Add chat history styles */
+}
+
+/* Message Items */
+.ai-sidebar-message {
+  /* TODO: Add message styles */
+}
+
+.ai-sidebar-message-user {
+  /* TODO: Add user message styles */
+}
+
+.ai-sidebar-message-ai {
+  /* TODO: Add AI message styles */
+}
+
+.ai-sidebar-message-system {
+  /* TODO: Add system message styles */
+}
+
+/* Input Panel */
+.ai-sidebar-input-panel {
+  /* TODO: Add input panel styles */
+}
+
+.ai-sidebar-textarea {
+  /* TODO: Add textarea styles */
+}
+
+.ai-sidebar-toolbar {
+  /* TODO: Add toolbar styles */
+}
+
+/* Selection Bar */
+.ai-sidebar-selection-bar {
+  /* TODO: Add selection bar styles */
+}
+
+/* Variable Selector */
+.ai-sidebar-variable-selector {
+  /* TODO: Add variable selector styles */
+}
+
+/* Prompt Selector */
+.ai-sidebar-prompt-selector {
+  /* TODO: Add prompt selector styles */
+}
+
+/* Diff Viewer */
+.ai-sidebar-diff-viewer {
+  /* TODO: Add diff viewer styles */
+}
+
+/* Buttons */
+.ai-sidebar-button {
+  /* TODO: Add button styles */
+}
+
+.ai-sidebar-execute-btn {
+  /* TODO: Add execute button styles */
+}
+
+/* Icons */
+.ai-sidebar-icon {
+  /* TODO: Add icon styles */
+}

@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { NotebookPanel, NotebookActions } from '@jupyterlab/notebook';
 import { AiService } from '../../services/ai-service';
-import { updateCellSourceForNode } from '../services/CodeGenerator';
+import { CellUpdater } from '../codegen';
 
 export const useFlowActions = (
   notebook: NotebookPanel,
@@ -59,7 +59,7 @@ export const useFlowActions = (
             // ignore
           }
           const root = serverRoot || (await new AiService().getServerRoot());
-          updateCellSourceForNode(notebook, nodeId, root);
+          new CellUpdater(notebook, root).updateCellForNode(nodeId);
 
           break;
         }
@@ -170,7 +170,7 @@ export const useFlowActions = (
         if ((cell.sharedModel.getMetadata('node_id') as string) === nodeId) {
           cell.sharedModel.setMetadata('flow_values', newValues);
           const root = serverRoot || (await new AiService().getServerRoot());
-          updateCellSourceForNode(notebook, nodeId, root);
+          new CellUpdater(notebook, root).updateCellForNode(nodeId);
           // Update local state to reflect changes immediately
           setNodes(nds =>
             nds.map(node => {

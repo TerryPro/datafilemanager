@@ -1,7 +1,7 @@
 import React from 'react';
 import { Node } from 'reactflow';
 import { INodeSchema, IColumn } from '../types';
-import { ParamInput } from './ParamInput';
+import { ParamInput } from '../forms/ParamInput';
 import { ServiceManager } from '@jupyterlab/services';
 
 interface IPropertyPanelProps {
@@ -12,12 +12,9 @@ interface IPropertyPanelProps {
 
 /**
  * 属性面板：展示并编辑选中节点的参数
- */
-/**
- * 属性面板：展示并编辑选中节点的参数
  * - 接收 ServiceManager 以支持文件/变量选择器的数据源
  */
-export const FlowPropertyPanel: React.FC<IPropertyPanelProps> = ({
+export const PropertyPanel: React.FC<IPropertyPanelProps> = ({
   selectedNode,
   onChange,
   serviceManager

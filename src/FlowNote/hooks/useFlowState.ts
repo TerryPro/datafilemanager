@@ -10,7 +10,7 @@ import {
   Connection
 } from 'reactflow';
 import { NotebookPanel } from '@jupyterlab/notebook';
-import { updateCellSourceForNode } from '../services/CodeGenerator';
+import { CellUpdater } from '../codegen';
 
 export const useFlowState = (notebook: NotebookPanel, serverRoot: string) => {
   const [nodes, setNodes] = useNodesState([]);
@@ -100,7 +100,7 @@ export const useFlowState = (notebook: NotebookPanel, serverRoot: string) => {
         metaEdges.push(record);
         notebook.model.sharedModel.setMetadata('flow_edges', metaEdges);
         if (params.target) {
-          updateCellSourceForNode(notebook, String(params.target), serverRoot);
+          new CellUpdater(notebook, serverRoot).updateCellForNode(String(params.target));
           // Update target node status
           setNodes(nds =>
             nds.map(n => {
@@ -154,7 +154,7 @@ export const useFlowState = (notebook: NotebookPanel, serverRoot: string) => {
       removes.forEach((r: any) => {
         const tgt = r?.edge?.target || undefined;
         if (tgt) {
-          updateCellSourceForNode(notebook, String(tgt), serverRoot);
+          new CellUpdater(notebook, serverRoot).updateCellForNode(String(tgt));
           // Update target node status
           const newEdges =
             (notebook.model!.sharedModel.getMetadata('flow_edges') as any[]) ||
@@ -207,7 +207,7 @@ export const useFlowState = (notebook: NotebookPanel, serverRoot: string) => {
       });
       notebook.model!.sharedModel.setMetadata('flow_edges', filtered);
       deleted.forEach(d => {
-        updateCellSourceForNode(notebook, String(d.target), serverRoot);
+        new CellUpdater(notebook, serverRoot).updateCellForNode(String(d.target));
         // Update target node status
         const afterEdges =
           (notebook.model!.sharedModel.getMetadata('flow_edges') as any[]) ||

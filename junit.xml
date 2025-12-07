@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="8" failures="0" errors="0" time="49.303">
+  <testsuite name="SelectionBar" errors="0" failures="0" skipped="0" timestamp="2025-12-07T12:33:42" time="7.41" tests="8">
+    <testcase classname="SelectionBar should create a selection bar with default labels" name="SelectionBar should create a selection bar with default labels" time="0.019">
+    </testcase>
+    <testcase classname="SelectionBar should display selected variable name" name="SelectionBar should display selected variable name" time="0.003">
+    </testcase>
+    <testcase classname="SelectionBar should display selected algorithm name" name="SelectionBar should display selected algorithm name" time="0.004">
+    </testcase>
+    <testcase classname="SelectionBar should call onClearVariable when variable clear button is clicked" name="SelectionBar should call onClearVariable when variable clear button is clicked" time="0.004">
+    </testcase>
+    <testcase classname="SelectionBar should call onClearAlgorithm when algorithm clear button is clicked" name="SelectionBar should call onClearAlgorithm when algorithm clear button is clicked" time="0.003">
+    </testcase>
+    <testcase classname="SelectionBar should update display when updateProps is called" name="SelectionBar should update display when updateProps is called" time="0.002">
+    </testcase>
+    <testcase classname="SelectionBar should update only specified props when updateProps is called with partial props" name="SelectionBar should update only specified props when updateProps is called with partial props" time="0.005">
+    </testcase>
+    <testcase classname="SelectionBar should clear selection when updateProps is called with undefined" name="SelectionBar should clear selection when updateProps is called with undefined" time="0.002">
+    </testcase>
+  </testsuite>
+</testsuites>

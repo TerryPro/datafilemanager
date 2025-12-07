@@ -2,9 +2,9 @@ import React from 'react';
 import { NotebookPanel } from '@jupyterlab/notebook';
 import { SplitPanel, BoxLayout } from '@lumino/widgets';
 import { ReactWidget } from '@jupyterlab/apputils';
-import { FlowNotePanel } from './FlowNotePanel';
+import { FlowNotePanel } from '../FlowNotePanel';
 
-export class FlowNoteEnhancer {
+export class FlowNoteIntegration {
   /**
    * Manage the notebook panel to conditionally enable FlowNote features.
    * Only attaches the FlowNote UI if 'use_stepbook' metadata is present.
@@ -23,7 +23,7 @@ export class FlowNoteEnhancer {
 
         console.log('FlowNote: checkAndAttach, useStepbook=', useStepbook);
         if (useStepbook) {
-          FlowNoteEnhancer.attach(panel);
+          FlowNoteIntegration.attach(panel);
         }
       };
 
@@ -84,8 +84,8 @@ export class FlowNoteEnhancer {
     // Add Notebook and Flow to SplitPanel
     splitPanel.addWidget(notebook);
     splitPanel.addWidget(flowWidget);
-    // Initial relative sizes for left-right layout
-    splitPanel.setRelativeSizes([0.6, 0.4]);
+    // Initial relative sizes for left-right layout (50/50 split)
+    splitPanel.setRelativeSizes([0.5, 0.5]);
 
     // Ensure splitPanel fills the space
     splitPanel.id = 'flownote-split-panel';
@@ -102,7 +102,7 @@ export class FlowNoteEnhancer {
       if (useStepbook) {
         if (flowWidget.isHidden) {
           flowWidget.show();
-          splitPanel.setRelativeSizes([0.6, 0.4]);
+          splitPanel.setRelativeSizes([0.5, 0.5]);
         }
       } else {
         // Only hide if currently shown

@@ -11,6 +11,11 @@ datafilemanager/labextension
 # Version file is handled by hatchling
 datafilemanager/_version.py
 
+# TypeScript compiled files in src (should only be in lib/)
+src/**/*.js
+src/**/*.js.map
+src/**/*.d.ts
+
 # Integration tests
 ui-tests/test-results/
 ui-tests/playwright-report/

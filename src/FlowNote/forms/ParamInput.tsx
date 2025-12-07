@@ -14,13 +14,9 @@ interface IParamInputProps {
 }
 
 /**
- * 渲染节点参数的输入控件
- * - 支持 column-selector、file-selector、variable-selector、数值与文本等
- */
-/**
  * 渲染节点参数输入控件
  * - 支持列选择、文件选择、变量选择、数字/文本
- * - 当为时间索引参数时，自动从已选文件解析列名供选择
+ * - 当为时间索引参数时,自动从已选文件解析列名供选择
  */
 export const ParamInput: React.FC<IParamInputProps> = ({
   param,

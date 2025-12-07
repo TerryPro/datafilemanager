@@ -3,10 +3,10 @@ import { INodeSchema } from '../types';
 import { caretDownIcon, caretRightIcon } from '@jupyterlab/ui-components';
 
 /**
- * FlowNote 独立的算法库侧栏组件
+ * 算法库面板组件
  * - 从后端获取算法库并支持拖拽到画布
  */
-export const FlowSidebar = () => {
+export const AlgorithmLibrary = () => {
   const [library, setLibrary] = useState<Record<string, INodeSchema[]>>({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');

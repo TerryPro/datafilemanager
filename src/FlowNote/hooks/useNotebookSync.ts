@@ -1,10 +1,19 @@
 import { useCallback, useEffect } from 'react';
 import { NotebookPanel } from '@jupyterlab/notebook';
 import { ICellModel } from '@jupyterlab/cells';
-import { UUID } from '@lumino/coreutils';
 import { Node, Edge, MarkerType } from 'reactflow';
 import { AiService } from '../../services/ai-service';
-import { updateCellSourceForNode } from '../services/CodeGenerator';
+import { CellUpdater } from '../codegen';
+import {
+  ensureNodeId,
+  getNodePosition,
+  getNodeValues,
+  ensureNodeNumber,
+  getNodeSchema,
+  inferNodeLabel,
+  ensureOutputVariables,
+  calculateNodeStatus
+} from './nodeHelpers';
 
 // 辅助函数：提取列信息
 async function extractColumns(
@@ -241,121 +250,18 @@ export const useNotebookSync = (
       inputColumns: Record<string, any[]> = {},
       inputVariables: Record<string, string> = {}
     ): Node => {
-      // Ensure node_id exists using sharedModel for consistency
-      let nodeId =
-        (cellModel.sharedModel.getMetadata('node_id') as string) || '';
-
-      if (!nodeId) {
-        nodeId = UUID.uuid4();
-        cellModel.sharedModel.setMetadata('node_id', nodeId);
-      }
-
-      // Get position from metadata if available
-      const metaPos = cellModel.sharedModel.getMetadata('flow_position') as any;
-      const position = metaPos
-        ? JSON.parse(JSON.stringify(metaPos))
-        : { x: 100, y: index * 150 + 50 };
-
-      // Get schema and values from metadata
-      const metaSchema = cellModel.sharedModel.getMetadata(
-        'flow_schema'
-      ) as any;
-      const metaValues = cellModel.sharedModel.getMetadata(
-        'flow_values'
-      ) as any;
-
-      // Node number persistence
-      let nodeNumber = cellModel.sharedModel.getMetadata(
-        'flow_node_number'
-      ) as number as number;
-      if (!nodeNumber || typeof nodeNumber !== 'number') {
-        const seqRaw = notebook.model
-          ? (notebook.model.sharedModel.getMetadata('flow_number_seq') as any)
-          : undefined;
-        const seq = typeof seqRaw === 'number' ? seqRaw : 1;
-        nodeNumber = seq;
-        cellModel.sharedModel.setMetadata('flow_node_number', nodeNumber);
-        if (notebook.model) {
-          notebook.model.sharedModel.setMetadata('flow_number_seq', seq + 1);
-        }
-      }
-
-      // Infer label if no schema name
-      let label = '(Unnamed Step)';
-      if (metaSchema && metaSchema.name) {
-        label = metaSchema.name;
-      } else {
-        const source = cellModel.sharedModel.getSource();
-        if (source.trim() !== '') {
-          const lines = source.split('\n');
-          const firstLine = lines[0].trim();
-          if (firstLine.startsWith('#')) {
-            label = firstLine.replace(/^#+\s*/, '');
-          } else {
-            label =
-              firstLine.substring(0, 20) + (firstLine.length > 20 ? '...' : '');
-          }
-        }
-      }
-
-      const schema = metaSchema
-        ? JSON.parse(JSON.stringify(metaSchema))
-        : {
-            id: 'free_cell',
-            name: '自由CELL',
-            category: 'free',
-            inputs: index > 0 ? [{ name: 'in', type: 'any' }] : [],
-            outputs: [{ name: 'out', type: 'any' }],
-            args: []
-          };
-
-      const values = metaValues ? JSON.parse(JSON.stringify(metaValues)) : {};
-
-      // Output variable naming persistence
-      let outVars = cellModel.sharedModel.getMetadata(
-        'flow_output_vars'
-      ) as Record<string, string> as Record<string, string>;
-      if (!outVars || typeof outVars !== 'object') {
-        outVars = {} as Record<string, string>;
-        const ports: string[] = (schema.outputs || []).map((p: any) => p.name);
-        ports.forEach((port: string) => {
-          const safePort = String(port).replace(/[^a-zA-Z0-9_]+/g, '_');
-          outVars[port] = `n${String(nodeNumber).padStart(2, '0')}_${safePort}`;
-        });
-        cellModel.sharedModel.setMetadata('flow_output_vars', outVars);
-      }
+      // Use helper functions to extract node properties
+      const nodeId = ensureNodeId(cellModel);
+      const position = getNodePosition(cellModel, index);
+      const nodeNumber = ensureNodeNumber(cellModel, notebook);
+      const schema = getNodeSchema(cellModel, index);
+      const values = getNodeValues(cellModel);
+      const label = inferNodeLabel(cellModel, schema);
+      const outVars = ensureOutputVariables(cellModel, schema, nodeNumber);
+      const status = calculateNodeStatus(cellModel, schema, nodeId, notebook);
 
       const sm = serviceManager || (notebook as any).context?.manager;
-      // 读取并计算节点状态（统一为五态）
-      const rawStatus =
-        (cellModel.sharedModel.getMetadata('flow_status') as string) || '';
-      const status = (() => {
-        if (rawStatus === 'running' || rawStatus === 'calculating') {
-          return 'running';
-        }
-        if (rawStatus === 'success' || rawStatus === 'ready') {
-          return 'success';
-        }
-        if (rawStatus === 'failed' || rawStatus === 'error') {
-          return 'failed';
-        }
-        // 自动判断：自由CELL或存在未连接的输入端口则视为未配置完整
-        if (schema && schema.category === 'free') {
-          return 'unconfigured';
-        }
-        try {
-          const metaEdges =
-            (notebook.model?.sharedModel.getMetadata('flow_edges') as any[]) ||
-            [];
-          const needInputs = (schema.inputs || []).map((p: any) => p.name);
-          const hasAllInputs = needInputs.every((p: string) =>
-            metaEdges.some(e => e.targetId === nodeId && e.targetPort === p)
-          );
-          return hasAllInputs ? 'configured' : 'unconfigured';
-        } catch {
-          return 'unconfigured';
-        }
-      })();
+
       return {
         id: nodeId,
         type: 'generic',
@@ -389,7 +295,7 @@ export const useNotebookSync = (
                 cell.sharedModel.setMetadata('flow_values', newValues);
                 const root =
                   serverRoot || (await new AiService().getServerRoot());
-                updateCellSourceForNode(notebook, nid, root);
+                new CellUpdater(notebook, root).updateCellForNode(nid);
                 break;
               }
             }
@@ -408,7 +314,7 @@ export const useNotebookSync = (
                 cell.sharedModel.setMetadata('flow_values', currentValues);
                 const root =
                   serverRoot || (await new AiService().getServerRoot());
-                updateCellSourceForNode(notebook, nid, root);
+                new CellUpdater(notebook, root).updateCellForNode(nid);
                 break;
               }
             }
@@ -433,7 +339,7 @@ export const useNotebookSync = (
       const cell = cells.get(i);
       const nid = cell.sharedModel.getMetadata('node_id') as string;
       if (nid) {
-        updateCellSourceForNode(notebook, nid, serverRoot);
+        new CellUpdater(notebook, serverRoot).updateCellForNode(nid);
       }
     }
   }, [serverRoot, notebook.model]);

@@ -51,6 +51,19 @@ export class AiSidebar extends Widget {
     title.className = 'ai-sidebar-title';
     title.innerHTML = `${ICONS.ai} <span>AI Assistant</span>`;
 
+    const settingsBtn = document.createElement('button');
+    settingsBtn.className = 'ai-sidebar-settings-btn';
+    settingsBtn.innerHTML = ICONS.settings;
+    settingsBtn.title = '设置';
+    settingsBtn.onclick = () =>
+      this.app.commands.execute('datafilemanager:open-settings');
+    // Add some basic styling inline if class is not defined yet to ensure visibility
+    settingsBtn.style.background = 'none';
+    settingsBtn.style.border = 'none';
+    settingsBtn.style.cursor = 'pointer';
+    settingsBtn.style.padding = '4px';
+    settingsBtn.style.color = 'var(--jp-ui-font-color1)';
+
     const clearBtn = document.createElement('button');
     clearBtn.className = 'ai-sidebar-clear-btn';
     clearBtn.innerHTML = ICONS.trash;
@@ -58,6 +71,7 @@ export class AiSidebar extends Widget {
     clearBtn.onclick = () => this.clearHistory();
 
     header.appendChild(title);
+    header.appendChild(settingsBtn);
     header.appendChild(clearBtn);
     this.node.appendChild(header);
 

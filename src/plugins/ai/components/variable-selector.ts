@@ -1,6 +1,6 @@
 /**
  * VariableSelector Component
- * 
+ *
  * Displays available DataFrame variables list,
  * handles variable selection,
  * and manages popup show/hide.
@@ -8,31 +8,31 @@
 
 import { Widget } from '@lumino/widgets';
 import { INotebookTracker } from '@jupyterlab/notebook';
-import { VariableInfo } from '../state/types';
+import { IVariableInfo } from '../state/types';
 import { AiService } from '../../../services/ai-service';
 import { ICONS } from '../utils/icons';
 
 /**
  * Props for VariableSelector component
  */
-export interface VariableSelectorProps {
+export interface IVariableSelectorProps {
   /** Notebook tracker to access current notebook */
   tracker: INotebookTracker;
-  
+
   /** AI service instance for fetching variable information */
   aiService: AiService;
-  
+
   /** Callback when a variable is selected */
-  onSelect: (variable: VariableInfo) => void;
+  onSelect: (variable: IVariableInfo) => void;
 }
 
 /**
  * VariableSelector component for selecting variables
- * 
+ *
  * This component displays a popup with available DataFrame variables
  * from the current notebook. Users can select a variable to insert
  * it into their prompt.
- * 
+ *
  * @example
  * ```typescript
  * const selector = new VariableSelector({
@@ -47,19 +47,19 @@ export interface VariableSelectorProps {
  */
 export class VariableSelector extends Widget {
   private popup: HTMLElement;
-  private _isVisible: boolean = false;
-  private props: VariableSelectorProps;
+  private _isVisible = false;
+  private props: IVariableSelectorProps;
 
   /**
    * Creates a new VariableSelector instance
-   * 
+   *
    * @param props - Component properties
    */
-  constructor(props: VariableSelectorProps) {
+  constructor(props: IVariableSelectorProps) {
     super();
     this.props = props;
     this.addClass('ai-variable-selector');
-    
+
     // Create popup element
     this.popup = document.createElement('div');
     this.popup.className = 'ai-variable-popup';
@@ -68,13 +68,13 @@ export class VariableSelector extends Widget {
 
   /**
    * Toggle the visibility of the selector popup
-   * 
+   *
    * If the popup is currently hidden, it will be shown and variables
    * will be loaded. If it's visible, it will be hidden.
    */
   toggle(): void {
     this._isVisible = !this._isVisible;
-    
+
     if (this._isVisible) {
       this.popup.classList.add('visible');
       this.loadVariables().catch(error => {
@@ -87,7 +87,7 @@ export class VariableSelector extends Widget {
 
   /**
    * Hide the selector popup
-   * 
+   *
    * This method explicitly hides the popup without toggling.
    */
   hide(): void {
@@ -97,32 +97,35 @@ export class VariableSelector extends Widget {
 
   /**
    * Load variables from the current notebook
-   * 
+   *
    * This method fetches DataFrame variables from the notebook kernel
    * and renders them in the popup. It handles loading states and errors.
-   * 
+   *
    * @private
    */
   private async loadVariables(): Promise<void> {
     // Show loading state
-    this.popup.innerHTML = '<div class="ai-variable-loading">加载变量中...</div>';
+    this.popup.innerHTML =
+      '<div class="ai-variable-loading">加载变量中...</div>';
 
     // Get current notebook panel
     const panel = this.props.tracker.currentWidget;
     if (!panel) {
-      this.popup.innerHTML = '<div class="ai-variable-empty">未检测到 Notebook</div>';
+      this.popup.innerHTML =
+        '<div class="ai-variable-empty">未检测到 Notebook</div>';
       return;
     }
 
     try {
       // Fetch variables from the kernel
       const variables = await this.props.aiService.getDataFrameInfo(panel);
-      
+
       // Render the variables
       this.renderVariables(variables);
     } catch (error) {
       // Show error message
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       this.popup.innerHTML = `<div class="ai-variable-empty">加载失败: ${errorMessage}</div>`;
       console.error('[VariableSelector] Error loading variables:', error);
     }
@@ -130,10 +133,10 @@ export class VariableSelector extends Widget {
 
   /**
    * Render the list of variables in the popup
-   * 
+   *
    * Creates a list of clickable variable items. Each item shows the
    * variable name, icon, and shape information.
-   * 
+   *
    * @param variables - Array of variable information objects
    * @private
    */
@@ -143,7 +146,8 @@ export class VariableSelector extends Widget {
 
     // Handle empty state
     if (variables.length === 0) {
-      this.popup.innerHTML = '<div class="ai-variable-empty">无可用 DataFrame</div>';
+      this.popup.innerHTML =
+        '<div class="ai-variable-empty">无可用 DataFrame</div>';
       return;
     }
 
@@ -176,7 +180,7 @@ export class VariableSelector extends Widget {
       item.onclick = () => {
         try {
           // Create VariableInfo object with description
-          const variableInfo: VariableInfo = {
+          const variableInfo: IVariableInfo = {
             name: v.name,
             type: v.type,
             shape: v.shape,

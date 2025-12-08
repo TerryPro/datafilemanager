@@ -100,7 +100,9 @@ export const useFlowState = (notebook: NotebookPanel, serverRoot: string) => {
         metaEdges.push(record);
         notebook.model.sharedModel.setMetadata('flow_edges', metaEdges);
         if (params.target) {
-          new CellUpdater(notebook, serverRoot).updateCellForNode(String(params.target));
+          new CellUpdater(notebook, serverRoot).updateCellForNode(
+            String(params.target)
+          );
           // Update target node status
           setNodes(nds =>
             nds.map(n => {
@@ -207,7 +209,9 @@ export const useFlowState = (notebook: NotebookPanel, serverRoot: string) => {
       });
       notebook.model!.sharedModel.setMetadata('flow_edges', filtered);
       deleted.forEach(d => {
-        new CellUpdater(notebook, serverRoot).updateCellForNode(String(d.target));
+        new CellUpdater(notebook, serverRoot).updateCellForNode(
+          String(d.target)
+        );
         // Update target node status
         const afterEdges =
           (notebook.model!.sharedModel.getMetadata('flow_edges') as any[]) ||

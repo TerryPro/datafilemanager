@@ -36,7 +36,10 @@ export function ensureNodeId(cellModel: ICellModel): string {
  * @param index - The cell index in the notebook
  * @returns The position object with x and y coordinates
  */
-export function getNodePosition(cellModel: ICellModel, index: number): Position {
+export function getNodePosition(
+  cellModel: ICellModel,
+  index: number
+): Position {
   const metaPos = cellModel.sharedModel.getMetadata('flow_position') as any;
   return metaPos
     ? { x: metaPos.x || 100, y: metaPos.y || 50 }
@@ -63,7 +66,9 @@ export function ensureNodeNumber(
   cellModel: ICellModel,
   notebook: NotebookPanel
 ): number {
-  let nodeNumber = cellModel.sharedModel.getMetadata('flow_node_number') as number;
+  let nodeNumber = cellModel.sharedModel.getMetadata(
+    'flow_node_number'
+  ) as number;
   if (!nodeNumber || typeof nodeNumber !== 'number') {
     const seqRaw = notebook.model
       ? (notebook.model.sharedModel.getMetadata('flow_number_seq') as any)
@@ -84,7 +89,10 @@ export function ensureNodeNumber(
  * @param index - The cell index in the notebook
  * @returns The node schema
  */
-export function getNodeSchema(cellModel: ICellModel, index: number): INodeSchema {
+export function getNodeSchema(
+  cellModel: ICellModel,
+  index: number
+): INodeSchema {
   const metaSchema = cellModel.sharedModel.getMetadata('flow_schema') as any;
   if (metaSchema) {
     return JSON.parse(JSON.stringify(metaSchema));
@@ -107,7 +115,10 @@ export function getNodeSchema(cellModel: ICellModel, index: number): INodeSchema
  * @param schema - The node schema
  * @returns The inferred label
  */
-export function inferNodeLabel(cellModel: ICellModel, schema: INodeSchema): string {
+export function inferNodeLabel(
+  cellModel: ICellModel,
+  schema: INodeSchema
+): string {
   // Use schema name if available and not default
   if (schema.name && schema.name !== '自由CELL') {
     return schema.name;
@@ -174,7 +185,8 @@ export function calculateNodeStatus(
   nodeId: string,
   notebook: NotebookPanel
 ): 'unconfigured' | 'configured' | 'running' | 'success' | 'failed' {
-  const rawStatus = (cellModel.sharedModel.getMetadata('flow_status') as string) || '';
+  const rawStatus =
+    (cellModel.sharedModel.getMetadata('flow_status') as string) || '';
 
   // Explicit status values
   if (rawStatus === 'running' || rawStatus === 'calculating') {

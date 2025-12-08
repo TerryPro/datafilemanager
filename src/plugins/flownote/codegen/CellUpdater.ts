@@ -26,14 +26,14 @@ export class CellUpdater {
 
     const cells = this.notebook.model.cells;
     const cellIndex = this.findCellByNodeId(cells, nodeId);
-    
+
     if (cellIndex === -1) {
       return;
     }
 
     const cell = cells.get(cellIndex);
     const schema = this.getCellSchema(cell);
-    
+
     // 跳过自由单元格
     if (this.isFreeCell(schema)) {
       return;
@@ -84,11 +84,13 @@ export class CellUpdater {
     nodeId: string,
     schema: INodeSchema
   ): Record<string, any> {
-    const baseValues = (cell.sharedModel.getMetadata('flow_values') || {}) as Record<string, any>;
+    const baseValues = (cell.sharedModel.getMetadata('flow_values') ||
+      {}) as Record<string, any>;
     const computedValues = { ...baseValues };
 
     // 添加输出变量映射
-    const outVars = (cell.sharedModel.getMetadata('flow_output_vars') || {}) as Record<string, string>;
+    const outVars = (cell.sharedModel.getMetadata('flow_output_vars') ||
+      {}) as Record<string, string>;
     computedValues['__output_vars__'] = outVars;
 
     // 处理输入连线
@@ -114,7 +116,10 @@ export class CellUpdater {
       );
 
       if (edge) {
-        const refVar = this.findSourceOutputVariable(edge.sourceId, edge.sourcePort);
+        const refVar = this.findSourceOutputVariable(
+          edge.sourceId,
+          edge.sourcePort
+        );
         if (refVar && PythonFormatter.isBareIdentifier(refVar)) {
           values[name] = refVar;
         }
@@ -129,8 +134,12 @@ export class CellUpdater {
    * 获取流程图连线元数据
    */
   private getFlowEdges(): any[] {
-    if (!this.notebook.model) return [];
-    return (this.notebook.model.sharedModel.getMetadata('flow_edges') as any[]) || [];
+    if (!this.notebook.model) {
+      return [];
+    }
+    return (
+      (this.notebook.model.sharedModel.getMetadata('flow_edges') as any[]) || []
+    );
   }
 
   /**
@@ -153,16 +162,22 @@ export class CellUpdater {
   /**
    * 查找源节点的输出变量
    */
-  private findSourceOutputVariable(sourceId: string, sourcePort: string): string | undefined {
-    if (!this.notebook.model) return undefined;
+  private findSourceOutputVariable(
+    sourceId: string,
+    sourcePort: string
+  ): string | undefined {
+    if (!this.notebook.model) {
+      return undefined;
+    }
 
     const cells = this.notebook.model.cells;
     for (let i = 0; i < cells.length; i++) {
       const cell = cells.get(i);
       const cellId = cell.sharedModel.getMetadata('node_id') as string;
-      
+
       if (cellId === sourceId) {
-        const outVars = (cell.sharedModel.getMetadata('flow_output_vars') || {}) as Record<string, string>;
+        const outVars = (cell.sharedModel.getMetadata('flow_output_vars') ||
+          {}) as Record<string, string>;
         return outVars[sourcePort];
       }
     }
@@ -172,7 +187,10 @@ export class CellUpdater {
   /**
    * 生成代码
    */
-  private generateCode(schema: INodeSchema, values: Record<string, any>): string {
+  private generateCode(
+    schema: INodeSchema,
+    values: Record<string, any>
+  ): string {
     const generator = new NodeCodeGenerator(schema, values, this.serverRoot);
     return generator.generate();
   }

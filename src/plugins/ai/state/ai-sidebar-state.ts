@@ -1,20 +1,25 @@
 /**
  * State Management
- * 
+ *
  * Defines application state structure,
  * provides state update methods,
  * and manages state subscriptions.
  */
 
-import { VariableInfo, AlgorithmInfo, ChatMessage, GenerateMode } from './types';
+import {
+  IVariableInfo,
+  IAlgorithmInfo,
+  IChatMessage,
+  GenerateMode
+} from './types';
 
 /**
  * AI Sidebar state interface
  */
-export interface AiSidebarState {
-  selectedVariable?: VariableInfo;
-  selectedAlgorithm?: AlgorithmInfo;
-  chatHistory: ChatMessage[];
+export interface IAiSidebarState {
+  selectedVariable?: IVariableInfo;
+  selectedAlgorithm?: IAlgorithmInfo;
+  chatHistory: IChatMessage[];
   isGenerating: boolean;
   intentText: string;
   mode: GenerateMode;
@@ -23,35 +28,35 @@ export interface AiSidebarState {
 /**
  * State listener callback type
  */
-export type StateListener = (state: AiSidebarState) => void;
+export type StateListener = (state: IAiSidebarState) => void;
 
 /**
  * StateManager class for managing AI sidebar state
- * 
+ *
  * This class provides centralized state management for the AI sidebar,
  * implementing a simple observer pattern for state updates. It ensures
  * that all state changes are tracked and listeners are notified consistently.
- * 
+ *
  * @example
  * ```typescript
  * const stateManager = new StateManager();
- * 
+ *
  * // Subscribe to state changes
  * const unsubscribe = stateManager.subscribe((state) => {
  *   console.log('State updated:', state);
  * });
- * 
+ *
  * // Update state
  * stateManager.setSelectedVariable({ name: 'df', type: 'DataFrame', shape: [100, 5] });
- * 
+ *
  * // Unsubscribe when done
  * unsubscribe();
  * ```
  */
 export class StateManager {
   /** Current state of the AI sidebar */
-  private state: AiSidebarState;
-  
+  private state: IAiSidebarState;
+
   /** Set of listener functions to be notified on state changes */
   private listeners: Set<StateListener>;
 
@@ -70,72 +75,72 @@ export class StateManager {
 
   /**
    * Get the current state
-   * 
+   *
    * Returns a shallow copy of the current state to prevent direct mutations.
-   * 
+   *
    * @returns A copy of the current AI sidebar state
-   * 
+   *
    * @example
    * ```typescript
    * const currentState = stateManager.getState();
    * console.log(currentState.isGenerating); // false
    * ```
    */
-  getState(): AiSidebarState {
+  getState(): IAiSidebarState {
     return { ...this.state };
   }
 
   /**
    * Update state with partial changes
-   * 
+   *
    * Merges the provided partial state with the current state and notifies
    * all subscribed listeners of the change. This method ensures immutability
    * by creating a new state object.
-   * 
+   *
    * @param partial - Partial state object containing properties to update
-   * 
+   *
    * @example
    * ```typescript
    * stateManager.setState({ isGenerating: true });
-   * stateManager.setState({ 
+   * stateManager.setState({
    *   selectedVariable: { name: 'df', type: 'DataFrame', shape: [100, 5] },
    *   intentText: 'Analyze this data'
    * });
    * ```
    */
-  setState(partial: Partial<AiSidebarState>): void {
+  setState(partial: Partial<IAiSidebarState>): void {
     // Create new state object by merging current state with partial update
     this.state = {
       ...this.state,
       ...partial
     };
-    
+
     // Notify all listeners of the state change
     this.notifyListeners();
   }
 
   /**
    * Subscribe to state changes
-   * 
+   *
    * Registers a listener function that will be called whenever the state changes.
    * Returns an unsubscribe function that can be called to remove the listener.
-   * 
+   *
    * @param listener - Callback function to be invoked on state changes
    * @returns Unsubscribe function to remove the listener
-   * 
+   *
    * @example
    * ```typescript
    * const unsubscribe = stateManager.subscribe((state) => {
    *   console.log('New state:', state);
    * });
-   * 
+   *
    * // Later, when you want to stop listening
    * unsubscribe();
    * ```
    */
   subscribe(listener: StateListener): () => void {
     this.listeners.add(listener);
-    
+
     // Return unsubscribe function
     return () => {
       this.listeners.delete(listener);
@@ -144,7 +149,7 @@ export class StateManager {
 
   /**
    * Notify all subscribed listeners of state changes
-   * 
+   *
    * This is a private method called internally whenever the state is updated.
    * It passes a copy of the current state to each listener to prevent mutations.
    */
@@ -161,62 +166,62 @@ export class StateManager {
 
   /**
    * Set selected variable
-   * 
+   *
    * Convenience method to update the selected variable in the state.
    * Pass undefined to clear the selection.
-   * 
+   *
    * @param variable - Variable information or undefined to clear
-   * 
+   *
    * @example
    * ```typescript
    * // Select a variable
-   * stateManager.setSelectedVariable({ 
-   *   name: 'df', 
-   *   type: 'DataFrame', 
-   *   shape: [100, 5] 
+   * stateManager.setSelectedVariable({
+   *   name: 'df',
+   *   type: 'DataFrame',
+   *   shape: [100, 5]
    * });
-   * 
+   *
    * // Clear selection
    * stateManager.setSelectedVariable(undefined);
    * ```
    */
-  setSelectedVariable(variable?: VariableInfo): void {
+  setSelectedVariable(variable?: IVariableInfo): void {
     this.setState({ selectedVariable: variable });
   }
 
   /**
    * Set selected algorithm
-   * 
+   *
    * Convenience method to update the selected algorithm in the state.
    * Pass undefined to clear the selection.
-   * 
+   *
    * @param algorithm - Algorithm information or undefined to clear
-   * 
+   *
    * @example
    * ```typescript
    * // Select an algorithm
-   * stateManager.setSelectedAlgorithm({ 
+   * stateManager.setSelectedAlgorithm({
    *   id: 'linear-regression',
    *   name: 'Linear Regression',
    *   category: 'Regression'
    * });
-   * 
+   *
    * // Clear selection
    * stateManager.setSelectedAlgorithm(undefined);
    * ```
    */
-  setSelectedAlgorithm(algorithm?: AlgorithmInfo): void {
+  setSelectedAlgorithm(algorithm?: IAlgorithmInfo): void {
     this.setState({ selectedAlgorithm: algorithm });
   }
 
   /**
    * Add a chat message
-   * 
+   *
    * Convenience method to append a new message to the chat history.
    * Creates a new array to ensure immutability.
-   * 
+   *
    * @param message - Chat message to add to the history
-   * 
+   *
    * @example
    * ```typescript
    * stateManager.addChatMessage({
@@ -227,7 +232,7 @@ export class StateManager {
    * });
    * ```
    */
-  addChatMessage(message: ChatMessage): void {
+  addChatMessage(message: IChatMessage): void {
     this.setState({
       chatHistory: [...this.state.chatHistory, message]
     });
@@ -235,9 +240,9 @@ export class StateManager {
 
   /**
    * Clear chat history
-   * 
+   *
    * Convenience method to remove all messages from the chat history.
-   * 
+   *
    * @example
    * ```typescript
    * stateManager.clearChatHistory();
@@ -249,17 +254,17 @@ export class StateManager {
 
   /**
    * Set generating state
-   * 
+   *
    * Convenience method to update the isGenerating flag, which indicates
    * whether the AI is currently processing a request.
-   * 
+   *
    * @param isGenerating - Whether code generation is in progress
-   * 
+   *
    * @example
    * ```typescript
    * // Start generating
    * stateManager.setGenerating(true);
-   * 
+   *
    * // Finish generating
    * stateManager.setGenerating(false);
    * ```
@@ -270,11 +275,11 @@ export class StateManager {
 
   /**
    * Set intent text
-   * 
+   *
    * Convenience method to update the user's intent text (the prompt input).
-   * 
+   *
    * @param intentText - The user's input text
-   * 
+   *
    * @example
    * ```typescript
    * stateManager.setIntentText('Create a scatter plot');
@@ -286,11 +291,11 @@ export class StateManager {
 
   /**
    * Set generation mode
-   * 
+   *
    * Convenience method to update the code generation mode.
-   * 
+   *
    * @param mode - The generation mode to use
-   * 
+   *
    * @example
    * ```typescript
    * stateManager.setMode('refactor');

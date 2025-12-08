@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { NotebookPanel, NotebookActions } from '@jupyterlab/notebook';
-import { AiService } from '../../services/ai-service';
+import { AiService } from '../../../services/ai-service';
 import { CellUpdater } from '../codegen';
 
 export const useFlowActions = (

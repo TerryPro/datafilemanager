@@ -1,34 +1,34 @@
 /**
  * PromptSelector Component
- * 
+ *
  * Displays algorithm prompt library,
  * handles algorithm selection,
  * and manages popup show/hide.
  */
 
 import { Widget } from '@lumino/widgets';
-import { AlgorithmInfo } from '../state/types';
+import { IAlgorithmInfo } from '../state/types';
 import { AiService } from '../../../services/ai-service';
 import { ICONS } from '../utils/icons';
 
 /**
  * Props for PromptSelector component
  */
-export interface PromptSelectorProps {
+export interface IPromptSelectorProps {
   /** AI service instance for fetching algorithm prompts */
   aiService: AiService;
-  
+
   /** Callback when an algorithm is selected */
-  onSelect: (algorithm: AlgorithmInfo) => void;
+  onSelect: (algorithm: IAlgorithmInfo) => void;
 }
 
 /**
  * PromptSelector component for selecting algorithm prompts
- * 
+ *
  * This component displays a popup with available algorithm templates
  * organized by category. Users can select an algorithm to insert
  * it into their prompt.
- * 
+ *
  * @example
  * ```typescript
  * const selector = new PromptSelector({
@@ -42,19 +42,19 @@ export interface PromptSelectorProps {
  */
 export class PromptSelector extends Widget {
   private popup: HTMLElement;
-  private _isVisible: boolean = false;
-  private props: PromptSelectorProps;
+  private _isVisible = false;
+  private props: IPromptSelectorProps;
 
   /**
    * Creates a new PromptSelector instance
-   * 
+   *
    * @param props - Component properties
    */
-  constructor(props: PromptSelectorProps) {
+  constructor(props: IPromptSelectorProps) {
     super();
     this.props = props;
     this.addClass('ai-prompt-selector');
-    
+
     // Create popup element
     this.popup = document.createElement('div');
     this.popup.className = 'ai-variable-popup';
@@ -63,13 +63,13 @@ export class PromptSelector extends Widget {
 
   /**
    * Toggle the visibility of the selector popup
-   * 
+   *
    * If the popup is currently hidden, it will be shown and prompts
    * will be loaded. If it's visible, it will be hidden.
    */
   toggle(): void {
     this._isVisible = !this._isVisible;
-    
+
     if (this._isVisible) {
       this.popup.classList.add('visible');
       this.loadPrompts().catch(error => {
@@ -82,7 +82,7 @@ export class PromptSelector extends Widget {
 
   /**
    * Hide the selector popup
-   * 
+   *
    * This method explicitly hides the popup without toggling.
    */
   hide(): void {
@@ -92,26 +92,28 @@ export class PromptSelector extends Widget {
 
   /**
    * Load algorithm prompts from the AI service
-   * 
+   *
    * This method fetches algorithm templates from the backend
    * and renders them in the popup grouped by category.
    * It handles loading states and errors.
-   * 
+   *
    * @private
    */
   private async loadPrompts(): Promise<void> {
     // Show loading state
-    this.popup.innerHTML = '<div class="ai-variable-loading">加载提示词库...</div>';
+    this.popup.innerHTML =
+      '<div class="ai-variable-loading">加载提示词库...</div>';
 
     try {
       // Fetch prompts from the AI service
       const prompts = await this.props.aiService.getAlgorithmPrompts();
-      
+
       // Render the prompts
       this.renderPrompts(prompts);
     } catch (error) {
       // Show error message
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       this.popup.innerHTML = `<div class="ai-variable-empty">加载失败: ${errorMessage}</div>`;
       console.error('[PromptSelector] Error loading prompts:', error);
     }
@@ -119,10 +121,10 @@ export class PromptSelector extends Widget {
 
   /**
    * Render the list of algorithm prompts in the popup
-   * 
+   *
    * Creates a categorized list of algorithm templates. Each category
    * is displayed with a header, followed by clickable algorithm items.
-   * 
+   *
    * @param prompts - Object containing algorithm prompts grouped by category
    * @private
    */
@@ -174,7 +176,7 @@ export class PromptSelector extends Widget {
         item.onclick = () => {
           try {
             // Create AlgorithmInfo object
-            const algorithmInfo: AlgorithmInfo = {
+            const algorithmInfo: IAlgorithmInfo = {
               id: algo.id || key,
               name: algo.name,
               category: category.label || key,

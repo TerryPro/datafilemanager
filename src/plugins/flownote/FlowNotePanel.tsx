@@ -7,7 +7,7 @@ import { FlowGenericNode } from './nodes/FlowGenericNode';
 import { FlowEmptyNode } from './nodes/FlowEmptyNode';
 import { AlgorithmLibrary } from './panels/AlgorithmLibrary';
 import { PropertyPanel } from './panels/PropertyPanel';
-import { AiService } from '../services/ai-service';
+import { AiService } from '../../services/ai-service';
 import { useFlowState } from './hooks/useFlowState';
 import { useFlowActions } from './hooks/useFlowActions';
 import { useNotebookSync } from './hooks/useNotebookSync';

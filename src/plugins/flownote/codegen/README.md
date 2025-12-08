@@ -16,6 +16,7 @@ codegen/
 ## 职责划分
 
 ### CodeBuilder
+
 使用 Builder 模式构建 Python 代码，提供链式调用接口。
 
 ```typescript
@@ -28,15 +29,17 @@ builder
 ```
 
 ### PythonFormatter
+
 负责将 JavaScript 值转换为 Python 代码字符串。
 
 ```typescript
-PythonFormatter.formatValue(true);           // 'True'
-PythonFormatter.formatValue([1, 2, 3]);      // '[1, 2, 3]'
-PythonFormatter.isBareIdentifier('df_out');  // true
+PythonFormatter.formatValue(true); // 'True'
+PythonFormatter.formatValue([1, 2, 3]); // '[1, 2, 3]'
+PythonFormatter.isBareIdentifier('df_out'); // true
 ```
 
 ### NodeCodeGenerator
+
 根据节点 schema 和参数值生成完整的 Python 代码。
 
 ```typescript
@@ -45,6 +48,7 @@ const code = generator.generate();
 ```
 
 ### CellUpdater
+
 负责查找和更新 Notebook Cell 的源代码，处理连线引用。
 
 ```typescript

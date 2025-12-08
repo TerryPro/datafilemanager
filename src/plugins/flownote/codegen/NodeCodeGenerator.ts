@@ -28,13 +28,13 @@ export class NodeCodeGenerator {
    */
   generate(): string {
     const title = this.schema?.name || 'Step';
-    
+
     this.builder
       .addComment(title)
       .addImport('from aiserver.workflow_lib import *');
 
     const outputs = this.schema.outputs || [];
-    
+
     if (outputs.length === 0) {
       this.generateNoOutputCode();
     } else if (this.canDirectAssign(outputs)) {
@@ -110,8 +110,10 @@ export class NodeCodeGenerator {
 
     // 先处理输入端口（保持顺序，这些是变量引用）
     (this.schema.inputs || []).forEach(port => {
-      if (included.has(port.name)) return;
-      
+      if (included.has(port.name)) {
+        return;
+      }
+
       const value = this.values[port.name];
       // 输入端口明确标记为 input 角色
       const argStr = this.formatArgument(port.name, value, port.type, 'input');
@@ -121,12 +123,15 @@ export class NodeCodeGenerator {
 
     // 再处理其他参数
     (this.schema.args || []).forEach(arg => {
-      if (arg.role === 'output' || included.has(arg.name)) return;
+      if (arg.role === 'output' || included.has(arg.name)) {
+        return;
+      }
 
-      const value = this.values[arg.name] !== undefined 
-        ? this.values[arg.name] 
-        : arg.default;
-      
+      const value =
+        this.values[arg.name] !== undefined
+          ? this.values[arg.name]
+          : arg.default;
+
       const argStr = this.formatArgument(arg.name, value, arg.type, arg.role);
       argStrs.push(argStr);
       included.add(arg.name);
@@ -170,12 +175,14 @@ export class NodeCodeGenerator {
    * 判断是否可以直接赋值（单输出且有合法变量名）
    */
   private canDirectAssign(outputs: any[]): boolean {
-    if (outputs.length !== 1) return false;
-    
+    if (outputs.length !== 1) {
+      return false;
+    }
+
     const outVars = this.getOutputVariables();
     const firstPortName = outputs[0].name;
     const varName = outVars[firstPortName];
-    
+
     return PythonFormatter.isBareIdentifier(varName);
   }
 }

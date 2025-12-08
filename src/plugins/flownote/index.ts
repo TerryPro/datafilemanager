@@ -8,7 +8,7 @@ import { IDocumentManager } from '@jupyterlab/docmanager';
 import { IDefaultFileBrowser } from '@jupyterlab/filebrowser';
 import { ICommandPalette } from '@jupyterlab/apputils';
 import { notebookIcon } from '@jupyterlab/ui-components';
-import { FlowNoteIntegration } from '../../flownote/integration/FlowNoteIntegration';
+import { FlowNoteIntegration } from './integration/FlowNoteIntegration';
 
 const flowNotePlugin: JupyterFrontEndPlugin<void> = {
   id: 'datafilemanager:flownote',

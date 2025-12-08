@@ -1,40 +1,44 @@
 /**
  * DiffViewer Component
- * 
+ *
  * A modal component for displaying and interacting with code diffs.
  * Supports block-level accept/reject decisions and real-time preview of merged results.
  */
 
-import { computeLineOps, groupIntoHunks, buildTextFromDecisions } from '../utils/diff-utils';
-import { DiffOp, DiffHunk, Decision } from '../state/types';
+import {
+  computeLineOps,
+  groupIntoHunks,
+  buildTextFromDecisions
+} from '../utils/diff-utils';
+import { IDiffOp, IDiffHunk, Decision } from '../state/types';
 import { createElement } from '../utils/dom-utils';
 
 /**
  * Props for the DiffViewer component
  */
-export interface DiffViewerProps {
+export interface IDiffViewerProps {
   /** Original text before changes */
   oldText: string;
-  
+
   /** New text with proposed changes */
   newText: string;
-  
+
   /** Callback when user accepts changes with final merged text */
   onAccept: (finalText: string) => void;
-  
+
   /** Callback when user rejects all changes */
   onReject: () => void;
 }
 
 /**
  * DiffViewer - A modal component for interactive code diff preview
- * 
+ *
  * This component displays a side-by-side diff view with:
  * - Left column: Original text with highlighted changes
  * - Right column: Preview of merged result based on user decisions
  * - Block-level accept/reject controls for each change hunk
  * - Global accept all/reject all buttons
- * 
+ *
  * @example
  * ```typescript
  * DiffViewer.show({
@@ -52,27 +56,28 @@ export interface DiffViewerProps {
 export class DiffViewer {
   /**
    * Display the diff viewer modal
-   * 
+   *
    * Creates a modal overlay with interactive diff display. The modal is centered
    * on screen and can be dismissed with Escape key or reject button.
-   * 
+   *
    * @param props - Configuration for the diff viewer
    */
-  static show(props: DiffViewerProps): void {
+  static show(props: IDiffViewerProps): void {
     const { oldText, newText, onAccept, onReject } = props;
-    
+
     // Create modal overlay
     const overlay = this.createOverlay();
-    
+
     // Create header with title and action buttons
-    const { header, hunkCountLabel, acceptAllBtn, rejectAllBtn } = this.createHeader();
-    
+    const { header, hunkCountLabel, acceptAllBtn, rejectAllBtn } =
+      this.createHeader();
+
     // Create body container for diff content
     const body = this.createBody();
-    
+
     // Create footer with apply/cancel buttons
     const { footer, acceptBtn, rejectBtn } = this.createFooter();
-    
+
     // Create grid container for two-column layout
     const gridContainer = createElement('div');
     gridContainer.style.cssText = `
@@ -82,51 +87,48 @@ export class DiffViewer {
       align-items: start;
       grid-auto-rows: max-content;
     `;
-    
+
     // Render the interactive diff
-    const { ops, decisionsProvider, setAllDecisions } = this.renderInteractiveDiff(
-      oldText,
-      newText,
-      gridContainer
-    );
-    
+    const { ops, decisionsProvider, setAllDecisions } =
+      this.renderInteractiveDiff(oldText, newText, gridContainer);
+
     // Calculate and display hunk count
     const hunks = groupIntoHunks(ops);
     hunkCountLabel.textContent = `变更块：${hunks.length}`;
-    
+
     // Assemble the modal
     body.appendChild(gridContainer);
     overlay.appendChild(header);
     overlay.appendChild(body);
     overlay.appendChild(footer);
     document.body.appendChild(overlay);
-    
+
     // Cleanup function to remove modal
     const cleanup = () => {
       overlay.remove();
       document.removeEventListener('keydown', onKeyDown);
     };
-    
+
     // Wire up event handlers
     acceptBtn.onclick = () => {
       const finalText = buildTextFromDecisions(ops, decisionsProvider());
       cleanup();
       onAccept(finalText);
     };
-    
+
     rejectBtn.onclick = () => {
       cleanup();
       onReject();
     };
-    
+
     acceptAllBtn.onclick = () => {
       setAllDecisions('accept');
     };
-    
+
     rejectAllBtn.onclick = () => {
       setAllDecisions('reject');
     };
-    
+
     // Handle Escape key to close modal
     const onKeyDown = (ev: KeyboardEvent) => {
       if (ev.key === 'Escape') {
@@ -136,10 +138,10 @@ export class DiffViewer {
     };
     document.addEventListener('keydown', onKeyDown);
   }
-  
+
   /**
    * Create the modal overlay container
-   * 
+   *
    * @returns The overlay element
    */
   private static createOverlay(): HTMLDivElement {
@@ -152,8 +154,9 @@ export class DiffViewer {
       width: calc(100vw - 64px);
       max-width: 1920px;
       max-height: 80vh;
+      min-height: 200px;
       box-sizing: border-box;
-      z-index: 10000;
+      z-index: 20000;
       background: var(--jp-layout-color1);
       border: 1px solid var(--jp-border-color2);
       border-radius: 8px;
@@ -164,10 +167,10 @@ export class DiffViewer {
     `;
     return overlay;
   }
-  
+
   /**
    * Create the header section with title and action buttons
-   * 
+   *
    * @returns Object containing header element and interactive elements
    */
   private static createHeader(): {
@@ -188,38 +191,51 @@ export class DiffViewer {
       font-size: 13px;
       color: var(--jp-ui-font-color1);
     `;
-    
+
     // Left side: title and hunk count
     const headerLeft = createElement('div');
     headerLeft.style.cssText = 'display: flex; align-items: center; gap: 12px;';
-    
-    const titleLabel = createElement('span', undefined, 'Diff预览（AI建议 vs 当前单元）');
-    
+
+    const titleLabel = createElement(
+      'span',
+      undefined,
+      'Diff预览（AI建议 vs 当前单元）'
+    );
+
     const hunkCountLabel = createElement('span', undefined, '变更块：计算中…');
-    hunkCountLabel.style.cssText = 'font-size: 12px; color: var(--jp-ui-font-color2);';
-    
+    hunkCountLabel.style.cssText =
+      'font-size: 12px; color: var(--jp-ui-font-color2);';
+
     headerLeft.appendChild(titleLabel);
     headerLeft.appendChild(hunkCountLabel);
-    
+
     // Right side: action buttons
     const headerActions = createElement('div');
     headerActions.style.cssText = 'display: flex; gap: 8px;';
-    
-    const acceptAllBtn = createElement('button', 'jp-Button jp-mod-accept', '接受全部');
-    const rejectAllBtn = createElement('button', 'jp-Button jp-mod-warn', '拒绝全部');
-    
+
+    const acceptAllBtn = createElement(
+      'button',
+      'jp-Button jp-mod-accept',
+      '接受全部'
+    );
+    const rejectAllBtn = createElement(
+      'button',
+      'jp-Button jp-mod-warn',
+      '拒绝全部'
+    );
+
     headerActions.appendChild(rejectAllBtn);
     headerActions.appendChild(acceptAllBtn);
-    
+
     header.appendChild(headerLeft);
     header.appendChild(headerActions);
-    
+
     return { header, hunkCountLabel, acceptAllBtn, rejectAllBtn };
   }
-  
+
   /**
    * Create the body section for diff content
-   * 
+   *
    * @returns The body element
    */
   private static createBody(): HTMLDivElement {
@@ -235,10 +251,10 @@ export class DiffViewer {
     `;
     return body;
   }
-  
+
   /**
    * Create the footer section with apply/cancel buttons
-   * 
+   *
    * @returns Object containing footer element and buttons
    */
   private static createFooter(): {
@@ -256,23 +272,27 @@ export class DiffViewer {
       background: var(--jp-layout-color2);
       border-radius: 0 0 8px 8px;
     `;
-    
-    const acceptBtn = createElement('button', 'jp-Button jp-mod-accept', '应用所选更改');
+
+    const acceptBtn = createElement(
+      'button',
+      'jp-Button jp-mod-accept',
+      '应用所选更改'
+    );
     const rejectBtn = createElement('button', 'jp-Button jp-mod-warn', '取消');
-    
+
     footer.appendChild(rejectBtn);
     footer.appendChild(acceptBtn);
-    
+
     return { footer, acceptBtn, rejectBtn };
   }
-  
+
   /**
    * Render interactive diff with block-level controls
-   * 
+   *
    * Creates a two-column layout:
    * - Left: Context lines and change hunks with accept/reject buttons
    * - Right: Preview of merged result based on current decisions
-   * 
+   *
    * @param oldText - Original text
    * @param newText - New text with changes
    * @param gridContainer - Container element for the grid layout
@@ -283,7 +303,7 @@ export class DiffViewer {
     newText: string,
     gridContainer: HTMLDivElement
   ): {
-    ops: DiffOp[];
+    ops: IDiffOp[];
     decisionsProvider: () => Decision[];
     setAllDecisions: (decision: Decision) => void;
   } {
@@ -292,16 +312,16 @@ export class DiffViewer {
     const newLines = newText.split(/\r?\n/);
     const ops = computeLineOps(oldLines, newLines);
     const hunks = groupIntoHunks(ops);
-    
+
     // Initialize all decisions to 'accept'
     const decisions: Decision[] = hunks.map(() => 'accept');
-    
+
     // Track right-side preview elements for batch updates
     const rightHunkViews: HTMLDivElement[] = [];
-    
+
     // Render context lines and hunks
     let cursor = 0;
-    
+
     /**
      * Render context lines up to the specified index
      */
@@ -310,7 +330,7 @@ export class DiffViewer {
       const rightCtx = this.createContextContainer();
       let hasContext = false;
       const contextTexts: string[] = [];
-      
+
       while (cursor < endIndex) {
         if (ops[cursor].type === 'ctx') {
           leftCtx.appendChild(this.createDiffLine('ctx', ops[cursor].text));
@@ -319,24 +339,25 @@ export class DiffViewer {
         }
         cursor++;
       }
-      
+
       if (hasContext) {
-        contextTexts.forEach(text => 
+        contextTexts.forEach(text =>
           rightCtx.appendChild(this.createPreviewLine(text))
         );
         gridContainer.appendChild(leftCtx);
         gridContainer.appendChild(rightCtx);
       }
     };
-    
+
     // Render each hunk with controls
     hunks.forEach((hunk, hunkIndex) => {
       // Render context before this hunk
       renderContextUntil(hunk.start);
-      
+
       // Create hunk container with header and controls
-      const { hunkWrapper, acceptToggle, rejectToggle } = this.createHunkContainer(hunkIndex);
-      
+      const { hunkWrapper, acceptToggle, rejectToggle } =
+        this.createHunkContainer(hunkIndex);
+
       // Add diff lines to hunk
       for (let k = hunk.start; k <= hunk.end; k++) {
         const op = ops[k];
@@ -344,16 +365,16 @@ export class DiffViewer {
           hunkWrapper.appendChild(this.createDiffLine(op.type, op.text));
         }
       }
-      
+
       // Create right-side preview for this hunk
       const rightPreview = this.createHunkPreview(hunkIndex);
-      
+
       /**
        * Update visual state and preview for this hunk
        */
       const updateVisuals = () => {
         const decision = decisions[hunkIndex];
-        
+
         // Update button states
         if (decision === 'accept') {
           acceptToggle.classList.add('jp-mod-accept');
@@ -366,36 +387,36 @@ export class DiffViewer {
           hunkWrapper.style.borderColor = 'rgba(200,0,0,0.6)';
           hunkWrapper.style.background = 'rgba(200,0,0,0.06)';
         }
-        
+
         // Update preview
         this.updateHunkPreview(rightPreview, ops, hunk, decision);
       };
-      
+
       // Wire up button handlers
       acceptToggle.onclick = () => {
         decisions[hunkIndex] = 'accept';
         updateVisuals();
       };
-      
+
       rejectToggle.onclick = () => {
         decisions[hunkIndex] = 'reject';
         updateVisuals();
       };
-      
+
       // Initial render
       updateVisuals();
-      
+
       // Add to grid
       gridContainer.appendChild(hunkWrapper);
       gridContainer.appendChild(rightPreview);
       rightHunkViews.push(rightPreview);
-      
+
       cursor = hunk.end + 1;
     });
-    
+
     // Render remaining context
     renderContextUntil(ops.length);
-    
+
     /**
      * Set all decisions to the same value and update all previews
      */
@@ -403,7 +424,7 @@ export class DiffViewer {
       for (let i = 0; i < decisions.length; i++) {
         decisions[i] = decision;
       }
-      
+
       // Batch update all hunk previews
       hunks.forEach((hunk, idx) => {
         const rightPreview = rightHunkViews[idx];
@@ -412,17 +433,17 @@ export class DiffViewer {
         }
       });
     };
-    
+
     return {
       ops,
       decisionsProvider: () => decisions.slice(),
       setAllDecisions
     };
   }
-  
+
   /**
    * Create a container for context lines
-   * 
+   *
    * @returns Container element
    */
   private static createContextContainer(): HTMLDivElement {
@@ -438,10 +459,10 @@ export class DiffViewer {
     `;
     return container;
   }
-  
+
   /**
    * Create a hunk container with header and controls
-   * 
+   *
    * @param hunkIndex - Index of the hunk
    * @returns Object with container and control buttons
    */
@@ -459,7 +480,7 @@ export class DiffViewer {
       min-width: 0;
       box-sizing: border-box;
     `;
-    
+
     // Create header with label and buttons
     const hunkHeader = createElement('div');
     hunkHeader.style.cssText = `
@@ -468,29 +489,33 @@ export class DiffViewer {
       align-items: center;
       margin-bottom: 6px;
     `;
-    
+
     const label = createElement('span', undefined, `变更块 ${hunkIndex + 1}`);
     label.style.cssText = 'color: var(--jp-ui-font-color1); font-size: 12px;';
-    
+
     const btnRow = createElement('div');
     btnRow.style.cssText = 'display: flex; gap: 6px;';
-    
+
     const acceptToggle = createElement('button', 'jp-Button', '接受');
-    const rejectToggle = createElement('button', 'jp-Button jp-mod-warn', '拒绝');
-    
+    const rejectToggle = createElement(
+      'button',
+      'jp-Button jp-mod-warn',
+      '拒绝'
+    );
+
     btnRow.appendChild(rejectToggle);
     btnRow.appendChild(acceptToggle);
-    
+
     hunkHeader.appendChild(label);
     hunkHeader.appendChild(btnRow);
     hunkWrapper.appendChild(hunkHeader);
-    
+
     return { hunkWrapper, acceptToggle, rejectToggle };
   }
-  
+
   /**
    * Create a preview container for a hunk
-   * 
+   *
    * @param hunkIndex - Index of the hunk
    * @returns Preview container element
    */
@@ -505,7 +530,7 @@ export class DiffViewer {
       min-width: 0;
       box-sizing: border-box;
     `;
-    
+
     const rightHeader = createElement('div');
     rightHeader.style.cssText = `
       display: flex;
@@ -513,19 +538,24 @@ export class DiffViewer {
       align-items: center;
       margin-bottom: 6px;
     `;
-    
-    const rightLabel = createElement('span', undefined, `变更块 ${hunkIndex + 1}（预览）`);
-    rightLabel.style.cssText = 'color: var(--jp-ui-font-color1); font-size: 12px;';
-    
+
+    const rightLabel = createElement(
+      'span',
+      undefined,
+      `变更块 ${hunkIndex + 1}（预览）`
+    );
+    rightLabel.style.cssText =
+      'color: var(--jp-ui-font-color1); font-size: 12px;';
+
     rightHeader.appendChild(rightLabel);
     rightPreview.appendChild(rightHeader);
-    
+
     return rightPreview;
   }
-  
+
   /**
    * Update the preview content for a hunk based on decision
-   * 
+   *
    * @param previewContainer - The preview container element
    * @param ops - All diff operations
    * @param hunk - The hunk to preview
@@ -533,18 +563,18 @@ export class DiffViewer {
    */
   private static updateHunkPreview(
     previewContainer: HTMLDivElement,
-    ops: DiffOp[],
-    hunk: DiffHunk,
+    ops: IDiffOp[],
+    hunk: IDiffHunk,
     decision: Decision
   ): void {
     // Remove all children except the header (first child)
     while (previewContainer.childElementCount > 1) {
       previewContainer.removeChild(previewContainer.lastChild as Node);
     }
-    
+
     // Build preview lines based on decision
     const previewLines: string[] = [];
-    
+
     if (decision === 'accept') {
       // Accept: show additions
       for (let k = hunk.start; k <= hunk.end; k++) {
@@ -560,21 +590,24 @@ export class DiffViewer {
         }
       }
     }
-    
+
     // Add preview lines to container
-    previewLines.forEach(text => 
+    previewLines.forEach(text =>
       previewContainer.appendChild(this.createPreviewLine(text))
     );
   }
-  
+
   /**
    * Create a diff line element
-   * 
+   *
    * @param type - Type of diff operation
    * @param text - Line text
    * @returns Line element
    */
-  private static createDiffLine(type: 'add' | 'del' | 'ctx', text: string): HTMLDivElement {
+  private static createDiffLine(
+    type: 'add' | 'del' | 'ctx',
+    text: string
+  ): HTMLDivElement {
     const line = createElement('div');
     line.style.cssText = `
       display: block;
@@ -589,7 +622,7 @@ export class DiffViewer {
       color: var(--jp-ui-font-color1);
       white-space: pre;
     `;
-    
+
     if (type === 'add') {
       line.style.background = 'rgba(0,160,0,0.12)';
       line.textContent = `+ ${text}`;
@@ -599,13 +632,13 @@ export class DiffViewer {
     } else {
       line.textContent = `  ${text}`;
     }
-    
+
     return line;
   }
-  
+
   /**
    * Create a preview line element
-   * 
+   *
    * @param text - Line text
    * @returns Line element
    */
@@ -624,11 +657,11 @@ export class DiffViewer {
       color: var(--jp-ui-font-color1);
       white-space: pre;
     `;
-    
+
     // Use non-breaking space for empty lines to maintain layout
     const content = text && text.length > 0 ? text : '\u00A0';
     line.textContent = `  ${content}`;
-    
+
     return line;
   }
 }

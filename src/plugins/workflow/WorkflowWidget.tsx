@@ -13,7 +13,8 @@ export class WorkflowWidget extends ReactWidget {
     super();
     this.tracker = tracker;
     this.serviceManager = serviceManager;
-    this.id = 'workflow-editor-widget';
+    // Use a fixed ID to allow finding the instance via shell.widgets()
+    this.id = 'datafilemanager-workflow-editor';
     this.title.label = 'Workflow Editor';
     this.title.closable = true;
     this.addClass('jp-WorkflowEditor');
@@ -22,6 +23,17 @@ export class WorkflowWidget extends ReactWidget {
     this.tracker.activeCellChanged.connect(this.onActiveCellChanged, this);
     // Initialize with current
     this.onActiveCellChanged();
+  }
+
+  dispose(): void {
+    if (this.isDisposed) {
+      return;
+    }
+    // Explicitly disconnect signals
+    if (this.tracker) {
+      this.tracker.activeCellChanged.disconnect(this.onActiveCellChanged, this);
+    }
+    super.dispose();
   }
 
   private onActiveCellChanged() {

@@ -1,12 +1,12 @@
 /**
  * Icon Definitions
- * 
+ *
  * Centralized SVG icon definitions for the AI sidebar.
  */
 
 /**
  * Icon definitions object
- * 
+ *
  * All SVG icons used in the AI sidebar components.
  */
 export const ICONS = {

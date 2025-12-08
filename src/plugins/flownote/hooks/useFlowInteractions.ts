@@ -3,7 +3,7 @@ import { Node, ReactFlowInstance } from 'reactflow';
 import { NotebookPanel } from '@jupyterlab/notebook';
 import { UUID } from '@lumino/coreutils';
 import * as nbformat from '@jupyterlab/nbformat';
-import { AiService } from '../../services/ai-service';
+import { AiService } from '../../../services/ai-service';
 import { CellUpdater } from '../codegen';
 
 export const useFlowInteractions = (

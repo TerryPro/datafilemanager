@@ -2,7 +2,7 @@ import { useCallback, useEffect } from 'react';
 import { NotebookPanel } from '@jupyterlab/notebook';
 import { ICellModel } from '@jupyterlab/cells';
 import { Node, Edge, MarkerType } from 'reactflow';
-import { AiService } from '../../services/ai-service';
+import { AiService } from '../../../services/ai-service';
 import { CellUpdater } from '../codegen';
 import {
   ensureNodeId,

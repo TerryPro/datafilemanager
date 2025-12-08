@@ -64,6 +64,7 @@
     "@jupyterlab/docregistry": "^4.0.0",
     "@jupyterlab/filebrowser": "^4.0.0",
     "@jupyterlab/launcher": "^4.0.0",
+    "@jupyterlab/mainmenu": "^4.5.0",
     "@jupyterlab/notebook": "^4.0.0",
     "@jupyterlab/ui-components": "^4.0.0",
     "reactflow": "^11.11.4"

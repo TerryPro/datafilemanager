@@ -2573,6 +2573,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@jupyterlab/mainmenu@npm:^4.5.0":
+  version: 4.5.0
+  resolution: "@jupyterlab/mainmenu@npm:4.5.0"
+  dependencies:
+    "@jupyterlab/apputils": ^4.6.0
+    "@jupyterlab/translation": ^4.5.0
+    "@jupyterlab/ui-components": ^4.5.0
+    "@lumino/algorithm": ^2.0.4
+    "@lumino/commands": ^2.3.3
+    "@lumino/coreutils": ^2.2.2
+    "@lumino/widgets": ^2.7.2
+  checksum: eb2c0db19a2463b6e0f4767e1f459d8efa81310fcd9155d8cfcb0982ff3a9c832947a6ed377ec8f0e9f7ec9e0584943fdfced4c8ff2fb57925aa831b49e75d2a
+  languageName: node
+  linkType: hard
+
 "@jupyterlab/markedparser-extension@npm:^4.5.0":
   version: 4.5.0
   resolution: "@jupyterlab/markedparser-extension@npm:4.5.0"
@@ -6258,6 +6273,7 @@ __metadata:
     "@jupyterlab/docregistry": ^4.0.0
     "@jupyterlab/filebrowser": ^4.0.0
     "@jupyterlab/launcher": ^4.0.0
+    "@jupyterlab/mainmenu": ^4.5.0
     "@jupyterlab/notebook": ^4.0.0
     "@jupyterlab/testutils": ^4.0.0
     "@jupyterlab/ui-components": ^4.0.0

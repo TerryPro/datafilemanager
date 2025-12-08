@@ -16,10 +16,7 @@ export class PythonFormatter {
   /**
    * 格式化文件路径
    */
-  static formatFilePath(
-    path: string,
-    serverRoot?: string
-  ): string {
+  static formatFilePath(path: string, serverRoot?: string): string {
     if (!path || path.trim().length === 0) {
       return "''";
     }
@@ -45,9 +42,7 @@ export class PythonFormatter {
    * 格式化数组
    */
   static formatArray(arr: any[]): string {
-    const items = arr.map(v => 
-      typeof v === 'string' ? `'${v}'` : String(v)
-    );
+    const items = arr.map(v => (typeof v === 'string' ? `'${v}'` : String(v)));
     return `[${items.join(', ')}]`;
   }
 
@@ -66,8 +61,12 @@ export class PythonFormatter {
     }
 
     // 布尔值
-    if (val === true) return 'True';
-    if (val === false) return 'False';
+    if (val === true) {
+      return 'True';
+    }
+    if (val === false) {
+      return 'False';
+    }
 
     // 数组
     if (Array.isArray(val)) {

@@ -1,10 +1,10 @@
 /**
  * InputPanel Component
- * 
+ *
  * Manages the text input area, toolbar buttons, and selection bar.
  * This component integrates VariableSelector, PromptSelector, and SelectionBar
  * to provide a complete input interface for the AI assistant.
- * 
+ *
  * @example
  * ```typescript
  * const inputPanel = new InputPanel({
@@ -18,7 +18,7 @@
 
 import { Widget } from '@lumino/widgets';
 import { INotebookTracker } from '@jupyterlab/notebook';
-import { VariableInfo, AlgorithmInfo } from '../state/types';
+import { IVariableInfo, IAlgorithmInfo } from '../state/types';
 import { AiService } from '../../../services/ai-service';
 import { createElement, createButton } from '../utils/dom-utils';
 import { ICONS } from '../utils/icons';
@@ -28,7 +28,7 @@ import { PromptSelector } from './prompt-selector';
 
 /**
  * Props for InputPanel component
- * 
+ *
  * @property onGenerate - Callback invoked when the execute button is clicked
  * @property onVariableSelect - Callback invoked when a variable is selected
  * @property onAlgorithmSelect - Callback invoked when an algorithm is selected
@@ -38,35 +38,35 @@ import { PromptSelector } from './prompt-selector';
  * @property tracker - Notebook tracker for accessing current notebook
  * @property aiService - AI service instance for API calls
  */
-export interface InputPanelProps {
+export interface IInputPanelProps {
   /** Callback when generate button is clicked */
   onGenerate: (intent: string) => void;
-  
+
   /** Callback when a variable is selected */
-  onVariableSelect: (variable: VariableInfo) => void;
-  
+  onVariableSelect: (variable: IVariableInfo) => void;
+
   /** Callback when an algorithm is selected */
-  onAlgorithmSelect: (algorithm: AlgorithmInfo) => void;
-  
+  onAlgorithmSelect: (algorithm: IAlgorithmInfo) => void;
+
   /** Currently selected variable */
-  selectedVariable?: VariableInfo;
-  
+  selectedVariable?: IVariableInfo;
+
   /** Currently selected algorithm */
-  selectedAlgorithm?: AlgorithmInfo;
-  
+  selectedAlgorithm?: IAlgorithmInfo;
+
   /** Whether code generation is in progress */
   isGenerating: boolean;
-  
+
   /** Notebook tracker */
   tracker: INotebookTracker;
-  
+
   /** AI service instance */
   aiService: AiService;
 }
 
 /**
  * InputPanel component for user input and controls
- * 
+ *
  * This component provides:
  * - A text area for entering prompts
  * - A toolbar with buttons for:
@@ -77,12 +77,12 @@ export interface InputPanelProps {
  *   - Execute/generate code
  * - A selection bar showing current variable and algorithm selections
  * - Integration with VariableSelector and PromptSelector popups
- * 
+ *
  * The component manages the state of the input text, mode selection,
  * and coordinates between the various sub-components.
  */
 export class InputPanel extends Widget {
-  private props: InputPanelProps;
+  private props: IInputPanelProps;
   private textarea: HTMLTextAreaElement;
   private modeSelect!: HTMLSelectElement;
   private executeBtn!: HTMLButtonElement;
@@ -95,10 +95,10 @@ export class InputPanel extends Widget {
 
   /**
    * Creates a new InputPanel instance
-   * 
+   *
    * @param props - Component properties
    */
-  constructor(props: InputPanelProps) {
+  constructor(props: IInputPanelProps) {
     super();
     this.props = props;
     this.addClass('ai-sidebar-input-container');
@@ -132,7 +132,7 @@ export class InputPanel extends Widget {
 
   /**
    * Creates the text area for prompt input
-   * 
+   *
    * @returns The textarea element
    * @private
    */
@@ -146,7 +146,7 @@ export class InputPanel extends Widget {
 
   /**
    * Creates the toolbar with all control buttons
-   * 
+   *
    * @returns The toolbar element
    * @private
    */
@@ -160,7 +160,7 @@ export class InputPanel extends Widget {
       '引用变量 (@)',
       () => this.variableSelectorWidget.toggle()
     );
-    this.variableBtn.addEventListener('click', (e) => e.stopPropagation());
+    this.variableBtn.addEventListener('click', e => e.stopPropagation());
     toolbar.appendChild(this.variableBtn);
 
     // Prompt library button
@@ -170,7 +170,7 @@ export class InputPanel extends Widget {
       '提示词库',
       () => this.promptSelectorWidget.toggle()
     );
-    this.promptBtn.addEventListener('click', (e) => e.stopPropagation());
+    this.promptBtn.addEventListener('click', e => e.stopPropagation());
     toolbar.appendChild(this.promptBtn);
 
     // Mode select wrapper
@@ -184,14 +184,14 @@ export class InputPanel extends Widget {
     this.variableSelectorWidget = new VariableSelector({
       tracker: this.props.tracker,
       aiService: this.props.aiService,
-      onSelect: (variable) => this.handleVariableSelect(variable)
+      onSelect: variable => this.handleVariableSelect(variable)
     });
     selectWrapper.appendChild(this.variableSelectorWidget.node);
 
     // Create PromptSelector component
     this.promptSelectorWidget = new PromptSelector({
       aiService: this.props.aiService,
-      onSelect: (algorithm) => this.handleAlgorithmSelect(algorithm)
+      onSelect: algorithm => this.handleAlgorithmSelect(algorithm)
     });
     selectWrapper.appendChild(this.promptSelectorWidget.node);
 
@@ -204,7 +204,7 @@ export class InputPanel extends Widget {
       '清空输入并清除选择',
       () => this.clear()
     );
-    this.clearInputBtn.addEventListener('click', (e) => e.stopPropagation());
+    this.clearInputBtn.addEventListener('click', e => e.stopPropagation());
     toolbar.appendChild(this.clearInputBtn);
 
     // Execute button
@@ -221,7 +221,7 @@ export class InputPanel extends Widget {
 
   /**
    * Creates the mode selection dropdown
-   * 
+   *
    * @returns The select element
    * @private
    */
@@ -248,11 +248,11 @@ export class InputPanel extends Widget {
 
   /**
    * Sets up global click handler to close popups when clicking outside
-   * 
+   *
    * @private
    */
   private setupGlobalClickHandler(): void {
-    document.addEventListener('click', (e) => {
+    document.addEventListener('click', e => {
       // Close variable selector if clicking outside
       if (
         !this.variableSelectorWidget.node.contains(e.target as Node) &&
@@ -273,32 +273,32 @@ export class InputPanel extends Widget {
 
   /**
    * Handles variable selection
-   * 
+   *
    * @param variable - The selected variable
    * @private
    */
-  private handleVariableSelect(variable: VariableInfo): void {
+  private handleVariableSelect(variable: IVariableInfo): void {
     // Insert variable name into textarea
     this.insertVariable(variable.name);
-    
+
     // Notify parent component (parent will call updateProps to update selection bar)
     this.props.onVariableSelect(variable);
   }
 
   /**
    * Handles algorithm selection
-   * 
+   *
    * @param algorithm - The selected algorithm
    * @private
    */
-  private handleAlgorithmSelect(algorithm: AlgorithmInfo): void {
+  private handleAlgorithmSelect(algorithm: IAlgorithmInfo): void {
     // Notify parent component (parent will call updateProps to update selection bar)
     this.props.onAlgorithmSelect(algorithm);
   }
 
   /**
    * Handles clearing the selected variable
-   * 
+   *
    * @private
    */
   private handleClearVariable(): void {
@@ -308,7 +308,7 @@ export class InputPanel extends Widget {
 
   /**
    * Handles clearing the selected algorithm
-   * 
+   *
    * @private
    */
   private handleClearAlgorithm(): void {
@@ -318,7 +318,7 @@ export class InputPanel extends Widget {
 
   /**
    * Handles execute button click
-   * 
+   *
    * @private
    */
   private handleExecute(): void {
@@ -328,7 +328,7 @@ export class InputPanel extends Widget {
 
   /**
    * Inserts a variable name into the textarea at cursor position
-   * 
+   *
    * @param name - The variable name to insert
    * @private
    */
@@ -339,7 +339,7 @@ export class InputPanel extends Widget {
 
     // Insert variable name with a space after it
     this.textarea.value = textBefore + name + ' ' + textAfter;
-    
+
     // Set cursor position after the inserted text
     this.textarea.focus();
     this.textarea.setSelectionRange(
@@ -350,7 +350,7 @@ export class InputPanel extends Widget {
 
   /**
    * Updates the selection bar with current selections
-   * 
+   *
    * @private
    */
   private updateSelectionBar(): void {
@@ -362,7 +362,7 @@ export class InputPanel extends Widget {
 
   /**
    * Gets the current value of the text area
-   * 
+   *
    * @returns The current text value
    */
   getValue(): string {
@@ -371,7 +371,7 @@ export class InputPanel extends Widget {
 
   /**
    * Sets the value of the text area
-   * 
+   *
    * @param value - The text value to set
    */
   setValue(value: string): void {
@@ -380,7 +380,7 @@ export class InputPanel extends Widget {
 
   /**
    * Gets the currently selected mode
-   * 
+   *
    * @returns The selected mode value
    */
   getMode(): string {
@@ -389,7 +389,7 @@ export class InputPanel extends Widget {
 
   /**
    * Sets the selected mode
-   * 
+   *
    * @param mode - The mode value to set
    */
   setMode(mode: string): void {
@@ -398,7 +398,7 @@ export class InputPanel extends Widget {
 
   /**
    * Clears the text area and all selections
-   * 
+   *
    * This method:
    * - Clears the textarea value
    * - Clears the selected variable
@@ -413,21 +413,21 @@ export class InputPanel extends Widget {
 
   /**
    * Updates the component with new props
-   * 
+   *
    * This method allows updating the component's state from the parent.
    * It updates the execute button's disabled state based on isGenerating.
-   * 
+   *
    * @param props - Partial props to update
    */
-  updateProps(props: Partial<InputPanelProps>): void {
+  updateProps(props: Partial<IInputPanelProps>): void {
     this.props = { ...this.props, ...props };
-    
+
     // Update execute button state
     if (props.isGenerating !== undefined) {
       this.executeBtn.disabled = props.isGenerating;
       this.executeBtn.style.opacity = props.isGenerating ? '0.5' : '1';
     }
-    
+
     // Update selection bar if selections changed
     // Use 'in' operator to check if property exists, not if value is undefined
     if ('selectedVariable' in props || 'selectedAlgorithm' in props) {

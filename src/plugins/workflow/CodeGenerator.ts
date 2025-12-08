@@ -70,7 +70,7 @@ export const generateCode = (
 
   // If there are library algorithms, add the workflow_lib import
   if (useWorkflowLib) {
-    allImports.add('from aiserver.workflow_lib import *');
+    allImports.add('from algorithm import *');
   }
 
   // Always add explicit imports from schema if defined

@@ -29,9 +29,7 @@ export class NodeCodeGenerator {
   generate(): string {
     const title = this.schema?.name || 'Step';
 
-    this.builder
-      .addComment(title)
-      .addImport('from aiserver.workflow_lib import *');
+    this.builder.addComment(title).addImport('from algorithm import *');
 
     const outputs = this.schema.outputs || [];
 

@@ -54,14 +54,19 @@ const workflowPlugin: JupyterFrontEndPlugin<void> = {
         caption: '打开算法流程设计器',
         execute: () => {
           const widgetId = 'datafilemanager-workflow-editor';
-          
+
           // Try to find existing widget in the shell
           // Convert iterator to array to search
-          const existingWidget = Array.from(app.shell.widgets('main')).find(w => w.id === widgetId);
+          const existingWidget = Array.from(app.shell.widgets('main')).find(
+            w => w.id === widgetId
+          );
 
           if (existingWidget && !existingWidget.isDisposed) {
-             console.log('[Workflow] Activating existing widget:', existingWidget.id);
-             app.shell.activateById(existingWidget.id);
+            console.log(
+              '[Workflow] Activating existing widget:',
+              existingWidget.id
+            );
+            app.shell.activateById(existingWidget.id);
           } else {
             console.log('[Workflow] Creating new widget instance');
             // Cast to ServiceManager for compatibility
@@ -72,7 +77,7 @@ const workflowPlugin: JupyterFrontEndPlugin<void> = {
             const content = new WorkflowWidget(tracker, serviceManager);
             // Ensure ID matches what we look for (though constructor sets it)
             content.id = widgetId;
-            
+
             console.log('[Workflow] New widget created with ID:', content.id);
 
             // Open in split-right mode to show side-by-side with notebook

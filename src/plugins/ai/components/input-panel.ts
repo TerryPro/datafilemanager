@@ -20,6 +20,7 @@ import { Widget } from '@lumino/widgets';
 import { INotebookTracker } from '@jupyterlab/notebook';
 import { IVariableInfo, IAlgorithmInfo } from '../state/types';
 import { AiService } from '../../../services/ai-service';
+import { LibraryService } from '../../../services/library-service';
 import { createElement, createButton } from '../utils/dom-utils';
 import { ICONS } from '../utils/icons';
 import { SelectionBar } from './selection-bar';
@@ -62,6 +63,9 @@ export interface IInputPanelProps {
 
   /** AI service instance */
   aiService: AiService;
+
+  /** Library service instance */
+  libraryService: LibraryService;
 }
 
 /**
@@ -191,6 +195,7 @@ export class InputPanel extends Widget {
     // Create PromptSelector component
     this.promptSelectorWidget = new PromptSelector({
       aiService: this.props.aiService,
+      libraryService: this.props.libraryService,
       onSelect: algorithm => this.handleAlgorithmSelect(algorithm)
     });
     selectWrapper.appendChild(this.promptSelectorWidget.node);

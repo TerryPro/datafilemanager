@@ -9,6 +9,7 @@
 import { Widget } from '@lumino/widgets';
 import { IAlgorithmInfo } from '../state/types';
 import { AiService } from '../../../services/ai-service';
+import { LibraryService } from '../../../services/library-service';
 import { ICONS } from '../utils/icons';
 
 /**
@@ -17,6 +18,7 @@ import { ICONS } from '../utils/icons';
 export interface IPromptSelectorProps {
   /** AI service instance for fetching algorithm prompts */
   aiService: AiService;
+  libraryService: LibraryService;
 
   /** Callback when an algorithm is selected */
   onSelect: (algorithm: IAlgorithmInfo) => void;
@@ -105,8 +107,8 @@ export class PromptSelector extends Widget {
       '<div class="ai-variable-loading">加载提示词库...</div>';
 
     try {
-      // Fetch prompts from the AI service
-      const prompts = await this.props.aiService.getAlgorithmPrompts();
+      // Fetch prompts from the library service
+      const prompts = await this.props.libraryService.getAlgorithmPrompts();
 
       // Render the prompts
       this.renderPrompts(prompts);

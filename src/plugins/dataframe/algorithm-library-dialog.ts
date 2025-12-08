@@ -3,6 +3,7 @@ import { NotebookPanel } from '@jupyterlab/notebook';
 import { Dialog } from '@jupyterlab/apputils';
 import { Widget } from '@lumino/widgets';
 import { AiService } from '../../services/ai-service';
+import { LibraryService } from '../../services/library-service';
 
 interface ILibraryFunction {
   id: string;
@@ -598,9 +599,11 @@ if ${outputVarName} is not None:
 
 export class AlgorithmLibraryDialogManager {
   private aiService: AiService;
+  private libraryService: LibraryService;
 
   constructor(_app: JupyterFrontEnd) {
     this.aiService = new AiService();
+    this.libraryService = new LibraryService();
   }
 
   async openLibraryDialog(
@@ -609,7 +612,7 @@ export class AlgorithmLibraryDialogManager {
     source = 'dataframe_panel' // 'dataframe_panel' or 'workflow'
   ): Promise<void> {
     const [libraryData, serverRoot] = await Promise.all([
-      this.aiService.getFunctionLibrary(),
+      this.libraryService.getFunctionLibrary(),
       this.aiService.getServerRoot()
     ]);
     const body = new LibraryBodyWidget(

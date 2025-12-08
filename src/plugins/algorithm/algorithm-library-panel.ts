@@ -1,11 +1,12 @@
 import { JupyterFrontEnd } from '@jupyterlab/application';
 import { INotebookTracker } from '@jupyterlab/notebook';
 import { Widget } from '@lumino/widgets';
-import { AiService } from '../../services/ai-service';
+import { LibraryService } from '../../services/library-service';
 import {
   paletteIcon,
   caretDownIcon,
-  caretRightIcon
+  caretRightIcon,
+  refreshIcon
 } from '@jupyterlab/ui-components';
 import { AlgorithmInfoDialogManager } from './algorithm-info-dialog';
 
@@ -19,7 +20,7 @@ interface IAlgorithm {
 }
 
 export class AlgorithmLibraryPanel extends Widget {
-  private aiService: AiService;
+  private libraryService: LibraryService;
   private treeContainer: HTMLDivElement;
   private searchInput: HTMLInputElement;
   private expandedCategories: Set<string> = new Set();
@@ -27,7 +28,7 @@ export class AlgorithmLibraryPanel extends Widget {
 
   constructor(app: JupyterFrontEnd, tracker: INotebookTracker) {
     super();
-    this.aiService = new AiService();
+    this.libraryService = new LibraryService();
     this.id = 'algorithm-library-panel';
     this.title.label = ''; // Hide label in sidebar to show only icon
     this.title.icon = paletteIcon;
@@ -49,15 +50,65 @@ export class AlgorithmLibraryPanel extends Widget {
     toolbar.style.padding = '8px';
     toolbar.style.borderBottom = '1px solid var(--jp-border-color2)';
     toolbar.style.backgroundColor = 'var(--jp-layout-color1)';
+    toolbar.style.display = 'flex';
+    toolbar.style.gap = '8px';
+    toolbar.style.alignItems = 'center';
 
     this.searchInput = document.createElement('input');
     this.searchInput.className = 'jp-mod-styled';
     this.searchInput.placeholder = '搜索算法...';
-    this.searchInput.style.width = '100%';
+    this.searchInput.style.flex = '1';
     this.searchInput.style.boxSizing = 'border-box';
     this.searchInput.addEventListener('input', () => this.filterAlgorithms());
 
+    // Refresh Button
+    const refreshBtn = document.createElement('div');
+    refreshBtn.className = 'jp-ToolbarButtonComponent';
+    refreshBtn.style.cursor = 'pointer';
+    refreshBtn.style.display = 'flex';
+    refreshBtn.style.alignItems = 'center';
+    refreshBtn.style.justifyContent = 'center';
+    refreshBtn.style.width = '24px';
+    refreshBtn.style.height = '24px';
+    refreshBtn.title = '刷新算法库';
+    refreshBtn.style.borderRadius = '3px';
+    refreshBtn.onmouseover = () => {
+      refreshBtn.style.backgroundColor = 'var(--jp-layout-color2)';
+    };
+    refreshBtn.onmouseout = () => {
+      refreshBtn.style.backgroundColor = 'transparent';
+    };
+
+    // Create icon element using JupyterLab's icon system
+    const iconNode = document.createElement('div');
+    refreshIcon.element({
+      container: iconNode,
+      height: '16px',
+      width: '16px',
+      elementPosition: 'center'
+    });
+    refreshBtn.appendChild(iconNode);
+
+    refreshBtn.onclick = async () => {
+      refreshBtn.style.opacity = '0.5'; // Visual feedback
+      try {
+        console.log('Refreshing library...');
+        this.algorithms = await this.libraryService.reloadFunctionLibrary();
+        // Re-expand all categories
+        Object.keys(this.algorithms).forEach(cat =>
+          this.expandedCategories.add(cat)
+        );
+        this.renderTree(this.searchInput.value);
+        console.log('Library refreshed');
+      } catch (e) {
+        console.error('Failed to refresh library:', e);
+      } finally {
+        refreshBtn.style.opacity = '1';
+      }
+    };
+
     toolbar.appendChild(this.searchInput);
+    toolbar.appendChild(refreshBtn);
     layout.appendChild(toolbar);
 
     // 2. Algorithm Tree Container
@@ -73,7 +124,7 @@ export class AlgorithmLibraryPanel extends Widget {
 
   private async loadAlgorithms() {
     try {
-      this.algorithms = await this.aiService.getFunctionLibrary();
+      this.algorithms = await this.libraryService.getFunctionLibrary();
       // Initialize with all categories expanded by default
       Object.keys(this.algorithms).forEach(cat =>
         this.expandedCategories.add(cat)

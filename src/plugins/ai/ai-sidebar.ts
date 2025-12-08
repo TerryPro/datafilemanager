@@ -3,6 +3,7 @@ import { INotebookTracker, NotebookPanel } from '@jupyterlab/notebook';
 import { JupyterFrontEnd } from '@jupyterlab/application';
 import { LabIcon } from '@jupyterlab/ui-components';
 import { AiService } from '../../services/ai-service';
+import { LibraryService } from '../../services/library-service';
 import { ICONS } from './utils/icons';
 import { IVariableInfo, IAlgorithmInfo, IChatMessage } from './state/types';
 import { StateManager, IAiSidebarState } from './state/ai-sidebar-state';
@@ -24,6 +25,7 @@ export class AiSidebar extends Widget {
   private app: JupyterFrontEnd;
   private tracker: INotebookTracker;
   private aiService: AiService;
+  private libraryService: LibraryService;
   private stateManager: StateManager;
   private chatHistoryWidget: ChatHistory;
   private inputPanelWidget: InputPanel;
@@ -38,6 +40,7 @@ export class AiSidebar extends Widget {
 
     this.tracker = tracker;
     this.aiService = new AiService();
+    this.libraryService = new LibraryService();
     this.stateManager = new StateManager();
 
     // Sidebar Header
@@ -75,7 +78,8 @@ export class AiSidebar extends Widget {
       selectedAlgorithm: state.selectedAlgorithm,
       isGenerating: state.isGenerating,
       tracker: this.tracker,
-      aiService: this.aiService
+      aiService: this.aiService,
+      libraryService: this.libraryService
     });
     this.node.appendChild(this.inputPanelWidget.node);
 
@@ -115,7 +119,7 @@ export class AiSidebar extends Widget {
       let selectedAlgorithm = algorithm;
       // If params and expectedOutput are not provided, get them from the service
       if (!algorithm.params || !algorithm.expectedOutput) {
-        const meta = this.aiService.getDefaultAlgorithmMeta(algorithm.id);
+        const meta = this.libraryService.getDefaultAlgorithmMeta(algorithm.id);
         selectedAlgorithm = {
           id: algorithm.id,
           name: algorithm.name,
@@ -331,7 +335,7 @@ export class AiSidebar extends Widget {
    */
   private updateStructuredIntent() {
     const state = this.stateManager.getState();
-    const text = this.aiService.generateStructuredPrompt(
+    const text = this.libraryService.generateStructuredPrompt(
       state.selectedVariable,
       state.selectedAlgorithm
     );

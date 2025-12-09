@@ -61,6 +61,75 @@ export class AiService {
   }
 
   /**
+   * 获取特定单元格的会话历史
+   */
+  async getSessionHistory(notebookId: string, cellId: string): Promise<any> {
+    try {
+      const url = `/aiserver/sessions?notebook_id=${encodeURIComponent(
+        notebookId
+      )}&cell_id=${encodeURIComponent(cellId)}`;
+      const resp = await fetch(url);
+      if (resp.ok) {
+        return await resp.json();
+      }
+      console.error('Failed to load session history', resp.statusText);
+      return null;
+    } catch (error) {
+      console.error('Network error loading session history', error);
+      return null;
+    }
+  }
+
+  /**
+   * 重置特定单元格的会话历史
+   */
+  async resetSession(notebookId: string, cellId: string): Promise<boolean> {
+    try {
+      const url = `/aiserver/sessions?notebook_id=${encodeURIComponent(
+        notebookId
+      )}&cell_id=${encodeURIComponent(cellId)}`;
+      const resp = await fetch(url, { method: 'DELETE' });
+      return resp.ok;
+    } catch (error) {
+      console.error('Failed to reset session', error);
+      return false;
+    }
+  }
+
+  /**
+   * 获取可用模型列表
+   */
+  async getModels(): Promise<{ current: string; models: any[] }> {
+    try {
+      const resp = await fetch('/aiserver/models');
+      if (resp.ok) {
+        return await resp.json();
+      }
+      return { current: '', models: [] };
+    } catch (error) {
+      console.error('Failed to fetch models', error);
+      return { current: '', models: [] };
+    }
+  }
+
+  /**
+   * 设置当前默认模型
+   */
+  async setModel(modelId: string): Promise<boolean> {
+    try {
+      const resp = await fetch('/aiserver/models', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model_id: modelId })
+      });
+      return resp.ok;
+    } catch (error) {
+      console.error('Failed to set model', error);
+      return false;
+    }
+  }
+
+  /**
    * 从当前内核获取可用的 DataFrame 信息
    */
   async getDataFrameInfo(panel: NotebookPanel): Promise<any[]> {
@@ -145,6 +214,10 @@ print(json.dumps(_dfs))
 
     // Get output if in fix mode
     let output = '';
+    const activeCell = panel.content.activeCell;
+    const cellId = activeCell?.model.id || '';
+    const notebookId = panel.context.path;
+
     if (mode === 'fix') {
       const cell = panel.content.activeCell;
       if (cell && cell.model.type === 'code') {
@@ -183,7 +256,9 @@ print(json.dumps(_dfs))
       intent,
       options: { mode, autoRun, privacy: 'normal', selection },
       output,
-      variables
+      variables,
+      notebookId,
+      cellId
     };
   }
 

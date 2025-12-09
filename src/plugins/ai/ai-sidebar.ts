@@ -10,6 +10,7 @@ import { StateManager, IAiSidebarState } from './state/ai-sidebar-state';
 import { ChatHistory } from './components/chat-history';
 import { InputPanel } from './components/input-panel';
 import { DiffViewer } from './components/diff-viewer';
+import { CellNavigator } from './components/cell-navigator';
 
 // AI助手图标
 export const aiAssistantIcon = new LabIcon({
@@ -29,6 +30,7 @@ export class AiSidebar extends Widget {
   private stateManager: StateManager;
   private chatHistoryWidget: ChatHistory;
   private inputPanelWidget: InputPanel;
+  private cellNavigator: CellNavigator;
 
   constructor(app: JupyterFrontEnd, tracker: INotebookTracker) {
     super();
@@ -51,28 +53,26 @@ export class AiSidebar extends Widget {
     title.className = 'ai-sidebar-title';
     title.innerHTML = `${ICONS.ai} <span>AI Assistant</span>`;
 
-    const settingsBtn = document.createElement('button');
-    settingsBtn.className = 'ai-sidebar-settings-btn';
-    settingsBtn.innerHTML = ICONS.settings;
-    settingsBtn.title = '设置';
-    settingsBtn.onclick = () =>
-      this.app.commands.execute('datafilemanager:open-settings');
-    // Add some basic styling inline if class is not defined yet to ensure visibility
-    settingsBtn.style.background = 'none';
-    settingsBtn.style.border = 'none';
-    settingsBtn.style.cursor = 'pointer';
-    settingsBtn.style.padding = '4px';
-    settingsBtn.style.color = 'var(--jp-ui-font-color1)';
+    // Right side actions wrapper
+    const actions = document.createElement('div');
+    actions.className = 'ai-sidebar-actions';
+    actions.style.display = 'flex';
+    actions.style.gap = '4px';
+    actions.style.alignItems = 'center';
+
+    // Cell Navigator
+    this.cellNavigator = new CellNavigator({ tracker: this.tracker });
+    actions.appendChild(this.cellNavigator.node);
 
     const clearBtn = document.createElement('button');
     clearBtn.className = 'ai-sidebar-clear-btn';
     clearBtn.innerHTML = ICONS.trash;
     clearBtn.title = '清空对话';
     clearBtn.onclick = () => this.clearHistory();
+    actions.appendChild(clearBtn);
 
     header.appendChild(title);
-    header.appendChild(settingsBtn);
-    header.appendChild(clearBtn);
+    header.appendChild(actions);
     this.node.appendChild(header);
 
     // Chat History Area - using ChatHistory component
@@ -99,6 +99,9 @@ export class AiSidebar extends Widget {
 
     // Subscribe to state changes
     this.stateManager.subscribe(newState => this.onStateUpdate(newState));
+
+    // Subscribe to active cell changes
+    this.tracker.activeCellChanged.connect(this.onActiveCellChanged, this);
   }
 
   /**
@@ -148,7 +151,101 @@ export class AiSidebar extends Widget {
     this.updateStructuredIntent();
   }
 
-  private clearHistory() {
+  /**
+   * Handle active cell changes
+   */
+  private async onActiveCellChanged() {
+    const notebookPanel = this.tracker.currentWidget;
+    const cell = this.tracker.activeCell;
+
+    if (!notebookPanel || !cell) {
+      return;
+    }
+
+    const notebookId = notebookPanel.context.path;
+    const cellId = cell.model.id;
+
+    // Load history for the new cell
+    await this.loadHistory(notebookId, cellId);
+  }
+
+  /**
+   * Load session history from backend
+   */
+  private async loadHistory(notebookId: string, cellId: string) {
+    const sessionData = await this.aiService.getSessionHistory(
+      notebookId,
+      cellId
+    );
+
+    let messages: IChatMessage[] = [];
+
+    if (sessionData && sessionData.interactions) {
+      messages = this.convertInteractionsToMessages(sessionData.interactions);
+    }
+
+    // Update UI
+    this.chatHistoryWidget.clear();
+    messages.forEach(msg => this.chatHistoryWidget.addMessage(msg));
+
+    this.stateManager.setState({
+      chatHistory: messages
+    });
+  }
+
+  /**
+   * Convert backend interactions to chat messages
+   */
+  private convertInteractionsToMessages(interactions: any[]): IChatMessage[] {
+    const messages: IChatMessage[] = [];
+
+    interactions.forEach((interaction: any) => {
+      // User message
+      messages.push({
+        id: `user-${interaction.turn_id}`,
+        sender: 'user',
+        content: interaction.user_request.intent,
+        timestamp: new Date(interaction.timestamp)
+      });
+
+      // AI message
+      if (interaction.ai_response) {
+        // Format content with explanation as comments
+        const explanation = interaction.ai_response.explanation || '';
+        const suggestion = interaction.ai_response.suggestion || '';
+        const content = explanation
+          ? `# ${explanation.replace(/\n/g, '\n# ')}\n\n${suggestion}`
+          : suggestion;
+
+        messages.push({
+          id: `ai-${interaction.turn_id}`,
+          sender: 'ai',
+          content: content,
+          timestamp: new Date(interaction.timestamp),
+          showApplyButton: true
+        });
+      }
+    });
+
+    return messages;
+  }
+
+  /**
+   * Clears the chat history
+   */
+  private async clearHistory() {
+    // Get current cell info
+    const notebookPanel = this.tracker.currentWidget;
+    const cell = this.tracker.activeCell;
+
+    if (notebookPanel && cell) {
+      const notebookId = notebookPanel.context.path;
+      const cellId = cell.model.id;
+      
+      // Reset backend session
+      await this.aiService.resetSession(notebookId, cellId);
+    }
+
     this.chatHistoryWidget.clear();
     this.stateManager.setState({ chatHistory: [] });
   }

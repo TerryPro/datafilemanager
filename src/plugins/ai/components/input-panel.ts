@@ -26,6 +26,7 @@ import { ICONS } from '../utils/icons';
 import { SelectionBar } from './selection-bar';
 import { VariableSelector } from './variable-selector';
 import { PromptSelector } from './prompt-selector';
+import { ModelSelector } from './model-selector';
 
 /**
  * Props for InputPanel component
@@ -96,6 +97,7 @@ export class InputPanel extends Widget {
   private selectionBarWidget: SelectionBar;
   private variableSelectorWidget!: VariableSelector;
   private promptSelectorWidget!: PromptSelector;
+  private modelSelectorWidget!: ModelSelector;
 
   /**
    * Creates a new InputPanel instance
@@ -156,6 +158,12 @@ export class InputPanel extends Widget {
    */
   private createToolbar(): HTMLDivElement {
     const toolbar = createElement('div', 'ai-sidebar-toolbar');
+
+    // Model Selector
+    this.modelSelectorWidget = new ModelSelector({
+      aiService: this.props.aiService
+    });
+    toolbar.appendChild(this.modelSelectorWidget.node);
 
     // Variable button (@)
     this.variableBtn = createButton(

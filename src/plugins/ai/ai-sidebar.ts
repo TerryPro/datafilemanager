@@ -241,7 +241,7 @@ export class AiSidebar extends Widget {
     if (notebookPanel && cell) {
       const notebookId = notebookPanel.context.path;
       const cellId = cell.model.id;
-      
+
       // Reset backend session
       await this.aiService.resetSession(notebookId, cellId);
     }

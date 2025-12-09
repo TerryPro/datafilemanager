@@ -28,13 +28,13 @@ export class ModelSelector extends Widget {
     this.selectElement = document.createElement('select');
     this.selectElement.className = 'ai-sidebar-mode-select';
     this.selectElement.title = '切换 AI 模型';
-    
+
     // Listen for changes
-    this.selectElement.addEventListener('change', async (e) => {
+    this.selectElement.addEventListener('change', async e => {
       const target = e.target as HTMLSelectElement;
       const modelId = target.value;
       if (modelId) {
-        // Optimistically update UI or waiting for confirm? 
+        // Optimistically update UI or waiting for confirm?
         // For now, trigger API and callback
         const success = await this.props.aiService.setModel(modelId);
         if (success) {
@@ -56,10 +56,10 @@ export class ModelSelector extends Widget {
 
   private async loadModels() {
     const data = await this.props.aiService.getModels();
-    
+
     // Clear existing options
     this.selectElement.innerHTML = '';
-    
+
     if (data.models && data.models.length > 0) {
       data.models.forEach(model => {
         const option = document.createElement('option');

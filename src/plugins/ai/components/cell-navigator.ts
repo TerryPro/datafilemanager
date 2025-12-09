@@ -5,7 +5,7 @@
  */
 
 import { Widget } from '@lumino/widgets';
-import { INotebookTracker } from '@jupyterlab/notebook';
+import { INotebookTracker, NotebookPanel } from '@jupyterlab/notebook';
 import { ICONS } from '../utils/icons';
 import { createButton } from '../utils/dom-utils';
 
@@ -39,7 +39,7 @@ export class CellNavigator extends Widget {
     this.node.appendChild(this.popup);
 
     // Click outside to close
-    document.addEventListener('click', (e) => {
+    document.addEventListener('click', e => {
       if (!this.node.contains(e.target as Node)) {
         this.hide();
       }
@@ -73,8 +73,8 @@ export class CellNavigator extends Widget {
    */
   private loadCells(): void {
     this.popup.innerHTML = '';
-    const notebookPanel = this.props.tracker.currentWidget;
-    
+    const notebookPanel = this.props.tracker.currentWidget as NotebookPanel;
+
     if (!notebookPanel) {
       this.showEmpty('无活动 Notebook');
       return;
@@ -89,11 +89,11 @@ export class CellNavigator extends Widget {
     cells.forEach((cell, index) => {
       const item = document.createElement('div');
       item.className = 'ai-cell-item';
-      
+
       // Determine type and content
       const type = cell.model.type;
       let content = cell.model.sharedModel.getSource();
-      
+
       // Truncate content
       const maxLength = 60;
       content = content.replace(/\n/g, ' ').trim();
@@ -105,21 +105,22 @@ export class CellNavigator extends Widget {
       }
 
       // Icon/Label for type
-      const typeLabel = type === 'code' ? '[Code]' : (type === 'markdown' ? '[MD]' : '[Raw]');
-      
+      const typeLabel =
+        type === 'code' ? '[Code]' : type === 'markdown' ? '[MD]' : '[Raw]';
+
       item.innerHTML = `
         <span class="cell-type ${type}">${typeLabel}</span>
         <span class="cell-content">${content}</span>
       `;
-      
+
       item.onclick = () => {
         // Activate cell
         notebookPanel.content.activeCellIndex = index;
-        
+
         // Scroll to cell
         const cellNode = cell.node;
         cellNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
+
         // Highlight logic (optional, but good for UX)
         // ...
 

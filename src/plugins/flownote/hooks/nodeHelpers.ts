@@ -11,7 +11,7 @@ import { INodeSchema } from '../types';
 /**
  * Position interface for node placement
  */
-export interface Position {
+export interface IPosition {
   x: number;
   y: number;
 }
@@ -39,7 +39,7 @@ export function ensureNodeId(cellModel: ICellModel): string {
 export function getNodePosition(
   cellModel: ICellModel,
   index: number
-): Position {
+): IPosition {
   const metaPos = cellModel.sharedModel.getMetadata('flow_position') as any;
   return metaPos
     ? { x: metaPos.x || 100, y: metaPos.y || 50 }

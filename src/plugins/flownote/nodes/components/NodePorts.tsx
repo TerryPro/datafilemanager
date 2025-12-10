@@ -2,13 +2,13 @@ import React from 'react';
 import { Handle, Position } from 'reactflow';
 import { IPort } from '../../types';
 
-interface PortProps {
+interface IPortProps {
   port: IPort;
   index: number;
   variableName?: string;
 }
 
-interface NodePortsProps {
+interface INodePortsProps {
   ports: IPort[];
   type: 'input' | 'output';
   variables?: Record<string, string>;
@@ -17,7 +17,7 @@ interface NodePortsProps {
 /**
  * 单个端口组件
  */
-const Port: React.FC<PortProps & { type: 'input' | 'output' }> = ({
+const Port: React.FC<IPortProps & { type: 'input' | 'output' }> = ({
   port,
   index,
   variableName,
@@ -80,7 +80,7 @@ const Port: React.FC<PortProps & { type: 'input' | 'output' }> = ({
  * 节点端口组件
  * 渲染输入或输出端口列表
  */
-export const NodePorts: React.FC<NodePortsProps> = ({
+export const NodePorts: React.FC<INodePortsProps> = ({
   ports,
   type,
   variables = {}

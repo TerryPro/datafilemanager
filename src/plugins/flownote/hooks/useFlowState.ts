@@ -88,7 +88,7 @@ export const useFlowState = (notebook: NotebookPanel, serverRoot: string) => {
         targetPort: params.targetHandle
       } as any;
       const metaEdges =
-        (notebook.model!.sharedModel.getMetadata('flow_edges') as any[]) || [];
+        (notebook.model.sharedModel.getMetadata('flow_edges') as any[]) || [];
       const exists = metaEdges.some(
         (e: any) =>
           e.sourceId === record.sourceId &&
@@ -138,7 +138,8 @@ export const useFlowState = (notebook: NotebookPanel, serverRoot: string) => {
   const handleEdgesChange = useCallback(
     (changes: any[]) => {
       onEdgesChange(changes as any);
-      if (!notebook.model || !Array.isArray(changes)) {
+      const model = notebook.model;
+      if (!model || !Array.isArray(changes)) {
         return;
       }
       const removes = changes.filter((c: any) => c.type === 'remove');
@@ -146,12 +147,12 @@ export const useFlowState = (notebook: NotebookPanel, serverRoot: string) => {
         return;
       }
       const metaEdges =
-        (notebook.model.sharedModel.getMetadata('flow_edges') as any[]) || [];
+        (model.sharedModel.getMetadata('flow_edges') as any[]) || [];
       const removeIds = new Set(
         removes.map((r: any) => (r.id ? r.id : r.edge?.id)).filter(Boolean)
       );
       const filtered = metaEdges.filter((e: any) => !removeIds.has(e.id));
-      notebook.model!.sharedModel.setMetadata('flow_edges', filtered);
+      model.sharedModel.setMetadata('flow_edges', filtered);
 
       removes.forEach((r: any) => {
         const tgt = r?.edge?.target || undefined;
@@ -159,8 +160,7 @@ export const useFlowState = (notebook: NotebookPanel, serverRoot: string) => {
           new CellUpdater(notebook, serverRoot).updateCellForNode(String(tgt));
           // Update target node status
           const newEdges =
-            (notebook.model!.sharedModel.getMetadata('flow_edges') as any[]) ||
-            [];
+            (model.sharedModel.getMetadata('flow_edges') as any[]) || [];
           setNodes(nds =>
             nds.map(n => {
               if (n.id !== tgt) {
@@ -193,11 +193,12 @@ export const useFlowState = (notebook: NotebookPanel, serverRoot: string) => {
 
   const onEdgesDelete = useCallback(
     (deleted: Edge[]) => {
-      if (!notebook.model || !Array.isArray(deleted) || deleted.length === 0) {
+      const model = notebook.model;
+      if (!model || !Array.isArray(deleted) || deleted.length === 0) {
         return;
       }
       const metaEdges =
-        (notebook.model.sharedModel.getMetadata('flow_edges') as any[]) || [];
+        (model.sharedModel.getMetadata('flow_edges') as any[]) || [];
       const filtered = metaEdges.filter((e: any) => {
         return !deleted.some(
           d =>
@@ -207,15 +208,14 @@ export const useFlowState = (notebook: NotebookPanel, serverRoot: string) => {
             e.targetPort === d.targetHandle
         );
       });
-      notebook.model!.sharedModel.setMetadata('flow_edges', filtered);
+      model.sharedModel.setMetadata('flow_edges', filtered);
       deleted.forEach(d => {
         new CellUpdater(notebook, serverRoot).updateCellForNode(
           String(d.target)
         );
         // Update target node status
         const afterEdges =
-          (notebook.model!.sharedModel.getMetadata('flow_edges') as any[]) ||
-          [];
+          (model.sharedModel.getMetadata('flow_edges') as any[]) || [];
         setNodes(nds =>
           nds.map(n => {
             if (n.id !== d.target) {

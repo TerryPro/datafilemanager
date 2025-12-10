@@ -81,7 +81,7 @@ export class ChatHistory extends Widget {
     // Make the container scrollable
     this.node.style.overflowY = 'auto';
     this.node.style.flex = '1';
-    this.node.style.padding = '10px';
+    this.node.style.padding = '0';
 
     // Render initial messages if provided
     if (props.messages && props.messages.length > 0) {

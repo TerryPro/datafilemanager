@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-interface RunButtonProps {
+interface IRunButtonProps {
   onClick: () => void;
   disabled: boolean;
 }
@@ -9,7 +9,7 @@ interface RunButtonProps {
  * 节点运行按钮组件
  * 带悬停效果的运行按钮
  */
-export const RunButton: React.FC<RunButtonProps> = ({ onClick, disabled }) => {
+export const RunButton: React.FC<IRunButtonProps> = ({ onClick, disabled }) => {
   const [hover, setHover] = useState(false);
 
   return (

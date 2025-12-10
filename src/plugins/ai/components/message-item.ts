@@ -132,7 +132,15 @@ export class MessageItem {
     const header = createElement('div', 'ai-message-header');
 
     const label = createElement('div', 'ai-message-label');
-    label.innerHTML = `${ICONS.ai} <span>AI Suggestion</span>`;
+
+    // Check if summary exists, use it as label; otherwise use default
+    if (message.summary) {
+      label.innerHTML = `${ICONS.ai} <span>${message.summary}</span>`;
+      label.title = message.summary; // Add tooltip for long summaries
+    } else {
+      label.innerHTML = `${ICONS.ai} <span>AI Suggestion</span>`;
+    }
+
     header.appendChild(label);
 
     const toolbar = createElement('div', 'ai-message-toolbar');
@@ -145,11 +153,11 @@ export class MessageItem {
 
     const text = message.content;
     const lines = text.split('\n');
-    const shouldCollapse = lines.length > 8;
+    const shouldCollapse = lines.length > 5;
 
     if (shouldCollapse) {
-      // Create collapsed version showing first 8 lines
-      const collapsedText = lines.slice(0, 8).join('\n') + '\n...';
+      // Create collapsed version showing first 5 lines
+      const collapsedText = lines.slice(0, 5).join('\n') + '\n...';
       content.textContent = collapsedText;
       content.classList.add('collapsed');
 
@@ -200,6 +208,19 @@ export class MessageItem {
     }
 
     msg.appendChild(content);
+
+    // Detailed Summary
+    if (message.detailedSummary) {
+      const summaryDiv = createElement('div', 'ai-message-detailed-summary');
+      summaryDiv.style.marginTop = '8px';
+      summaryDiv.style.padding = '8px';
+      summaryDiv.style.borderTop = '1px solid var(--jp-border-color2, #e0e0e0)';
+      summaryDiv.style.whiteSpace = 'pre-wrap';
+      summaryDiv.style.fontSize = '12px';
+      summaryDiv.style.color = 'var(--jp-ui-font-color1, #555)';
+      summaryDiv.textContent = message.detailedSummary;
+      msg.appendChild(summaryDiv);
+    }
 
     return msg;
   }

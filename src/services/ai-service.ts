@@ -22,9 +22,13 @@ export class AiService {
   /**
    * 向后端请求生成代码
    */
-  async requestGenerate(
-    payload: any
-  ): Promise<{ suggestion: string; explanation?: string; error?: string }> {
+  async requestGenerate(payload: any): Promise<{
+    suggestion: string;
+    explanation?: string;
+    error?: string;
+    summary?: string;
+    detailed_summary?: string;
+  }> {
     try {
       const resp = await fetch('/aiserver/generate', {
         method: 'POST',

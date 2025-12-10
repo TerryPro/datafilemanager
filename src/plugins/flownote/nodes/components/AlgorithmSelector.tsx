@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { INodeSchema } from '../../types';
 
-interface AlgorithmSelectorProps {
+interface IAlgorithmSelectorProps {
   library: Record<string, INodeSchema[]>;
   allSchemas: INodeSchema[];
   loading: boolean;
@@ -12,7 +12,7 @@ interface AlgorithmSelectorProps {
  * 算法选择器组件
  * 用于自由 Cell 选择算法
  */
-export const AlgorithmSelector: React.FC<AlgorithmSelectorProps> = ({
+export const AlgorithmSelector: React.FC<IAlgorithmSelectorProps> = ({
   library,
   allSchemas,
   loading,

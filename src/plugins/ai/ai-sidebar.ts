@@ -213,6 +213,8 @@ export class AiSidebar extends Widget {
         // Format content with explanation as comments
         const explanation = interaction.ai_response.explanation || '';
         const suggestion = interaction.ai_response.suggestion || '';
+        const summary = interaction.ai_response.summary || '';
+        const detailedSummary = interaction.ai_response.detailed_summary || '';
         const content = explanation
           ? `# ${explanation.replace(/\n/g, '\n# ')}\n\n${suggestion}`
           : suggestion;
@@ -222,7 +224,9 @@ export class AiSidebar extends Widget {
           sender: 'ai',
           content: content,
           timestamp: new Date(interaction.timestamp),
-          showApplyButton: true
+          showApplyButton: true,
+          summary: summary,
+          detailedSummary: detailedSummary
         });
       }
     });
@@ -305,7 +309,14 @@ export class AiSidebar extends Widget {
           'error'
         );
       } else {
-        this.appendHistory('AI', resp.suggestion, 'success', true);
+        this.appendHistory(
+          'AI',
+          resp.suggestion,
+          'success',
+          true,
+          resp.summary,
+          resp.detailed_summary
+        );
       }
     } catch (e) {
       this.appendHistory(
@@ -415,7 +426,9 @@ export class AiSidebar extends Widget {
     sender: string,
     text: string,
     type: 'normal' | 'error' | 'warning' | 'success' | 'info' = 'normal',
-    showApplyBtn = false
+    showApplyBtn = false,
+    summary?: string,
+    detailedSummary?: string
   ) {
     // Convert sender string to ChatMessage sender type
     let messageSender: 'user' | 'ai' | 'system';
@@ -434,7 +447,9 @@ export class AiSidebar extends Widget {
       content: text,
       type: type,
       timestamp: new Date(),
-      showApplyButton: showApplyBtn
+      showApplyButton: showApplyBtn,
+      summary: summary,
+      detailedSummary: detailedSummary
     };
 
     // Use ChatHistory component to add the message

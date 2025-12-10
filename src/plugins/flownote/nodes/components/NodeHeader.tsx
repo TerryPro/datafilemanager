@@ -2,7 +2,7 @@ import React from 'react';
 import { StatusIcon, getStatusLabel, NodeStatus } from './StatusIcon';
 import { RunButton } from './RunButton';
 
-interface NodeHeaderProps {
+interface INodeHeaderProps {
   nodeNumber?: number;
   nodeName: string;
   status: NodeStatus;
@@ -14,7 +14,7 @@ interface NodeHeaderProps {
  * 节点头部组件
  * 显示节点编号、名称、状态和运行按钮
  */
-export const NodeHeader: React.FC<NodeHeaderProps> = ({
+export const NodeHeader: React.FC<INodeHeaderProps> = ({
   nodeNumber,
   nodeName,
   status,

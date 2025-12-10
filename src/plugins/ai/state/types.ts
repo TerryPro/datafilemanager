@@ -66,6 +66,12 @@ export interface IChatMessage {
 
   /** Whether to show an "Apply" button for this message */
   showApplyButton?: boolean;
+
+  /** Optional summary of the action performed */
+  summary?: string;
+
+  /** Optional detailed technical summary (Markdown) */
+  detailedSummary?: string;
 }
 
 /**

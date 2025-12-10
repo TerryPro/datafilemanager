@@ -3,7 +3,7 @@ import { IParam, IColumn } from '../../types';
 import { ParamInput } from '../../forms/ParamInput';
 import { ServiceManager } from '@jupyterlab/services';
 
-interface NodeParametersProps {
+interface INodeParametersProps {
   args: IParam[];
   values: Record<string, any>;
   onChange: (name: string, value: any) => void;
@@ -15,7 +15,7 @@ interface NodeParametersProps {
  * 节点参数表单组件
  * 显示节点的参数输入表单
  */
-export const NodeParameters: React.FC<NodeParametersProps> = ({
+export const NodeParameters: React.FC<INodeParametersProps> = ({
   args,
   values,
   onChange,

@@ -7,7 +7,7 @@ export type NodeStatus =
   | 'success'
   | 'failed';
 
-interface StatusIconProps {
+interface IStatusIconProps {
   status: NodeStatus;
 }
 
@@ -15,7 +15,7 @@ interface StatusIconProps {
  * 节点状态图标组件
  * 根据节点状态显示不同的图标和颜色
  */
-export const StatusIcon: React.FC<StatusIconProps> = ({ status }) => {
+export const StatusIcon: React.FC<IStatusIconProps> = ({ status }) => {
   const getStatusColor = (s: NodeStatus): string => {
     switch (s) {
       case 'running':

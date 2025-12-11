@@ -134,11 +134,15 @@ export class MessageItem {
     const label = createElement('div', 'ai-message-label');
 
     // Check if summary exists, use it as label; otherwise use default
+    let labelText = message.summary || 'AI Suggestion';
+    if (message.iteration) {
+      labelText = `(尝试 ${message.iteration}) ${labelText}`;
+    }
+
+    label.innerHTML = `${ICONS.ai} <span>${labelText}</span>`;
+
     if (message.summary) {
-      label.innerHTML = `${ICONS.ai} <span>${message.summary}</span>`;
       label.title = message.summary; // Add tooltip for long summaries
-    } else {
-      label.innerHTML = `${ICONS.ai} <span>AI Suggestion</span>`;
     }
 
     header.appendChild(label);

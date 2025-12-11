@@ -90,6 +90,8 @@ export class InputPanel extends Widget {
   private props: IInputPanelProps;
   private textarea: HTMLTextAreaElement;
   private modeSelect!: HTMLSelectElement;
+  private workflowSelect!: HTMLSelectElement;
+  private contextCheckbox!: HTMLInputElement;
   private executeBtn!: HTMLButtonElement;
   private clearInputBtn!: HTMLButtonElement;
   private variableBtn!: HTMLButtonElement;
@@ -188,6 +190,10 @@ export class InputPanel extends Widget {
     // Mode select wrapper
     const selectWrapper = createElement('div', 'ai-sidebar-select-wrapper');
 
+    // Workflow select dropdown
+    this.workflowSelect = this.createWorkflowSelect();
+    selectWrapper.appendChild(this.workflowSelect);
+
     // Mode select dropdown
     this.modeSelect = this.createModeSelect();
     selectWrapper.appendChild(this.modeSelect);
@@ -220,6 +226,28 @@ export class InputPanel extends Widget {
     this.clearInputBtn.addEventListener('click', e => e.stopPropagation());
     toolbar.appendChild(this.clearInputBtn);
 
+    // Context Checkbox Wrapper
+    const contextWrapper = createElement('div', 'ai-sidebar-context-wrapper');
+    contextWrapper.style.display = 'flex';
+    contextWrapper.style.alignItems = 'center';
+    contextWrapper.style.marginRight = '4px';
+    contextWrapper.title = '是否包含上下文信息';
+
+    this.contextCheckbox = document.createElement('input');
+    this.contextCheckbox.type = 'checkbox';
+    this.contextCheckbox.id = 'ai-sidebar-context-check';
+    this.contextCheckbox.checked = false; // Default to false as per requirement implication (user chooses) or based on previous behavior
+    const contextLabel = document.createElement('label');
+    contextLabel.htmlFor = 'ai-sidebar-context-check';
+    contextLabel.textContent = '上下文';
+    contextLabel.style.fontSize = '10px';
+    contextLabel.style.marginLeft = '2px';
+    contextLabel.style.cursor = 'pointer';
+
+    contextWrapper.appendChild(this.contextCheckbox);
+    contextWrapper.appendChild(contextLabel);
+    toolbar.appendChild(contextWrapper);
+
     // Execute button
     this.executeBtn = createButton(
       'ai-sidebar-execute-btn',
@@ -230,6 +258,33 @@ export class InputPanel extends Widget {
     toolbar.appendChild(this.executeBtn);
 
     return toolbar;
+  }
+
+  /**
+   * Creates the workflow selection dropdown
+   *
+   * @returns The select element
+   * @private
+   */
+  private createWorkflowSelect(): HTMLSelectElement {
+    const select = document.createElement('select');
+    select.className = 'ai-sidebar-mode-select'; // Reuse same class for styling
+    select.style.marginRight = '4px';
+    select.style.width = 'auto'; // Auto width for shorter content
+
+    const workflows = [
+      { value: 'chat', label: 'Chat' },
+      { value: 'build', label: 'Build' }
+    ];
+
+    workflows.forEach(w => {
+      const opt = document.createElement('option');
+      opt.value = w.value;
+      opt.textContent = w.label;
+      select.appendChild(opt);
+    });
+
+    return select;
   }
 
   /**
@@ -389,6 +444,24 @@ export class InputPanel extends Widget {
    */
   setValue(value: string): void {
     this.textarea.value = value;
+  }
+
+  /**
+   * Gets the currently selected workflow mode
+   *
+   * @returns The selected workflow mode
+   */
+  getWorkflowMode(): 'chat' | 'build' {
+    return this.workflowSelect.value as 'chat' | 'build';
+  }
+
+  /**
+   * Gets whether context should be included
+   *
+   * @returns Boolean indicating if context is enabled
+   */
+  getIncludeContext(): boolean {
+    return this.contextCheckbox.checked;
   }
 
   /**

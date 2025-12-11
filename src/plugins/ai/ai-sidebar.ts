@@ -1,5 +1,9 @@
 import { Widget } from '@lumino/widgets';
-import { INotebookTracker, NotebookPanel } from '@jupyterlab/notebook';
+import {
+  INotebookTracker,
+  NotebookPanel,
+  NotebookActions
+} from '@jupyterlab/notebook';
 import { JupyterFrontEnd } from '@jupyterlab/application';
 import { LabIcon } from '@jupyterlab/ui-components';
 import { AiService } from '../../services/ai-service';
@@ -254,6 +258,126 @@ export class AiSidebar extends Widget {
     this.stateManager.setState({ chatHistory: [] });
   }
 
+  /**
+   * 运行单元格并检查是否有错误
+   */
+  private async runCellAndCheckError(
+    panel: NotebookPanel
+  ): Promise<{ hasError: boolean; errorOutput?: string }> {
+    const sessionContext = panel.context.sessionContext;
+    await NotebookActions.run(panel.content, sessionContext);
+
+    const cell = panel.content.activeCell;
+    if (!cell || cell.model.type !== 'code') {
+      return { hasError: false };
+    }
+
+    const outputs = (cell.model.toJSON() as any).outputs;
+    if (!outputs || !Array.isArray(outputs)) {
+      return { hasError: false };
+    }
+
+    const errorOutput = outputs.find((o: any) => o.output_type === 'error');
+    if (errorOutput) {
+      // Format error message
+      const traceback = (errorOutput.traceback as string[]).join('\n');
+      return { hasError: true, errorOutput: traceback };
+    }
+
+    return { hasError: false };
+  }
+
+  /**
+   * 处理 Build 模式：自动生成 -> 运行 -> 修复
+   */
+  private async handleBuildMode(
+    panel: NotebookPanel,
+    intent: string,
+    mode: string,
+    variables: any[]
+  ) {
+    let currentIntent = intent;
+    // Build模式下如果是初次生成，可以使用用户选择的模式，后续修复强制切换到fix模式
+    let currentMode = mode;
+    const maxRetries = 3;
+    let retryCount = 0;
+    const state = this.stateManager.getState();
+
+    this.appendHistory('System', '开始 Build 模式...', 'info');
+
+    while (retryCount <= maxRetries) {
+      // 1. Generate Code
+      const cell = panel.content.activeCell;
+      if (!cell || cell.model.type !== 'code') {
+        break;
+      }
+      const source = cell.model.sharedModel.getSource();
+      const includeContext = this.inputPanelWidget.getIncludeContext();
+
+      const payload = this.aiService.buildAiRequestPayload(
+        panel,
+        source,
+        currentIntent,
+        currentMode,
+        includeContext,
+        variables,
+        { variable: state.selectedVariable, algorithm: state.selectedAlgorithm }
+      );
+
+      const resp = await this.aiService.requestGenerate(payload);
+
+      if (resp.error) {
+        this.appendHistory('AI', `生成错误: ${resp.error}`, 'error');
+        break;
+      }
+
+      // 2. Apply Code automatically
+      const suggestion = resp.suggestion;
+      this.appendHistory(
+        'AI',
+        `尝试第 ${retryCount + 1} 次运行...\n${suggestion}`,
+        'normal',
+        true,
+        resp.summary,
+        resp.detailed_summary,
+        retryCount + 1
+      );
+
+      // 强制应用代码，不弹Diff
+      await this.applySuggestion(panel, suggestion, 'create'); // force overwrite
+
+      // 3. Run and Check
+      const result = await this.runCellAndCheckError(panel);
+
+      if (!result.hasError) {
+        this.appendHistory('System', 'Build 成功！代码运行无误。', 'success');
+        return;
+      }
+
+      // 4. Prepare for retry
+      retryCount++;
+      if (retryCount > maxRetries) {
+        this.appendHistory(
+          'System',
+          `Build 失败：已达到最大重试次数 (${maxRetries})。\n最后一次错误：\n${result.errorOutput}`,
+          'error'
+        );
+        break;
+      }
+
+      this.appendHistory(
+        'System',
+        `运行出错，正在尝试修复 (${retryCount}/${maxRetries})...`,
+        'warning'
+      );
+
+      // Update intent for fix
+      currentIntent = `修复以下错误:\n${result.errorOutput}`;
+      // Switch to fix mode for subsequent retries
+      currentMode = 'fix';
+    }
+  }
+
   private async handleGenerate() {
     const panel = this.tracker.currentWidget;
     if (!panel) {
@@ -290,13 +414,21 @@ export class AiSidebar extends Widget {
         console.warn('Failed to fetch variables:', e);
       }
 
+      const workflowMode = this.inputPanelWidget.getWorkflowMode();
+
+      if (workflowMode === 'build') {
+        await this.handleBuildMode(panel, intent, mode, variables);
+        return;
+      }
+
       const state = this.stateManager.getState();
+      const includeContext = this.inputPanelWidget.getIncludeContext();
       const payload = this.aiService.buildAiRequestPayload(
         panel,
         source,
         intent,
         mode,
-        false,
+        includeContext,
         variables,
         { variable: state.selectedVariable, algorithm: state.selectedAlgorithm }
       );
@@ -428,7 +560,8 @@ export class AiSidebar extends Widget {
     type: 'normal' | 'error' | 'warning' | 'success' | 'info' = 'normal',
     showApplyBtn = false,
     summary?: string,
-    detailedSummary?: string
+    detailedSummary?: string,
+    iteration?: number
   ) {
     // Convert sender string to ChatMessage sender type
     let messageSender: 'user' | 'ai' | 'system';
@@ -449,7 +582,8 @@ export class AiSidebar extends Widget {
       timestamp: new Date(),
       showApplyButton: showApplyBtn,
       summary: summary,
-      detailedSummary: detailedSummary
+      detailedSummary: detailedSummary,
+      iteration: iteration
     };
 
     // Use ChatHistory component to add the message

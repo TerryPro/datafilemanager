@@ -72,6 +72,9 @@ export interface IChatMessage {
 
   /** Optional detailed technical summary (Markdown) */
   detailedSummary?: string;
+
+  /** Optional iteration count for build mode */
+  iteration?: number;
 }
 
 /**

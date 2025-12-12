@@ -13,7 +13,8 @@ import {
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
 import { INotebookTracker, NotebookPanel } from '@jupyterlab/notebook';
-import { ICommandPalette } from '@jupyterlab/apputils';
+import { ICommandPalette, ToolbarButton } from '@jupyterlab/apputils';
+import { paletteIcon, searchIcon } from '@jupyterlab/ui-components';
 import { showErrorMessage } from '@jupyterlab/apputils';
 import { AlgorithmLibraryPanel } from './algorithm-library-panel';
 import { AlgorithmLibraryDialogManager } from '../dataframe/algorithm-library-dialog';
@@ -38,6 +39,78 @@ const algorithmPlugin: JupyterFrontEndPlugin<void> = {
     palette: ICommandPalette
   ) => {
     console.log('Algorithm Library plugin activated');
+
+    // Add Algorithm Button to Notebook Toolbar
+    tracker.widgetAdded.connect((sender, panel) => {
+      const button = new ToolbarButton({
+        icon: paletteIcon,
+        label: '',
+        tooltip: 'Insert Algorithm Widget',
+        onClick: async () => {
+          const session = panel.sessionContext;
+          if (session.isReady) {
+            const code = 'from algorithm.widgets import AlgorithmWidget\nAlgorithmWidget()';
+            // Import NotebookActions dynamically
+            const { NotebookActions } = await import('@jupyterlab/notebook');
+
+            if (panel.content.activeCell) {
+              const activeCell = panel.content.activeCell;
+              if (activeCell.model.type === 'code' && activeCell.model.sharedModel.getSource().trim() === '') {
+                activeCell.model.sharedModel.setSource(code);
+                await NotebookActions.run(panel.content, session);
+              } else {
+                NotebookActions.insertBelow(panel.content);
+                const newCell = panel.content.activeCell;
+                if (newCell) {
+                  newCell.model.sharedModel.setSource(code);
+                  await NotebookActions.run(panel.content, session);
+                }
+              }
+            }
+          }
+        }
+      });
+      panel.toolbar.insertItem(10, 'add-algorithm-widget', button);
+
+      const browseButton = new ToolbarButton({
+        icon: searchIcon,
+        tooltip: 'Browse Algorithm Library',
+        onClick: async () => {
+          const session = panel.sessionContext;
+          if (session.isReady) {
+            // Lazy load manager to avoid circular deps or heavy init if possible,
+            // or just new it up here.
+            const manager = new AlgorithmLibraryDialogManager(app);
+            const selection = await manager.selectAlgorithm(panel);
+
+            if (selection) {
+              const code = `from algorithm.widgets import AlgorithmWidget\nAlgorithmWidget(init_algo='${selection.id}')`;
+              const { NotebookActions } = await import('@jupyterlab/notebook');
+
+              if (panel.content.activeCell) {
+                const activeCell = panel.content.activeCell;
+                const source = activeCell.model.sharedModel.getSource().trim();
+
+                if (source === '') {
+                  // Current cell is empty, use it
+                  activeCell.model.sharedModel.setSource(code);
+                  await NotebookActions.run(panel.content, session);
+                } else {
+                  // Current cell not empty, insert below
+                  NotebookActions.insertBelow(panel.content);
+                  const newCell = panel.content.activeCell;
+                  if (newCell) {
+                    newCell.model.sharedModel.setSource(code);
+                    await NotebookActions.run(panel.content, session);
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
+      panel.toolbar.insertItem(11, 'browse-algorithm-library', browseButton);
+    });
 
     try {
       // Create and add the algorithm library panel to the left sidebar

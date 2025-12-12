@@ -595,6 +595,16 @@ if ${outputVarName} is not None:
   getValue(): string {
     return this.selectedCode;
   }
+
+  getSelectedFunction(): ILibraryFunction | null {
+    if (this.selectedFunctionId) {
+      for (const cat in this.libraryData) {
+        const func = this.libraryData[cat].find(f => f.id === this.selectedFunctionId);
+        if (func) return func;
+      }
+    }
+    return null;
+  }
 }
 
 export class AlgorithmLibraryDialogManager {
@@ -669,5 +679,58 @@ export class AlgorithmLibraryDialogManager {
         cell.model.sharedModel.setSource(newSource);
       }
     }
+  }
+
+  /**
+   * Open dialog to select an algorithm and return its info instead of inserting code.
+   */
+  async selectAlgorithm(
+    panel: NotebookPanel
+  ): Promise<ILibraryFunction | null> {
+    const [libraryData, serverRoot] = await Promise.all([
+      this.libraryService.getFunctionLibrary(),
+      this.aiService.getServerRoot()
+    ]);
+
+    // Pass empty string for dfName as we are just selecting algorithm type
+    const body = new LibraryBodyWidget(
+      libraryData,
+      '',
+      serverRoot,
+      'dataframe_panel'
+    );
+
+    const dialog = new Dialog({
+      title: 'Select Algorithm',
+      body: body,
+      buttons: [
+        Dialog.cancelButton({ label: 'Cancel' }),
+        Dialog.okButton({ label: 'Select' })
+      ]
+    });
+
+    // Style adjustments (copied from openLibraryDialog)
+    const content = dialog.node.querySelector('.jp-Dialog-content') as HTMLElement | null;
+    const bodyEl = dialog.node.querySelector('.jp-Dialog-body') as HTMLElement | null;
+    dialog.node.style.resize = 'none';
+    dialog.node.style.overflow = 'hidden';
+    if (content) {
+      content.style.display = 'flex';
+      content.style.flexDirection = 'column';
+      content.style.resize = 'none';
+      content.style.maxHeight = '80vh';
+      content.style.overflow = 'hidden';
+    }
+    if (bodyEl) {
+      bodyEl.style.flex = '1';
+      bodyEl.style.maxHeight = '70vh';
+      bodyEl.style.overflow = 'auto';
+    }
+
+    const result = await dialog.launch();
+    if (result.button.accept) {
+      return body.getSelectedFunction();
+    }
+    return null;
   }
 }

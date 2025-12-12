@@ -76,67 +76,62 @@ class AlgorithmEditorBody extends Widget implements Dialog.IBodyWidget<IAlgorith
 
     // --- Header Section (Sticky) ---
     const header = document.createElement('div');
-    header.style.marginBottom = '16px';
+    header.style.marginBottom = '12px';
     header.style.borderBottom = '1px solid var(--jp-border-color2)';
-    header.style.paddingBottom = '12px';
+    header.style.paddingBottom = '8px';
     header.style.position = 'sticky';
     header.style.top = '0';
     header.style.backgroundColor = 'var(--jp-layout-color1)';
     header.style.zIndex = '10';
     header.style.display = 'flex';
-    header.style.flexDirection = 'column';
-    header.style.gap = '8px';
+    header.style.alignItems = 'center';
+    header.style.gap = '16px';
 
-    // Row 1: ID (Title-like)
+    // Name (ID) Input - flex: 1 to take remaining space
     const idWrapper = document.createElement('div');
-    idWrapper.style.width = '100%';
+    idWrapper.style.flex = '1';
+    idWrapper.style.display = 'flex';
+    idWrapper.style.flexDirection = 'column';
 
-    // Label for ID
     const idLabel = document.createElement('label');
     idLabel.textContent = 'Function Name (ID)';
-    idLabel.style.fontSize = '12px';
+    idLabel.style.fontSize = '11px';
     idLabel.style.color = 'var(--jp-ui-font-color2)';
-    idLabel.style.marginBottom = '4px';
-    idLabel.style.display = 'block';
+    idLabel.style.marginBottom = '2px';
 
     this.idInput = document.createElement('input');
-    // Minimalist style keeping focus on the "Title" aspect
     this.idInput.style.width = '100%';
-    this.idInput.style.boxSizing = 'border-box'; // Ensure padding doesn't overflow
-    this.idInput.style.fontSize = '18px';
+    this.idInput.style.boxSizing = 'border-box';
+    this.idInput.style.fontSize = '14px';
     this.idInput.style.color = 'var(--jp-ui-font-color0)';
     this.idInput.style.fontWeight = 'bold';
-    this.idInput.style.border = '1px solid var(--jp-border-color2)'; // Subtle border
+    this.idInput.style.border = '1px solid var(--jp-border-color2)';
     this.idInput.style.borderRadius = '4px';
-    this.idInput.style.padding = '6px';
+    this.idInput.style.padding = '4px 6px';
     this.idInput.style.backgroundColor = 'var(--jp-layout-color1)';
-
     this.idInput.value = algo?.id || '';
     this.idInput.placeholder = 'my_algorithm_name';
-
-    // FIX: Removed disabled check for edits, to allow ID editing
     this.idInput.addEventListener('input', () => this.syncCode());
 
     idWrapper.appendChild(idLabel);
     idWrapper.appendChild(this.idInput);
 
-    // Row 2: Category
+    // Category Select - fixed width
     const catWrapper = document.createElement('div');
     catWrapper.style.display = 'flex';
-    catWrapper.style.alignItems = 'baseline'; // FIX: Align text baselines, not boxes
-    catWrapper.style.gap = '8px';
+    catWrapper.style.flexDirection = 'column';
 
-    const catLabel = document.createElement('span');
-    catLabel.textContent = 'Category:';
-    catLabel.style.fontSize = '12px';
-    catLabel.style.fontWeight = 'bold';
+    const catLabel = document.createElement('label');
+    catLabel.textContent = 'Category';
+    catLabel.style.fontSize = '11px';
     catLabel.style.color = 'var(--jp-ui-font-color2)';
+    catLabel.style.marginBottom = '2px';
 
     this.categorySelect = document.createElement('select');
     this.categorySelect.className = 'jp-mod-styled';
     this.categorySelect.style.fontSize = '12px';
-    this.categorySelect.style.padding = '2px 8px';
-    this.categorySelect.style.height = 'auto'; // Let content determine height
+    this.categorySelect.style.padding = '4px 8px';
+    this.categorySelect.style.height = 'auto';
     this.categorySelect.style.margin = '0';
 
     categories.forEach(cat => {
@@ -146,6 +141,7 @@ class AlgorithmEditorBody extends Widget implements Dialog.IBodyWidget<IAlgorith
       if (algo && algo.category === cat.id) option.selected = true;
       this.categorySelect.appendChild(option);
     });
+
     catWrapper.appendChild(catLabel);
     catWrapper.appendChild(this.categorySelect);
 
@@ -158,125 +154,152 @@ class AlgorithmEditorBody extends Widget implements Dialog.IBodyWidget<IAlgorith
     descHeader.textContent = 'Description';
     descHeader.style.fontSize = '14px';
     descHeader.style.marginTop = '0';
-    descHeader.style.marginBottom = '8px';
+    descHeader.style.marginBottom = '4px';
     container.appendChild(descHeader);
 
     this.descriptionInput = document.createElement('textarea');
     this.descriptionInput.className = 'jp-mod-styled';
     this.descriptionInput.style.width = '100%';
     this.descriptionInput.style.boxSizing = 'border-box';
-    this.descriptionInput.style.minHeight = '60px';
-    this.descriptionInput.style.marginBottom = '20px';
+    this.descriptionInput.style.minHeight = '40px';
+    this.descriptionInput.style.maxHeight = '60px';
+    this.descriptionInput.style.marginBottom = '12px';
     this.descriptionInput.style.resize = 'none';
     this.descriptionInput.style.fontFamily = 'var(--jp-ui-font-family)';
     this.descriptionInput.style.color = 'var(--jp-ui-font-color1)';
-    this.descriptionInput.style.lineHeight = '1.5';
+    this.descriptionInput.style.lineHeight = '1.4';
+    this.descriptionInput.style.fontSize = '12px';
     this.descriptionInput.value = algo?.description || '';
     this.descriptionInput.placeholder = 'Enter a brief description...';
     this.descriptionInput.addEventListener('input', () => this.syncCode());
     container.appendChild(this.descriptionInput);
 
-    // --- Inputs Section ---
+    // --- Inputs & Outputs Row (Side by Side) ---
+    const ioRow = document.createElement('div');
+    ioRow.style.display = 'flex';
+    ioRow.style.gap = '16px';
+    ioRow.style.marginBottom = '12px';
+
+    // --- Inputs Column ---
+    const inputsColumn = document.createElement('div');
+    inputsColumn.style.flex = '1';
+
     const inputsHeader = document.createElement('div');
     inputsHeader.style.display = 'flex';
     inputsHeader.style.justifyContent = 'space-between';
     inputsHeader.style.alignItems = 'center';
-    inputsHeader.style.marginBottom = '8px';
+    inputsHeader.style.marginBottom = '4px';
 
     const inputsTitle = document.createElement('h3');
     inputsTitle.textContent = 'Inputs';
-    inputsTitle.style.fontSize = '14px';
+    inputsTitle.style.fontSize = '13px';
     inputsTitle.style.margin = '0';
     inputsHeader.appendChild(inputsTitle);
 
     const addInputBtn = document.createElement('button');
     addInputBtn.className = 'jp-mod-styled jp-mod-accept';
-    addInputBtn.textContent = '+ Add Input';
+    addInputBtn.textContent = '+';
     addInputBtn.style.fontSize = '11px';
-    addInputBtn.style.padding = '4px 8px';
+    addInputBtn.style.padding = '2px 6px';
+    addInputBtn.title = 'Add Input';
     addInputBtn.onclick = () => this.addInput();
     inputsHeader.appendChild(addInputBtn);
-    container.appendChild(inputsHeader);
+    inputsColumn.appendChild(inputsHeader);
 
     this.inputsContainer = document.createElement('div');
-    this.inputsContainer.style.marginBottom = '20px';
-    container.appendChild(this.inputsContainer);
+    inputsColumn.appendChild(this.inputsContainer);
     this.renderInputs();
 
-    // --- Outputs Section ---
+    ioRow.appendChild(inputsColumn);
+
+    // --- Outputs Column ---
+    const outputsColumn = document.createElement('div');
+    outputsColumn.style.flex = '1';
+
     const outputsHeader = document.createElement('div');
     outputsHeader.style.display = 'flex';
     outputsHeader.style.justifyContent = 'space-between';
     outputsHeader.style.alignItems = 'center';
-    outputsHeader.style.marginBottom = '8px';
+    outputsHeader.style.marginBottom = '4px';
 
     const outputsTitle = document.createElement('h3');
     outputsTitle.textContent = 'Outputs';
-    outputsTitle.style.fontSize = '14px';
+    outputsTitle.style.fontSize = '13px';
     outputsTitle.style.margin = '0';
     outputsHeader.appendChild(outputsTitle);
 
     const addOutputBtn = document.createElement('button');
     addOutputBtn.className = 'jp-mod-styled jp-mod-accept';
-    addOutputBtn.textContent = '+ Add Output';
+    addOutputBtn.textContent = '+';
     addOutputBtn.style.fontSize = '11px';
-    addOutputBtn.style.padding = '4px 8px';
+    addOutputBtn.style.padding = '2px 6px';
+    addOutputBtn.title = 'Add Output';
     addOutputBtn.onclick = () => this.addOutput();
     outputsHeader.appendChild(addOutputBtn);
-    container.appendChild(outputsHeader);
+    outputsColumn.appendChild(outputsHeader);
 
     this.outputsContainer = document.createElement('div');
-    this.outputsContainer.style.marginBottom = '20px';
-    container.appendChild(this.outputsContainer);
+    outputsColumn.appendChild(this.outputsContainer);
     this.renderOutputs();
+
+    ioRow.appendChild(outputsColumn);
+    container.appendChild(ioRow);
 
     // --- Parameters Section ---
     const paramHeader = document.createElement('div');
     paramHeader.style.display = 'flex';
     paramHeader.style.justifyContent = 'space-between';
     paramHeader.style.alignItems = 'center';
-    paramHeader.style.marginBottom = '8px';
+    paramHeader.style.marginBottom = '4px';
 
     const paramTitle = document.createElement('h3');
     paramTitle.textContent = 'Parameters';
-    paramTitle.style.fontSize = '14px';
+    paramTitle.style.fontSize = '13px';
     paramTitle.style.margin = '0';
     paramHeader.appendChild(paramTitle);
 
     const addParamBtn = document.createElement('button');
     addParamBtn.className = 'jp-mod-styled jp-mod-accept';
-    addParamBtn.textContent = '+ Add Param';
+    addParamBtn.textContent = '+ Add';
     addParamBtn.style.fontSize = '11px';
-    addParamBtn.style.padding = '4px 8px';
+    addParamBtn.style.padding = '2px 6px';
     addParamBtn.onclick = () => this.addParam();
     paramHeader.appendChild(addParamBtn);
     container.appendChild(paramHeader);
 
     this.argsContainer = document.createElement('div');
-    this.argsContainer.style.marginBottom = '20px';
+    this.argsContainer.style.marginBottom = '12px';
     container.appendChild(this.argsContainer);
     this.renderParams();
 
-    // --- Code Section ---
+    // --- Code Section (Flex to fill remaining space) ---
+    const codeWrapper = document.createElement('div');
+    codeWrapper.style.display = 'flex';
+    codeWrapper.style.flexDirection = 'column';
+    codeWrapper.style.flex = '1';
+    codeWrapper.style.minHeight = '120px';
+
     const codeHeader = document.createElement('h3');
     codeHeader.textContent = 'Code Template';
-    codeHeader.style.fontSize = '14px';
-    codeHeader.style.marginBottom = '8px';
-    container.appendChild(codeHeader);
+    codeHeader.style.fontSize = '13px';
+    codeHeader.style.marginBottom = '4px';
+    codeHeader.style.marginTop = '0';
+    codeWrapper.appendChild(codeHeader);
 
     this.codeInput = document.createElement('textarea');
     this.codeInput.className = 'jp-mod-styled';
-    this.codeInput.style.width = '100%'; // FIX: Auto width
-    this.codeInput.style.height = '250px';
-    this.codeInput.style.boxSizing = 'border-box'; // FIX: Prevent overflow
+    this.codeInput.style.width = '100%';
+    this.codeInput.style.flex = '1';
+    this.codeInput.style.minHeight = '100px';
+    this.codeInput.style.boxSizing = 'border-box';
     this.codeInput.style.fontFamily = 'var(--jp-code-font-family)';
     this.codeInput.style.fontSize = '12px';
-    this.codeInput.style.lineHeight = '1.5';
-    this.codeInput.style.whiteSpace = 'pre'; // Keep pre for code, but container handles scroll
-    this.codeInput.style.overflowX = 'auto'; // Code area handles its own scroll
+    this.codeInput.style.lineHeight = '1.4';
+    this.codeInput.style.whiteSpace = 'pre';
+    this.codeInput.style.overflowX = 'auto';
     this.codeInput.style.backgroundColor = 'var(--jp-layout-color2)';
     this.codeInput.style.border = '1px solid var(--jp-border-color2)';
-    this.codeInput.style.padding = '12px';
+    this.codeInput.style.padding = '8px';
     this.codeInput.spellcheck = false;
     this.codeInput.style.resize = 'none';
 
@@ -287,7 +310,8 @@ class AlgorithmEditorBody extends Widget implements Dialog.IBodyWidget<IAlgorith
       this.syncCode(true); // Generate initial code
     }
 
-    container.appendChild(this.codeInput);
+    codeWrapper.appendChild(this.codeInput);
+    container.appendChild(codeWrapper);
   }
 
   private renderParams() {

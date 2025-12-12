@@ -12,8 +12,8 @@ import {
   closeIcon,
   LabIcon
 } from '@jupyterlab/ui-components';
-import { AlgorithmInfoDialogManager } from './algorithm-info-dialog';
-import { AlgorithmEditorDialogManager, ICategory } from './algorithm-editor-dialog';
+import { AlgorithmInfoDialogManager } from '../../component/algorithm/algorithm-info-dialog';
+import { AlgorithmEditorDialogManager, ICategory } from '../../component/algorithm/algorithm-editor-dialog';
 import { showErrorMessage, showDialog, Dialog } from '@jupyterlab/apputils';
 
 interface IAlgorithm {

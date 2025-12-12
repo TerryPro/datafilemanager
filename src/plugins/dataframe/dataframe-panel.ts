@@ -4,7 +4,7 @@ import { INotebookTracker, NotebookPanel } from '@jupyterlab/notebook';
 import { showErrorMessage, InputDialog } from '@jupyterlab/apputils';
 import { ITranslator } from '@jupyterlab/translation';
 import { Menu } from '@lumino/widgets';
-import { AlgorithmLibraryDialogManager } from './algorithm-library-dialog';
+import { AlgorithmLibraryDialogManager } from '../../component/algorithm/algorithm-library-dialog';
 
 /**
  * DataFrame 检视面板组件，显示当前笔记本中的所有 DataFrame 变量
@@ -140,8 +140,8 @@ export class DataFramePanel {
         typeof it.rows === 'number'
           ? String(it.rows)
           : it.shape
-          ? String(it.shape[0])
-          : '';
+            ? String(it.shape[0])
+            : '';
 
       row.appendChild(name);
       row.appendChild(shape);
@@ -356,8 +356,7 @@ export class DataFramePanel {
           await showErrorMessage(
             this.trans.__('Analysis'),
             this.trans.__(
-              `Failed to open library dialog: ${
-                error instanceof Error ? error.message : 'Unknown error'
+              `Failed to open library dialog: ${error instanceof Error ? error.message : 'Unknown error'
               }`
             )
           );

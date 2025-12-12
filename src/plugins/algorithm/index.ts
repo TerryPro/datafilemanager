@@ -17,7 +17,7 @@ import { ICommandPalette, ToolbarButton } from '@jupyterlab/apputils';
 import { paletteIcon, searchIcon } from '@jupyterlab/ui-components';
 import { showErrorMessage } from '@jupyterlab/apputils';
 import { AlgorithmLibraryPanel } from './algorithm-library-panel';
-import { AlgorithmLibraryDialogManager } from '../dataframe/algorithm-library-dialog';
+import { AlgorithmLibraryDialogManager } from '../../component/algorithm/algorithm-library-dialog';
 
 /**
  * Algorithm Library Plugin

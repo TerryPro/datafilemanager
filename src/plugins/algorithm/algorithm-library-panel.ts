@@ -6,9 +6,15 @@ import {
   paletteIcon,
   caretDownIcon,
   caretRightIcon,
-  refreshIcon
+  refreshIcon,
+  addIcon,
+  editIcon,
+  closeIcon,
+  LabIcon
 } from '@jupyterlab/ui-components';
 import { AlgorithmInfoDialogManager } from './algorithm-info-dialog';
+import { AlgorithmEditorDialogManager, ICategory } from './algorithm-editor-dialog';
+import { showErrorMessage, showDialog, Dialog } from '@jupyterlab/apputils';
 
 interface IAlgorithm {
   id: string;
@@ -17,6 +23,8 @@ interface IAlgorithm {
   category: string;
   template?: string;
   args?: any[];
+  inputs?: { name: string; type: string }[];
+  outputs?: { name: string; type: string }[];
 }
 
 export class AlgorithmLibraryPanel extends Widget {
@@ -25,6 +33,7 @@ export class AlgorithmLibraryPanel extends Widget {
   private searchInput: HTMLInputElement;
   private expandedCategories: Set<string> = new Set();
   private algorithms: { [category: string]: IAlgorithm[] } = {};
+  private categories: ICategory[] = [];
 
   constructor(app: JupyterFrontEnd, tracker: INotebookTracker) {
     super();
@@ -61,53 +70,48 @@ export class AlgorithmLibraryPanel extends Widget {
     this.searchInput.style.boxSizing = 'border-box';
     this.searchInput.addEventListener('input', () => this.filterAlgorithms());
 
+    // Helper to create toolbar button
+    const createBtn = (icon: LabIcon, title: string, onClick: () => void) => {
+      const btn = document.createElement('div');
+      btn.className = 'jp-ToolbarButtonComponent';
+      btn.style.cursor = 'pointer';
+      btn.style.display = 'flex';
+      btn.style.alignItems = 'center';
+      btn.style.justifyContent = 'center';
+      btn.style.width = '24px';
+      btn.style.height = '24px';
+      btn.title = title;
+      btn.style.borderRadius = '3px';
+      btn.onmouseover = () => {
+        btn.style.backgroundColor = 'var(--jp-layout-color2)';
+      };
+      btn.onmouseout = () => {
+        btn.style.backgroundColor = 'transparent';
+      };
+
+      const iconNode = document.createElement('div');
+      icon.element({
+        container: iconNode,
+        height: '16px',
+        width: '16px',
+        elementPosition: 'center'
+      });
+      btn.appendChild(iconNode);
+
+      btn.onclick = onClick;
+      return btn;
+    };
+
+    // Add Button
+    const addBtn = createBtn(addIcon, 'Add New Algorithm', () => this.handleAdd());
+
     // Refresh Button
-    const refreshBtn = document.createElement('div');
-    refreshBtn.className = 'jp-ToolbarButtonComponent';
-    refreshBtn.style.cursor = 'pointer';
-    refreshBtn.style.display = 'flex';
-    refreshBtn.style.alignItems = 'center';
-    refreshBtn.style.justifyContent = 'center';
-    refreshBtn.style.width = '24px';
-    refreshBtn.style.height = '24px';
-    refreshBtn.title = '刷新算法库';
-    refreshBtn.style.borderRadius = '3px';
-    refreshBtn.onmouseover = () => {
-      refreshBtn.style.backgroundColor = 'var(--jp-layout-color2)';
-    };
-    refreshBtn.onmouseout = () => {
-      refreshBtn.style.backgroundColor = 'transparent';
-    };
-
-    // Create icon element using JupyterLab's icon system
-    const iconNode = document.createElement('div');
-    refreshIcon.element({
-      container: iconNode,
-      height: '16px',
-      width: '16px',
-      elementPosition: 'center'
+    const refreshBtn = createBtn(refreshIcon, 'Refresh Library', async () => {
+      await this.refreshLibrary();
     });
-    refreshBtn.appendChild(iconNode);
-
-    refreshBtn.onclick = async () => {
-      refreshBtn.style.opacity = '0.5'; // Visual feedback
-      try {
-        console.log('Refreshing library...');
-        this.algorithms = await this.libraryService.reloadFunctionLibrary();
-        // Re-expand all categories
-        Object.keys(this.algorithms).forEach(cat =>
-          this.expandedCategories.add(cat)
-        );
-        this.renderTree(this.searchInput.value);
-        console.log('Library refreshed');
-      } catch (e) {
-        console.error('Failed to refresh library:', e);
-      } finally {
-        refreshBtn.style.opacity = '1';
-      }
-    };
 
     toolbar.appendChild(this.searchInput);
+    toolbar.appendChild(addBtn);
     toolbar.appendChild(refreshBtn);
     layout.appendChild(toolbar);
 
@@ -122,9 +126,46 @@ export class AlgorithmLibraryPanel extends Widget {
     this.loadAlgorithms();
   }
 
+  private async refreshLibrary() {
+    try {
+      console.log('Refreshing library...');
+      this.algorithms = await this.libraryService.reloadFunctionLibrary();
+
+      try {
+        const prompts = await this.libraryService.getAlgorithmPrompts();
+        this.categories = Object.keys(prompts).map(id => ({
+          id: id,
+          label: prompts[id].label
+        }));
+      } catch (e) {
+        console.warn('Failed to fetch category map:', e);
+      }
+
+      // Re-expand all categories
+      Object.keys(this.algorithms).forEach(cat =>
+        this.expandedCategories.add(cat)
+      );
+      this.renderTree(this.searchInput.value);
+      console.log('Library refreshed');
+    } catch (e) {
+      console.error('Failed to refresh library:', e);
+    }
+  }
+
   private async loadAlgorithms() {
     try {
       this.algorithms = await this.libraryService.getFunctionLibrary();
+
+      try {
+        const prompts = await this.libraryService.getAlgorithmPrompts();
+        this.categories = Object.keys(prompts).map(id => ({
+          id: id,
+          label: prompts[id].label
+        }));
+      } catch (e) {
+        console.warn('Failed to fetch category map:', e);
+      }
+
       // Initialize with all categories expanded by default
       Object.keys(this.algorithms).forEach(cat =>
         this.expandedCategories.add(cat)
@@ -200,42 +241,63 @@ export class AlgorithmLibraryPanel extends Widget {
       filteredAlgos.forEach(algo => {
         const algoItem = document.createElement('li');
         algoItem.className = 'jp-AlgorithmLibrary-item';
-        algoItem.style.padding = '8px 12px 8px 36px'; // Indent to align with text
+        algoItem.style.padding = '6px 12px 6px 28px';
         algoItem.style.cursor = 'pointer';
-        algoItem.style.fontSize = '13px';
+        algoItem.style.fontSize = '12px';
+        algoItem.style.borderBottom = '1px solid var(--jp-border-color3)';
         algoItem.style.color = 'var(--jp-ui-font-color1)';
-        algoItem.style.borderBottom = '1px solid var(--jp-border-color3)'; // Optional: subtle separator
+        algoItem.style.transition = 'background-color 0.2s';
         algoItem.style.display = 'flex';
-        algoItem.style.flexDirection = 'column';
+        algoItem.style.alignItems = 'center';
 
-        // Name
-        const nameSpan = document.createElement('span');
-        nameSpan.textContent = algo.name;
-        nameSpan.style.fontWeight = '500';
-        algoItem.appendChild(nameSpan);
+        // Content
+        const content = document.createElement('div');
+        content.style.flex = '1';
 
-        // Description (optional, small)
-        if (algo.description) {
-          const descSpan = document.createElement('span');
-          descSpan.textContent = algo.description;
-          descSpan.style.fontSize = '11px';
-          descSpan.style.color = 'var(--jp-ui-font-color2)';
-          descSpan.style.marginTop = '2px';
-          descSpan.style.whiteSpace = 'nowrap';
-          descSpan.style.overflow = 'hidden';
-          descSpan.style.textOverflow = 'ellipsis';
-          algoItem.appendChild(descSpan);
-        }
+        const name = document.createElement('div');
+        name.style.fontWeight = '500';
+        name.textContent = algo.name;
 
-        // Hover effect
+        const desc = document.createElement('div');
+        desc.style.color = 'var(--jp-ui-font-color2)';
+        desc.style.fontSize = '11px';
+        desc.style.marginTop = '2px';
+        desc.textContent = algo.description;
+
+        content.appendChild(name);
+        content.appendChild(desc);
+        algoItem.appendChild(content);
+
+        // Actions
+        const actions = document.createElement('div');
+        actions.style.display = 'none';
+        actions.style.marginLeft = '8px';
+        actions.style.gap = '4px';
+
+        const editBtn = this.createActionButton(editIcon, 'Edit', (e) => {
+          e.stopPropagation();
+          const catId = this.getCategoryId(category);
+          this.handleEdit(algo, catId);
+        });
+
+        const deleteBtn = this.createActionButton(closeIcon, 'Delete', (e) => {
+          e.stopPropagation();
+          this.handleDelete(algo.id);
+        });
+
+        actions.appendChild(editBtn);
+        actions.appendChild(deleteBtn);
+        algoItem.appendChild(actions);
+
         algoItem.onmouseenter = () => {
           algoItem.style.backgroundColor = 'var(--jp-layout-color2)';
+          actions.style.display = 'flex';
         };
         algoItem.onmouseleave = () => {
           algoItem.style.backgroundColor = 'transparent';
+          actions.style.display = 'none';
         };
 
-        // Click to show info
         algoItem.onclick = () => this.openAlgorithmDialog(algo);
 
         algoList.appendChild(algoItem);
@@ -275,5 +337,94 @@ export class AlgorithmLibraryPanel extends Widget {
   private openAlgorithmDialog(algo: IAlgorithm) {
     const dialogManager = new AlgorithmInfoDialogManager();
     dialogManager.showAlgorithmInfo(algo);
+  }
+
+  private createActionButton(icon: LabIcon, title: string, onClick: (e: Event) => void) {
+    const btn = document.createElement('div');
+    btn.style.cursor = 'pointer';
+    btn.style.padding = '2px';
+    btn.style.borderRadius = '3px';
+    btn.style.color = 'var(--jp-ui-font-color2)';
+    btn.title = title;
+
+    btn.onmouseenter = () => {
+      btn.style.backgroundColor = 'var(--jp-layout-color3)';
+      btn.style.color = 'var(--jp-ui-font-color1)';
+    };
+    btn.onmouseleave = () => {
+      btn.style.backgroundColor = 'transparent';
+      btn.style.color = 'var(--jp-ui-font-color2)';
+    };
+
+    const iconNode = document.createElement('div');
+    icon.element({
+      container: iconNode,
+      height: '14px',
+      width: '14px',
+      elementPosition: 'center'
+    });
+    btn.appendChild(iconNode);
+
+    btn.onclick = onClick;
+    return btn;
+  }
+
+  private getCategoryId(label: string): string {
+    const cat = this.categories.find(c => c.label === label);
+    return cat ? cat.id : label;
+  }
+
+  private async handleAdd() {
+    const manager = new AlgorithmEditorDialogManager();
+    const result = await manager.showEditor(null, this.categories);
+    if (result) {
+      try {
+        await this.libraryService.manageAlgorithm('add', result);
+        await this.refreshLibrary();
+      } catch (e: any) {
+        await showErrorMessage('Add Failed', e.message);
+      }
+    }
+  }
+
+  private async handleEdit(algo: IAlgorithm, catId: string) {
+    try {
+      const code = await this.libraryService.getAlgorithmCode(algo.id);
+
+      const manager = new AlgorithmEditorDialogManager();
+      const result = await manager.showEditor({
+        id: algo.id,
+        category: catId,
+        code: code,
+        description: algo.description,
+        args: algo.args,
+        inputs: algo.inputs,
+        outputs: algo.outputs
+      }, this.categories);
+
+      if (result) {
+        await this.libraryService.manageAlgorithm('update', result);
+        await this.refreshLibrary();
+      }
+    } catch (e: any) {
+      await showErrorMessage('Edit Failed', e.message);
+    }
+  }
+
+  private async handleDelete(id: string) {
+    const result = await showDialog({
+      title: 'Delete Algorithm',
+      body: `Are you sure you want to delete algorithm "${id}"?`,
+      buttons: [Dialog.cancelButton(), Dialog.warnButton({ label: 'Delete' })]
+    });
+
+    if (result.button.accept) {
+      try {
+        await this.libraryService.manageAlgorithm('delete', { id });
+        await this.refreshLibrary();
+      } catch (e: any) {
+        await showErrorMessage('Delete Failed', e.message);
+      }
+    }
   }
 }

@@ -299,7 +299,7 @@ export class AiSidebar extends Widget {
     let currentIntent = intent;
     // Build模式下如果是初次生成，可以使用用户选择的模式，后续修复强制切换到fix模式
     let currentMode = mode;
-    const maxRetries = 3;
+    const maxRetries = 5;
     let retryCount = 0;
     const state = this.stateManager.getState();
 
@@ -335,7 +335,7 @@ export class AiSidebar extends Widget {
       const suggestion = resp.suggestion;
       this.appendHistory(
         'AI',
-        `尝试第 ${retryCount + 1} 次运行...\n${suggestion}`,
+        `${suggestion}`,
         'normal',
         true,
         resp.summary,

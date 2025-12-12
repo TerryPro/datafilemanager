@@ -61,6 +61,63 @@ export class LibraryService {
   }
 
   /**
+   * Manage algorithm (add, update, delete)
+   */
+  async manageAlgorithm(action: 'add' | 'update' | 'delete', data: any): Promise<any> {
+    try {
+      const resp = await fetch('/aiserver/algorithm-manage', {
+        method: 'POST',
+        body: JSON.stringify({
+          action,
+          ...data
+        })
+      });
+      
+      if (resp.ok) {
+        return await resp.json();
+      }
+      
+      let errorMsg = resp.statusText;
+      try {
+        const errJson = await resp.json();
+        if (errJson.error) errorMsg = errJson.error;
+      } catch (e) {
+        // ignore
+      }
+      
+      console.error('Failed to manage algorithm:', errorMsg);
+      throw new Error(errorMsg);
+    } catch (error) {
+      console.error('Error managing algorithm:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get algorithm source code
+   */
+  async getAlgorithmCode(id: string): Promise<string> {
+    try {
+      const resp = await fetch('/aiserver/algorithm-manage', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'get_code',
+          id
+        })
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        return data.code;
+      }
+      const errorText = await resp.text();
+      throw new Error(errorText || resp.statusText);
+    } catch (error) {
+      console.error('Error fetching algorithm code:', error);
+      throw error;
+    }
+  }
+
+  /**
    * 为算法生成默认的参数配置与预期输出
    */
   getDefaultAlgorithmMeta(id: string): { params: any; expectedOutput: string } {

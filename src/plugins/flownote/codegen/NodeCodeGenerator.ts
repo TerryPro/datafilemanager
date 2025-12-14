@@ -31,6 +31,13 @@ export class NodeCodeGenerator {
 
     this.builder.addComment(title).addImport('from algorithm import *');
 
+    // Add explicit imports from schema
+    if (this.schema.imports && Array.isArray(this.schema.imports)) {
+      this.schema.imports.forEach(imp => {
+        this.builder.addImport(imp);
+      });
+    }
+
     const outputs = this.schema.outputs || [];
 
     if (outputs.length === 0) {

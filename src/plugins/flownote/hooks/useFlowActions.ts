@@ -21,17 +21,9 @@ export const useFlowActions = (
           const initialValues: Record<string, any> = {};
           if (schema.args && Array.isArray(schema.args)) {
             schema.args.forEach((arg: any) => {
+              // Initialize all parameters with their default values
               if (Object.prototype.hasOwnProperty.call(arg, 'default')) {
-                if (arg.name === 'filepath') {
-                  initialValues[arg.name] = '';
-                } else if (
-                  arg.name === 'timeIndex' ||
-                  arg.name === 'time_index'
-                ) {
-                  initialValues[arg.name] = '';
-                } else {
-                  initialValues[arg.name] = arg.default;
-                }
+                initialValues[arg.name] = arg.default;
               }
             });
           }

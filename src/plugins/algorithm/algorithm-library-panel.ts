@@ -400,16 +400,21 @@ export class AlgorithmLibraryPanel extends Widget {
     try {
       const code = await this.libraryService.getAlgorithmCode(algo.id);
 
+      // Parse code to get complete metadata
+      const metadata = await this.libraryService.parseCode(code);
+
       const manager = new AlgorithmEditorDialogManager();
       const result = await manager.showEditor(
         {
           id: algo.id,
+          name: algo.name,
           category: catId,
           code: code,
-          description: algo.description,
-          args: algo.args,
-          inputs: algo.inputs,
-          outputs: algo.outputs
+          description: algo.description || metadata.description,
+          prompt: metadata.prompt,
+          args: algo.args || metadata.args,
+          inputs: algo.inputs || metadata.inputs,
+          outputs: algo.outputs || metadata.outputs
         },
         this.categories
       );

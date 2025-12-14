@@ -300,6 +300,17 @@ const WorkflowEditorContent = ({
         }
       };
 
+      // Initialize parameter values with defaults from schema
+      if (schema && schema.args && Array.isArray(schema.args)) {
+        const initialValues: Record<string, any> = {};
+        schema.args.forEach((arg: any) => {
+          if (Object.prototype.hasOwnProperty.call(arg, 'default')) {
+            initialValues[arg.name] = arg.default;
+          }
+        });
+        newNode.data.values = initialValues;
+      }
+
       // Add ID to data for the node to reference itself
       newNode.data.id = newNode.id;
 

@@ -62,6 +62,9 @@ export const generateCode = (
   // Collect imports from all nodes
   const allImports = new Set<string>();
 
+  // Add essential imports for workflow execution
+  allImports.add('from IPython.display import display');
+
   // For function templates, we need to import from workflow_lib
   // Check if any node uses library (has a schema)
   const useWorkflowLib = sortedNodes.some(node => {

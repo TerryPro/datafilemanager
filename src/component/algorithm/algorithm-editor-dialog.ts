@@ -5,6 +5,7 @@ import { LibraryService } from '../../services/library-service';
 export interface IPort {
   name: string;
   type: string;
+  description?: string;
 }
 
 export interface IParameter {
@@ -19,14 +20,16 @@ export interface IParameter {
   max?: number;
   step?: number;
   priority?: 'critical' | 'non-critical';
-  role?: 'input' | 'output' | 'parameter';
 }
 
 export interface IAlgorithmData {
   id: string;
+  name?: string;
   category: string;
   code: string;
   description?: string;
+  prompt?: string;
+  imports?: string[];
   args?: IParameter[];
   inputs?: IPort[];
   outputs?: IPort[];
@@ -61,6 +64,10 @@ class ParameterSettingsBody
       lbl.className = 'jp-ParameterSettings-label';
 
       input.classList.add('jp-ParameterSettings-input');
+      // Force input to be interactive and selectable, overriding any global JupyterLab styles
+      input.style.pointerEvents = 'auto';
+      input.style.userSelect = 'text';
+      input.style.cursor = 'text';
 
       row.appendChild(lbl);
       row.appendChild(input);
@@ -69,7 +76,9 @@ class ParameterSettingsBody
 
     // Default Value
     const defaultInput = document.createElement('input');
-    defaultInput.className = 'jp-mod-styled';
+    // Remove 'jp-mod-styled' to avoid gray background if that's the issue,
+    // but keep consistent styling with class 'jp-ParameterSettings-input' which is added in createRow
+    // defaultInput.className = 'jp-mod-styled';
     defaultInput.value =
       this.param.default !== undefined ? String(this.param.default) : '';
     defaultInput.name = 'default';
@@ -90,55 +99,50 @@ class ParameterSettingsBody
     prioritySelect.name = 'priority';
     this.form.appendChild(createRow('Priority:', prioritySelect));
 
-    // Role
-    const roleSelect = document.createElement('select');
-    roleSelect.className = 'jp-mod-styled';
-    ['parameter', 'input', 'output'].forEach(r => {
-      const opt = document.createElement('option');
-      opt.value = r;
-      opt.text = r;
-      if (this.param.role === r) {
-        opt.selected = true;
-      }
-      roleSelect.appendChild(opt);
-    });
-    roleSelect.name = 'role';
-    this.form.appendChild(createRow('Role:', roleSelect));
+    // Options (Only for select widget)
+    if (this.param.widget === 'select') {
+      const optionsInput = document.createElement('input');
+      // optionsInput.className = 'jp-mod-styled';
+      optionsInput.value = this.param.options
+        ? JSON.stringify(this.param.options)
+        : '';
+      optionsInput.placeholder = '["opt1", "opt2"]';
+      optionsInput.name = 'options';
+      this.form.appendChild(createRow('Options (JSON):', optionsInput));
+    }
 
-    // Options
-    const optionsInput = document.createElement('input');
-    optionsInput.className = 'jp-mod-styled';
-    optionsInput.value = this.param.options
-      ? JSON.stringify(this.param.options)
-      : '';
-    optionsInput.placeholder = '["opt1", "opt2"]';
-    optionsInput.name = 'options';
-    this.form.appendChild(createRow('Options (JSON):', optionsInput));
+    // Show Min/Max/Step only for numeric types AND widget is number
+    if (
+      ['int', 'float', 'number'].includes(this.param.type) &&
+      this.param.widget === 'number'
+    ) {
+      // Min
+      const minInput = document.createElement('input');
+      minInput.type = 'number';
+      // minInput.className = 'jp-mod-styled';
+      minInput.value =
+        this.param.min !== undefined ? String(this.param.min) : '';
+      minInput.name = 'min';
+      this.form.appendChild(createRow('Min:', minInput));
 
-    // Min
-    const minInput = document.createElement('input');
-    minInput.type = 'number';
-    minInput.className = 'jp-mod-styled';
-    minInput.value = this.param.min !== undefined ? String(this.param.min) : '';
-    minInput.name = 'min';
-    this.form.appendChild(createRow('Min:', minInput));
+      // Max
+      const maxInput = document.createElement('input');
+      maxInput.type = 'number';
+      // maxInput.className = 'jp-mod-styled';
+      maxInput.value =
+        this.param.max !== undefined ? String(this.param.max) : '';
+      maxInput.name = 'max';
+      this.form.appendChild(createRow('Max:', maxInput));
 
-    // Max
-    const maxInput = document.createElement('input');
-    maxInput.type = 'number';
-    maxInput.className = 'jp-mod-styled';
-    maxInput.value = this.param.max !== undefined ? String(this.param.max) : '';
-    maxInput.name = 'max';
-    this.form.appendChild(createRow('Max:', maxInput));
-
-    // Step
-    const stepInput = document.createElement('input');
-    stepInput.type = 'number';
-    stepInput.className = 'jp-mod-styled';
-    stepInput.value =
-      this.param.step !== undefined ? String(this.param.step) : '';
-    stepInput.name = 'step';
-    this.form.appendChild(createRow('Step:', stepInput));
+      // Step
+      const stepInput = document.createElement('input');
+      stepInput.type = 'number';
+      // stepInput.className = 'jp-mod-styled';
+      stepInput.value =
+        this.param.step !== undefined ? String(this.param.step) : '';
+      stepInput.name = 'step';
+      this.form.appendChild(createRow('Step:', stepInput));
+    }
 
     return this.form;
   }
@@ -148,7 +152,10 @@ class ParameterSettingsBody
     const defaultVal = this.form.querySelector<HTMLInputElement>(
       'input[name="default"]'
     )?.value;
-    if (defaultVal) {
+    // Allow empty string to be set (to clear default) if needed,
+    // but usually we check if it exists.
+    // If user wants to set empty string as default, we should allow it.
+    if (defaultVal !== undefined) {
       data.default = defaultVal;
     }
 
@@ -157,13 +164,6 @@ class ParameterSettingsBody
     )?.value;
     if (priority) {
       data.priority = priority;
-    }
-
-    const role = this.form.querySelector<HTMLSelectElement>(
-      'select[name="role"]'
-    )?.value;
-    if (role) {
-      data.role = role;
     }
 
     const optionsVal = this.form.querySelector<HTMLInputElement>(
@@ -177,22 +177,27 @@ class ParameterSettingsBody
       }
     }
 
-    const minVal =
-      this.form.querySelector<HTMLInputElement>('input[name="min"]')?.value;
-    if (minVal) {
-      data.min = parseFloat(minVal);
-    }
+    if (
+      ['int', 'float', 'number'].includes(this.param.type) &&
+      this.param.widget === 'number'
+    ) {
+      const minVal =
+        this.form.querySelector<HTMLInputElement>('input[name="min"]')?.value;
+      if (minVal) {
+        data.min = parseFloat(minVal);
+      }
 
-    const maxVal =
-      this.form.querySelector<HTMLInputElement>('input[name="max"]')?.value;
-    if (maxVal) {
-      data.max = parseFloat(maxVal);
-    }
+      const maxVal =
+        this.form.querySelector<HTMLInputElement>('input[name="max"]')?.value;
+      if (maxVal) {
+        data.max = parseFloat(maxVal);
+      }
 
-    const stepVal =
-      this.form.querySelector<HTMLInputElement>('input[name="step"]')?.value;
-    if (stepVal) {
-      data.step = parseFloat(stepVal);
+      const stepVal =
+        this.form.querySelector<HTMLInputElement>('input[name="step"]')?.value;
+      if (stepVal) {
+        data.step = parseFloat(stepVal);
+      }
     }
 
     return data;
@@ -206,8 +211,10 @@ class AlgorithmEditorBody
   private libraryService = new LibraryService();
   private syncTimeout: any = null;
   private idInput: HTMLInputElement;
+  private nameInput: HTMLInputElement;
   private categorySelect: HTMLSelectElement;
   private descriptionInput: HTMLTextAreaElement;
+  private promptInput: HTMLTextAreaElement;
   private argsContainer: HTMLElement;
   private inputsContainer: HTMLElement;
   private outputsContainer: HTMLElement;
@@ -216,6 +223,7 @@ class AlgorithmEditorBody
   private outputs: IPort[] = [];
   private codeInput: HTMLTextAreaElement;
   private isEdit: boolean;
+  private expandedParamIndex: number | null = null;
 
   constructor(algo: IAlgorithmData | null, categories: ICategory[]) {
     super();
@@ -227,22 +235,15 @@ class AlgorithmEditorBody
       : [];
 
     // If new algorithm, add defaults
-    if (!this.isEdit && this.args.length === 0) {
-      this.args = [
-        {
-          name: 'df',
-          type: 'pd.DataFrame',
-          description: 'Input DataFrame',
-          label: '输入数据',
-          widget: 'input'
-        }
+    if (!this.isEdit && this.inputs.length === 0) {
+      this.inputs = [
+        { name: 'df', type: 'pd.DataFrame', description: 'Input DataFrame' }
       ];
     }
-    if (!this.isEdit && this.inputs.length === 0) {
-      this.inputs = [{ name: 'df_in', type: 'DataFrame' }];
-    }
     if (!this.isEdit && this.outputs.length === 0) {
-      this.outputs = [{ name: 'df_out', type: 'DataFrame' }];
+      this.outputs = [
+        { name: 'df_out', type: 'DataFrame', description: 'Output DataFrame' }
+      ];
     }
 
     this.addClass('jp-AlgorithmEditorBody');
@@ -272,7 +273,7 @@ class AlgorithmEditorBody
     idWrapper.className = 'jp-AlgorithmEditor-header-idWrapper';
 
     const idLabel = document.createElement('label');
-    idLabel.textContent = 'Function Name (ID)';
+    idLabel.textContent = '算法ID';
     idLabel.className = 'jp-AlgorithmEditor-label';
 
     this.idInput = document.createElement('input');
@@ -286,12 +287,30 @@ class AlgorithmEditorBody
     idWrapper.appendChild(idLabel);
     idWrapper.appendChild(this.idInput);
 
+    // Name Input
+    const nameWrapper = document.createElement('div');
+    nameWrapper.className = 'jp-AlgorithmEditor-header-idWrapper'; // Reuse class
+
+    const nameLabel = document.createElement('label');
+    nameLabel.textContent = '算法名称';
+    nameLabel.className = 'jp-AlgorithmEditor-label';
+
+    this.nameInput = document.createElement('input');
+    this.nameInput.className = 'jp-mod-styled';
+    this.nameInput.style.width = '100%';
+    this.nameInput.value = algo?.name || '';
+    this.nameInput.placeholder = 'Algorithm Name';
+    this.nameInput.addEventListener('input', () => this.syncCode());
+
+    nameWrapper.appendChild(nameLabel);
+    nameWrapper.appendChild(this.nameInput);
+
     // Category Select
     const catWrapper = document.createElement('div');
     catWrapper.className = 'jp-AlgorithmEditor-header-catWrapper';
 
     const catLabel = document.createElement('label');
-    catLabel.textContent = 'Category';
+    catLabel.textContent = '算法分类';
     catLabel.className = 'jp-AlgorithmEditor-label';
 
     this.categorySelect = document.createElement('select');
@@ -312,22 +331,9 @@ class AlgorithmEditorBody
     catWrapper.appendChild(this.categorySelect);
 
     header.appendChild(idWrapper);
+    header.appendChild(nameWrapper);
     header.appendChild(catWrapper);
     leftPanel.appendChild(header);
-
-    // --- Description Section ---
-    const descHeader = document.createElement('h3');
-    descHeader.textContent = 'Description';
-    descHeader.className = 'jp-AlgorithmEditor-sectionHeader';
-    leftPanel.appendChild(descHeader);
-
-    this.descriptionInput = document.createElement('textarea');
-    this.descriptionInput.className =
-      'jp-mod-styled jp-AlgorithmEditor-descriptionInput';
-    this.descriptionInput.value = algo?.description || '';
-    this.descriptionInput.placeholder = 'Enter a brief description...';
-    this.descriptionInput.addEventListener('input', () => this.syncCode());
-    leftPanel.appendChild(this.descriptionInput);
 
     // --- Inputs & Outputs Row ---
     const ioRow = document.createElement('div');
@@ -414,9 +420,44 @@ class AlgorithmEditorBody
     leftPanel.appendChild(this.argsContainer);
     this.renderParams();
 
+    // --- Description Section (Right Panel) ---
+    const descHeader = document.createElement('h3');
+    descHeader.textContent = '算法简介';
+    descHeader.className = 'jp-AlgorithmEditor-sectionHeader';
+    rightPanel.appendChild(descHeader);
+
+    this.descriptionInput = document.createElement('textarea');
+    this.descriptionInput.className =
+      'jp-mod-styled jp-AlgorithmEditor-descriptionInput';
+    this.descriptionInput.style.height = '60px'; // Increased height for better visibility
+    this.descriptionInput.style.width = '100%';
+    this.descriptionInput.style.boxSizing = 'border-box';
+    this.descriptionInput.value = algo?.description || '';
+    this.descriptionInput.placeholder = 'Enter a brief description...';
+    this.descriptionInput.addEventListener('input', () => this.syncCode());
+    rightPanel.appendChild(this.descriptionInput);
+
+    // --- Prompt Section (Right Panel) ---
+    const promptHeader = document.createElement('h3');
+    promptHeader.textContent = '提示词模板（Prompt Template）';
+    promptHeader.className = 'jp-AlgorithmEditor-sectionHeader';
+    rightPanel.appendChild(promptHeader);
+
+    this.promptInput = document.createElement('textarea');
+    this.promptInput.className =
+      'jp-mod-styled jp-AlgorithmEditor-descriptionInput';
+    this.promptInput.style.width = '100%';
+    this.promptInput.style.boxSizing = 'border-box';
+    this.promptInput.value =
+      algo?.prompt || 'Perform {ALGO_NAME} on {VAR_NAME}';
+    this.promptInput.placeholder =
+      'e.g. Perform operation on {VAR_NAME} with param {param}';
+    this.promptInput.addEventListener('input', () => this.syncCode());
+    rightPanel.appendChild(this.promptInput);
+
     // --- Right Panel: Code Section ---
     const codeHeader = document.createElement('h3');
-    codeHeader.textContent = 'Code Template';
+    codeHeader.textContent = '算法代码';
     codeHeader.className = 'jp-AlgorithmEditor-codeHeader';
     rightPanel.appendChild(codeHeader);
 
@@ -511,19 +552,52 @@ class AlgorithmEditorBody
       const typeSelect = document.createElement('select');
       typeSelect.className = 'jp-AlgorithmEditor-table-select';
 
-      ['str', 'int', 'float', 'bool', 'pd.DataFrame', 'List', 'Dict'].forEach(
-        t => {
-          const opt = document.createElement('option');
-          opt.value = t;
-          opt.text = t;
-          if (arg.type === t) {
-            opt.selected = true;
-          }
-          typeSelect.appendChild(opt);
+      [
+        'str',
+        'int',
+        'float',
+        'bool',
+        'pd.DataFrame',
+        'List',
+        'Dict',
+        'tuple'
+      ].forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t;
+        opt.text = t;
+        if (arg.type === t) {
+          opt.selected = true;
         }
-      );
+        typeSelect.appendChild(opt);
+      });
       typeSelect.onchange = () => {
-        this.args[index].type = typeSelect.value;
+        const newType = typeSelect.value;
+        this.args[index].type = newType;
+
+        // Set default widget based on type constraints
+        switch (newType) {
+          case 'str':
+            this.args[index].widget = 'input';
+            break;
+          case 'int':
+          case 'float':
+            this.args[index].widget = 'number';
+            break;
+          case 'bool':
+            this.args[index].widget = 'checkbox';
+            break;
+          case 'List':
+            this.args[index].widget = 'column-selector';
+            break;
+          case 'tuple':
+            this.args[index].widget = 'input';
+            break;
+          default:
+            this.args[index].widget = 'input';
+            break;
+        }
+
+        this.renderParams();
         this.syncCode();
       };
       tdType.appendChild(typeSelect);
@@ -537,14 +611,35 @@ class AlgorithmEditorBody
       const widgetSelect = document.createElement('select');
       widgetSelect.className = 'jp-AlgorithmEditor-table-select';
 
-      [
-        'input',
-        'select',
-        'checkbox',
-        'number',
-        'file-selector',
-        'column-selector'
-      ].forEach(w => {
+      let allowedWidgets: string[] = ['input'];
+      switch (arg.type) {
+        case 'str':
+          allowedWidgets = [
+            'input',
+            'select',
+            'file-selector',
+            'column-selector'
+          ];
+          break;
+        case 'int':
+        case 'float':
+          allowedWidgets = ['number', 'select'];
+          break;
+        case 'bool':
+          allowedWidgets = ['checkbox', 'select'];
+          break;
+        case 'List':
+          allowedWidgets = ['column-selector', 'input'];
+          break;
+        case 'tuple':
+          allowedWidgets = ['input'];
+          break;
+        default:
+          allowedWidgets = ['input'];
+          break;
+      }
+
+      allowedWidgets.forEach(w => {
         const opt = document.createElement('option');
         opt.value = w;
         opt.text = w;
@@ -555,6 +650,7 @@ class AlgorithmEditorBody
       });
       widgetSelect.onchange = () => {
         this.args[index].widget = widgetSelect.value;
+        this.renderParams();
         this.syncCode();
       };
       tdWidget.appendChild(widgetSelect);
@@ -581,10 +677,13 @@ class AlgorithmEditorBody
 
       // Settings Btn
       const setBtn = document.createElement('div');
-      setBtn.innerHTML = '⚙️';
-      setBtn.title = 'Advanced Settings';
+      setBtn.innerHTML = this.expandedParamIndex === index ? '▲' : '⚙️';
+      setBtn.title =
+        this.expandedParamIndex === index
+          ? 'Close Settings'
+          : 'Advanced Settings';
       setBtn.className = 'jp-AlgorithmEditor-actionBtn';
-      setBtn.onclick = () => this.openParamSettings(index);
+      setBtn.onclick = () => this.toggleParamSettings(index);
 
       // Delete Btn
       const delBtn = document.createElement('div');
@@ -603,34 +702,79 @@ class AlgorithmEditorBody
       tr.appendChild(tdAction);
 
       tbody.appendChild(tr);
+
+      // Render Expanded Settings Row
+      if (this.expandedParamIndex === index) {
+        const trExp = document.createElement('tr');
+        trExp.className = 'jp-AlgorithmEditor-table-tr-expanded';
+
+        const tdExp = document.createElement('td');
+        tdExp.colSpan = 6;
+        tdExp.style.padding = '8px';
+        tdExp.style.backgroundColor = 'var(--jp-layout-color2)';
+        tdExp.style.borderTop = 'none';
+
+        const settingsBody = new ParameterSettingsBody(arg);
+
+        // Wrap body in a container with "Save" action
+        const wrapper = document.createElement('div');
+        wrapper.style.display = 'flex';
+        wrapper.style.flexDirection = 'column';
+        wrapper.style.gap = '8px';
+
+        wrapper.appendChild(settingsBody.node);
+
+        const btnRow = document.createElement('div');
+        btnRow.style.display = 'flex';
+        btnRow.style.justifyContent = 'flex-end';
+        btnRow.style.gap = '8px';
+        btnRow.style.marginTop = '8px';
+
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'jp-mod-styled';
+        closeBtn.textContent = 'Close';
+        closeBtn.onclick = () => {
+          this.toggleParamSettings(index);
+        };
+
+        const saveBtn = document.createElement('button');
+        saveBtn.className = 'jp-mod-styled jp-mod-accept';
+        saveBtn.textContent = 'Confirm Changes';
+        saveBtn.onclick = () => {
+          const value = settingsBody.getValue();
+          Object.assign(this.args[index], value);
+          this.syncCode();
+          // Optional: Close after save
+          // this.toggleParamSettings(index);
+          // Or just feedback? For now, we keep it open or close it?
+          // Usually "Confirm" implies done.
+          this.toggleParamSettings(index);
+        };
+
+        btnRow.appendChild(closeBtn);
+        btnRow.appendChild(saveBtn);
+        wrapper.appendChild(btnRow);
+
+        tdExp.appendChild(wrapper);
+        trExp.appendChild(tdExp);
+        tbody.appendChild(trExp);
+      }
     });
     table.appendChild(tbody);
     this.argsContainer.appendChild(table);
   }
 
   /**
-   * Open the parameter settings dialog using JupyterLab's Dialog class.
-   * This provides a more native and consistent experience than a manual overlay.
+   * Toggle the parameter settings visibility (inline expansion).
    * @param index - The index of the parameter to edit
    */
-  private async openParamSettings(index: number) {
-    const param = this.args[index];
-    const body = new ParameterSettingsBody(param);
-
-    const dialog = new Dialog({
-      title: `Settings: ${param.name}`,
-      body: body,
-      buttons: [Dialog.cancelButton(), Dialog.okButton({ label: 'Save' })]
-    });
-    dialog.addClass('jp-ParameterSettings-dialog-wrapper');
-
-    const result = await dialog.launch();
-
-    if (result.button.accept && result.value) {
-      Object.assign(this.args[index], result.value);
-      this.renderParams();
-      this.syncCode();
+  private toggleParamSettings(index: number): void {
+    if (this.expandedParamIndex === index) {
+      this.expandedParamIndex = null;
+    } else {
+      this.expandedParamIndex = index;
     }
+    this.renderParams();
   }
 
   private addParam() {
@@ -646,13 +790,43 @@ class AlgorithmEditorBody
   }
 
   private addInput() {
-    this.inputs.push({ name: 'new_input', type: 'DataFrame' });
+    let name = 'df';
+    let i = 1;
+    // Check if 'df' exists
+    const existingNames = this.inputs.map(p => p.name);
+    if (existingNames.includes(name)) {
+      // Try df1, df2...
+      while (existingNames.includes(`df${i}`)) {
+        i++;
+      }
+      name = `df${i}`;
+    }
+
+    this.inputs.push({
+      name: name,
+      type: 'pd.DataFrame',
+      description: ''
+    });
     this.renderInputs();
     this.syncCode();
   }
 
   private addOutput() {
-    this.outputs.push({ name: 'new_output', type: 'DataFrame' });
+    let name = 'df_out';
+    let i = 1;
+    const existingNames = this.outputs.map(p => p.name);
+    if (existingNames.includes(name)) {
+      while (existingNames.includes(`df_out_${i}`)) {
+        i++;
+      }
+      name = `df_out_${i}`;
+    }
+
+    this.outputs.push({
+      name: name,
+      type: 'pd.DataFrame',
+      description: ''
+    });
     this.renderOutputs();
     this.syncCode();
   }
@@ -688,7 +862,7 @@ class AlgorithmEditorBody
     const headerRow = document.createElement('tr');
     headerRow.className = 'jp-AlgorithmEditor-portTable-headerRow';
 
-    ['Name', 'Type', ''].forEach(text => {
+    ['Name', 'Description', ''].forEach(text => {
       const th = document.createElement('th');
       th.textContent = text;
       th.className = 'jp-AlgorithmEditor-portTable-th';
@@ -709,6 +883,7 @@ class AlgorithmEditorBody
       const nameInput = document.createElement('input');
       nameInput.value = port.name || '';
       nameInput.className = 'jp-AlgorithmEditor-portTable-input';
+      nameInput.placeholder = 'Variable Name';
       nameInput.oninput = e => {
         ports[index].name = (e.target as HTMLInputElement).value;
         this.syncCode();
@@ -716,33 +891,19 @@ class AlgorithmEditorBody
       tdName.appendChild(nameInput);
       tr.appendChild(tdName);
 
-      // Type
-      const tdType = document.createElement('td');
-      tdType.className =
-        'jp-AlgorithmEditor-portTable-td jp-AlgorithmEditor-portTable-td-type';
-      const typeSelect = document.createElement('select');
-      typeSelect.className = 'jp-AlgorithmEditor-portTable-select';
-
-      const types = ['DataFrame', 'any', 'str', 'int', 'float', 'list', 'dict'];
-      if (port.type && !types.includes(port.type)) {
-        types.push(port.type);
-      }
-
-      types.forEach(t => {
-        const opt = document.createElement('option');
-        opt.value = t;
-        opt.text = t;
-        if (port.type === t) {
-          opt.selected = true;
-        }
-        typeSelect.appendChild(opt);
-      });
-      typeSelect.onchange = e => {
-        ports[index].type = (e.target as HTMLSelectElement).value;
+      // Description (Replacing Type)
+      const tdDesc = document.createElement('td');
+      tdDesc.className = 'jp-AlgorithmEditor-portTable-td';
+      const descInput = document.createElement('input');
+      descInput.value = port.description || '';
+      descInput.className = 'jp-AlgorithmEditor-portTable-input';
+      descInput.placeholder = 'Description';
+      descInput.oninput = e => {
+        ports[index].description = (e.target as HTMLInputElement).value;
         this.syncCode();
       };
-      tdType.appendChild(typeSelect);
-      tr.appendChild(tdType);
+      tdDesc.appendChild(descInput);
+      tr.appendChild(tdDesc);
 
       // Action (Delete)
       const tdAction = document.createElement('td');
@@ -779,14 +940,18 @@ class AlgorithmEditorBody
 
   private async doSyncCode(force: boolean) {
     const id = this.idInput.value.trim() || 'new_algorithm';
+    const name = this.nameInput.value.trim() || id;
     const desc = this.descriptionInput.value || 'Algorithm Description';
     const category = this.categorySelect.value;
+    const prompt =
+      this.promptInput.value || 'Perform {ALGO_NAME} on {VAR_NAME}';
 
     const metadata = {
       id,
-      name: id,
+      name,
       category,
       description: desc,
+      prompt,
       args: this.args,
       inputs: this.inputs,
       outputs: this.outputs
@@ -807,9 +972,11 @@ class AlgorithmEditorBody
   getValue(): IAlgorithmData {
     return {
       id: this.idInput.value.trim(),
+      name: this.nameInput.value.trim(),
       category: this.categorySelect.value,
       code: this.codeInput.value,
       description: this.descriptionInput.value,
+      prompt: this.promptInput.value,
       args: this.args,
       inputs: this.inputs,
       outputs: this.outputs

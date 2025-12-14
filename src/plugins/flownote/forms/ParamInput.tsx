@@ -214,10 +214,13 @@ print(json.dumps([v for v in globals().keys() if not v.startswith('_') and isins
   }
 
   if (param.widget === 'file-selector') {
+    // Use the value from props, or fallback to param.default if value is undefined
+    const currentValue = value !== undefined ? value : param.default || '';
+
     return (
       <select
         className="nodrag"
-        value={value || ''}
+        value={currentValue}
         onChange={e => onChange(e.target.value)}
         style={inputStyle}
       >

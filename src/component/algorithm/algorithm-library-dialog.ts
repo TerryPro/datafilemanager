@@ -437,6 +437,8 @@ class LibraryBodyWidget extends Widget implements Dialog.IBodyWidget<string> {
   private updateCode(func: ILibraryFunction) {
     let finalCode = '';
 
+    console.log('[DEBUG] updateCode called, this.source =', this.source);
+
     // Common: Generate Function Call Dynamically
     const funcName = func.id;
     const callArgs: string[] = [];
@@ -563,12 +565,19 @@ if ${outputVarName} is not None:
     display(${outputVarName}.head())`;
 
     // Final Assembly based on Source
+    console.log('[DEBUG] Before final assembly, this.source =', this.source);
     if (this.source === 'workflow') {
+      console.log('[DEBUG] Using workflow mode (no imports)');
       finalCode = callCode;
     } else {
+      console.log('[DEBUG] Using notebook mode (with imports)');
       // Notebook Mode: Add imports and function definition
+      console.log('[DEBUG] updateCode: func.imports =', func.imports);
       if (func.imports && func.imports.length > 0) {
+        console.log('[DEBUG] Adding imports:', func.imports);
         finalCode += func.imports.join('\n') + '\n\n';
+      } else {
+        console.log('[DEBUG] No imports to add (empty or undefined)');
       }
 
       if (func.template) {
@@ -579,6 +588,12 @@ if ${outputVarName} is not None:
 
       finalCode += callCode;
     }
+
+    console.log('[DEBUG] Final code length:', finalCode.length);
+    console.log(
+      '[DEBUG] Final code preview (first 200 chars):',
+      finalCode.substring(0, 200)
+    );
 
     this.selectedCode = finalCode;
 

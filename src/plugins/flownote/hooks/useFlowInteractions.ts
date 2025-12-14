@@ -177,6 +177,16 @@ export const useFlowInteractions = (
         schema.name || 'New Step'
       }\n# Add your code here\n`;
 
+      // Initialize parameter values with defaults from schema
+      const initialValues: Record<string, any> = {};
+      if (schema && schema.args && Array.isArray(schema.args)) {
+        schema.args.forEach((arg: any) => {
+          if (Object.prototype.hasOwnProperty.call(arg, 'default')) {
+            initialValues[arg.name] = arg.default;
+          }
+        });
+      }
+
       const cellData: nbformat.ICodeCell = {
         cell_type: 'code',
         source: defaultCode,
@@ -184,7 +194,7 @@ export const useFlowInteractions = (
           node_id: nodeId,
           flow_position: position,
           flow_schema: schema,
-          flow_values: {}
+          flow_values: initialValues
         },
         outputs: [],
         execution_count: null

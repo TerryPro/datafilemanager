@@ -63,7 +63,10 @@ export class LibraryService {
   /**
    * Manage algorithm (add, update, delete)
    */
-  async manageAlgorithm(action: 'add' | 'update' | 'delete', data: any): Promise<any> {
+  async manageAlgorithm(
+    action: 'add' | 'update' | 'delete',
+    data: any
+  ): Promise<any> {
     try {
       const resp = await fetch('/aiserver/algorithm-manage', {
         method: 'POST',
@@ -72,19 +75,21 @@ export class LibraryService {
           ...data
         })
       });
-      
+
       if (resp.ok) {
         return await resp.json();
       }
-      
+
       let errorMsg = resp.statusText;
       try {
         const errJson = await resp.json();
-        if (errJson.error) errorMsg = errJson.error;
+        if (errJson.error) {
+          errorMsg = errJson.error;
+        }
       } catch (e) {
         // ignore
       }
-      
+
       console.error('Failed to manage algorithm:', errorMsg);
       throw new Error(errorMsg);
     } catch (error) {
@@ -113,6 +118,55 @@ export class LibraryService {
       throw new Error(errorText || resp.statusText);
     } catch (error) {
       console.error('Error fetching algorithm code:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Generate code from metadata
+   */
+  async generateCode(metadata: any, existingCode?: string): Promise<string> {
+    try {
+      const resp = await fetch('/aiserver/algorithm-manage', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'generate_code',
+          metadata,
+          code: existingCode
+        })
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        return data.code;
+      }
+      const errorText = await resp.text();
+      throw new Error(errorText || resp.statusText);
+    } catch (error) {
+      console.error('Error generating code:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Parse code to metadata
+   */
+  async parseCode(code: string): Promise<any> {
+    try {
+      const resp = await fetch('/aiserver/algorithm-manage', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'parse_code',
+          code
+        })
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        return data.metadata;
+      }
+      const errorText = await resp.text();
+      throw new Error(errorText || resp.statusText);
+    } catch (error) {
+      console.error('Error parsing code:', error);
       throw error;
     }
   }

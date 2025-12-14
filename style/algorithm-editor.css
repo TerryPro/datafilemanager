@@ -1,0 +1,586 @@
+/* Dialog Wrapper Overrides */
+.jp-AlgorithmEditor-dialog-wrapper .jp-Dialog-content {
+  min-width: 90vw;
+  max-width: 90vw;
+  height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.jp-AlgorithmEditor-dialog-wrapper .jp-Dialog-body {
+  flex: 1;
+  overflow: hidden; /* Prevent body scroll, let internal panels scroll */
+  padding: 0;
+}
+
+/* Main Container */
+.jp-AlgorithmEditorBody {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.jp-AlgorithmEditor-container {
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  gap: 24px;
+  padding: 16px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* Left Panel (Metadata & Params) */
+.jp-AlgorithmEditor-leftPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-right: 12px;
+  font-size: 12px;
+  min-height: 0;
+}
+
+/* Normalize JupyterLab select wrapper and styled inputs within left panel */
+.jp-AlgorithmEditor-leftPanel .jp-select-wrapper {
+  margin: 0 !important;
+  padding: 0;
+  height: 28px;
+  box-sizing: border-box;
+}
+
+.jp-AlgorithmEditor-leftPanel .jp-select-wrapper select,
+.jp-AlgorithmEditor-leftPanel select.jp-mod-styled,
+.jp-AlgorithmEditor-leftPanel input.jp-mod-styled {
+  height: 28px;
+  font-size: 12px;
+  padding: 2px 6px;
+  box-sizing: border-box;
+}
+
+/* Right Panel (Code) */
+.jp-AlgorithmEditor-rightPanel {
+  flex: 1; /* 1:1 Split */
+  display: flex;
+  flex-direction: column;
+  overflow-y: hidden;
+}
+
+/* Header Section */
+.jp-AlgorithmEditor-header {
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--jp-border-color2);
+  display: flex;
+  align-items: flex-start; /* Changed from flex-end to allow better control */
+  gap: 16px;
+}
+
+.jp-AlgorithmEditor-header-idWrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.jp-AlgorithmEditor-header-catWrapper {
+  width: 160px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.jp-AlgorithmEditor-label {
+  font-size: 10px; /* Compact label */
+  font-weight: 600;
+  color: var(--jp-ui-font-color2); /* Lighter color for labels */
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Compact Inputs for Header */
+.jp-AlgorithmEditor-header input.jp-mod-styled,
+.jp-AlgorithmEditor-header select.jp-mod-styled {
+  height: 28px; /* Compact height */
+  font-size: 13px;
+  padding: 2px 6px;
+}
+
+/* Description */
+.jp-AlgorithmEditor-sectionHeader {
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: var(--jp-ui-font-color0);
+  border-left: 3px solid var(--jp-brand-color1);
+  padding-left: 8px;
+  line-height: 1.2;
+}
+
+.jp-AlgorithmEditor-descriptionInput {
+  width: 100%;
+  max-width: 680px; /* limit overly wide description input */
+  min-height: 60px;
+  margin-bottom: 24px;
+  resize: none;
+  font-family: var(--jp-ui-font-family);
+  font-size: 12px;
+  border: 1px solid var(--jp-border-color1);
+  background: var(--jp-layout-color1);
+  color: var(--jp-ui-font-color0);
+  padding: 8px;
+  border-radius: 2px;
+}
+
+.jp-AlgorithmEditor-descriptionInput:focus {
+  border-color: var(--jp-brand-color1);
+  outline: none;
+}
+
+/* I/O Section */
+.jp-AlgorithmEditor-ioRow {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 12px;
+  flex: 1 1 0;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.jp-AlgorithmEditor-ioGroup {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.jp-AlgorithmEditor-ioColumn {
+  flex: 1 1 0;
+  background: var(--jp-layout-color2);
+  padding: 12px;
+  border-radius: 4px;
+  border: 1px solid var(--jp-border-color2);
+  min-height: 120px; /* Keep container visually stable when rows change */
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.jp-AlgorithmEditor-ioGroup .jp-AlgorithmEditor-ioColumn {
+  flex: 1 1 0;
+}
+
+/* Keep IO header fixed, scroll only the table content */
+.jp-AlgorithmEditor-ioHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  height: 28px;
+}
+
+.jp-AlgorithmEditor-ioColumn > .jp-AlgorithmEditor-ioHeader {
+  flex: 0 0 auto;
+}
+
+.jp-AlgorithmEditor-ioColumn > div:last-child {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.jp-AlgorithmEditor-ioTitle {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--jp-ui-font-color1);
+}
+
+/* IO add button统一使用参数按钮样式（jp-AlgorithmEditor-addParamBtn） */
+
+/* Port Tables (Inputs/Outputs) */
+.jp-AlgorithmEditor-portTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.jp-AlgorithmEditor-portTable-th {
+  text-align: left;
+  font-size: 11px;
+  color: var(--jp-ui-font-color2);
+  padding: 4px;
+  font-weight: normal;
+  border-bottom: 1px solid var(--jp-border-color3);
+}
+
+.jp-AlgorithmEditor-portTable-td {
+  padding: 0 4px;
+  border-bottom: 1px solid var(--jp-border-color3);
+  vertical-align: middle;
+}
+
+.jp-AlgorithmEditor-portTable-td-type {
+  width: 140px;
+}
+
+.jp-AlgorithmEditor-portTable-input,
+.jp-AlgorithmEditor-portTable-select {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--jp-border-color2);
+  background: var(--jp-layout-color0);
+  font-size: 12px;
+  color: var(--jp-ui-font-color0);
+  padding: 2px 6px;
+  height: 28px;
+  line-height: 20px;
+  margin: 2px 0;
+  vertical-align: middle;
+}
+
+.jp-AlgorithmEditor-portTable-input:hover,
+.jp-AlgorithmEditor-portTable-select:hover,
+.jp-AlgorithmEditor-portTable-input:focus,
+.jp-AlgorithmEditor-portTable-select:focus {
+  border-color: var(--jp-border-color1);
+  background: var(--jp-layout-color0);
+}
+
+.jp-AlgorithmEditor-portTable-deleteBtn {
+  color: var(--jp-ui-font-color2);
+  cursor: pointer;
+  font-size: 12px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+}
+
+.jp-AlgorithmEditor-portTable-actionTd {
+  width: 32px;
+  text-align: center;
+}
+
+.jp-AlgorithmEditor-portTable-deleteBtn:hover {
+  color: var(--jp-error-color1);
+  background-color: var(--jp-layout-color3);
+  border-radius: 2px;
+}
+
+.jp-AlgorithmEditor-portTable-empty {
+  font-style: italic;
+  color: var(--jp-ui-font-color2);
+  font-size: 11px;
+  padding: 16px 0;
+  text-align: center;
+}
+
+/* Parameters Section */
+.jp-AlgorithmEditor-paramHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  margin-top: 10px;
+  height: 28px;
+}
+
+.jp-AlgorithmEditor-paramTitle {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--jp-ui-font-color0);
+  border-left: 3px solid var(--jp-brand-color1);
+  padding-left: 8px;
+  line-height: 1.2;
+}
+
+.jp-AlgorithmEditor-addParamBtn {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 2px;
+  cursor: pointer;
+  height: 24px;
+  line-height: 14px;
+}
+
+.jp-AlgorithmEditor-argsContainer {
+  margin-bottom: 0;
+  overflow-y: auto;
+  min-height: 0;
+  padding: 12px;
+  border: 1px solid var(--jp-border-color2);
+  border-radius: 4px;
+  background: var(--jp-layout-color2);
+  box-sizing: border-box;
+  flex: 1 1 0;
+}
+
+/* Ensure non-scroll sections do not flex-grow */
+.jp-AlgorithmEditor-sectionHeader,
+.jp-AlgorithmEditor-paramHeader {
+  flex: 0 0 auto;
+}
+
+.jp-AlgorithmEditor-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  border: 1px solid var(--jp-border-color2);
+}
+
+.jp-AlgorithmEditor-table-headerRow {
+  background-color: var(--jp-layout-color2);
+}
+
+.jp-AlgorithmEditor-table-th {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--jp-border-color2);
+  color: var(--jp-ui-font-color1);
+  font-weight: 600;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.jp-AlgorithmEditor-table-tr {
+  border-bottom: 1px solid var(--jp-border-color2);
+  background-color: var(--jp-layout-color1);
+  height: 32px;
+}
+
+.jp-AlgorithmEditor-table-tr:hover {
+  background-color: var(--jp-layout-color2);
+}
+
+.jp-AlgorithmEditor-table-td {
+  padding: 0 4px;
+  vertical-align: middle;
+}
+
+.jp-AlgorithmEditor-table-td-type {
+  width: 140px;
+}
+
+.jp-AlgorithmEditor-table-td-widget {
+  width: 160px;
+}
+
+.jp-AlgorithmEditor-table-td-action {
+  width: 60px;
+  text-align: center;
+}
+
+/* Table Inputs/Selects */
+.jp-AlgorithmEditor-table-input,
+.jp-AlgorithmEditor-table-select {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--jp-border-color2);
+  background: var(--jp-layout-color0);
+  font-size: 12px;
+  color: var(--jp-ui-font-color0);
+  padding: 2px 6px;
+  border-radius: 2px;
+  outline: none;
+  height: 28px;
+  line-height: 20px;
+  margin: 2px 0;
+  vertical-align: middle;
+}
+
+/* Type列的select使用等宽代码字体，规则置于通用选择器之后以避免特异性lint */
+.jp-AlgorithmEditor-table-td-type .jp-AlgorithmEditor-table-select {
+  font-family: var(--jp-code-font-family);
+}
+
+/* Ensure Jupyter select wrapper inside table cells does not add extra spacing */
+.jp-AlgorithmEditor-table-td .jp-select-wrapper,
+.jp-AlgorithmEditor-portTable-td .jp-select-wrapper {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  height: 28px;
+}
+
+/* Show border on hover/focus to indicate editability */
+.jp-AlgorithmEditor-table-input:hover,
+.jp-AlgorithmEditor-table-select:hover {
+  border-color: var(--jp-border-color2);
+  background-color: var(--jp-layout-color0);
+}
+
+.jp-AlgorithmEditor-table-input:focus,
+.jp-AlgorithmEditor-table-select:focus {
+  border-color: var(--jp-brand-color1);
+  background-color: var(--jp-layout-color0);
+}
+
+/* Action Buttons */
+.jp-AlgorithmEditor-actionDiv {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  vertical-align: middle;
+}
+
+.jp-AlgorithmEditor-actionBtn {
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px;
+  border-radius: 2px;
+  user-select: none;
+  opacity: 0.7;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.jp-AlgorithmEditor-actionBtn:hover {
+  opacity: 1;
+  background-color: var(--jp-layout-color3);
+}
+
+/* Code Panel */
+.jp-AlgorithmEditor-codeHeader {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  margin-top: 0;
+  color: var(--jp-ui-font-color0);
+  border-left: 3px solid var(--jp-brand-color1);
+  padding-left: 8px;
+  line-height: 1.2;
+}
+
+.jp-AlgorithmEditor-codeInput {
+  width: 100%;
+  flex: 1;
+  box-sizing: border-box;
+  font-family: var(--jp-code-font-family);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre;
+  overflow: auto; /* Both x and y */
+  background-color: var(--jp-layout-color0);
+  border: 1px solid var(--jp-border-color2);
+  padding: 12px;
+  resize: none;
+  border-radius: 2px;
+}
+
+.jp-AlgorithmEditor-codeInput:focus {
+  border-color: var(--jp-brand-color1);
+  outline: none;
+}
+
+/* Empty State */
+.jp-AlgorithmEditor-emptyParams {
+  color: var(--jp-ui-font-color2);
+  font-style: italic;
+  font-size: 12px;
+  padding: 16px;
+  text-align: center;
+  border: 1px dashed var(--jp-border-color2);
+  border-radius: 4px;
+}
+
+/* Parameter Settings Overlay Dialog (Nested) */
+.jp-AlgorithmEditor-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgb(0 0 0 / 40%);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.jp-AlgorithmEditor-dialogContainer {
+  width: 520px;
+  max-width: 90vw;
+  background: var(--jp-layout-color1);
+  border: 1px solid var(--jp-border-color1);
+  border-radius: 6px;
+  box-shadow: var(--jp-elevation-z6);
+  display: flex;
+  flex-direction: column;
+  max-height: 70vh;
+  overflow: hidden;
+  resize: none;
+}
+
+.jp-AlgorithmEditor-dialogHeader {
+  padding: 8px 12px;
+  background: var(--jp-layout-color2);
+  border-bottom: 1px solid var(--jp-border-color2);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.jp-AlgorithmEditor-dialogBody {
+  padding: 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.jp-AlgorithmEditor-dialogFooter {
+  padding: 10px 12px;
+  border-top: 1px solid var(--jp-border-color2);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Buttons in parameter dialog footer */
+.jp-AlgorithmEditor-dialogFooter .jp-Dialog-button {
+  height: 28px;
+  line-height: 16px;
+  padding: 6px 14px;
+  min-width: 80px;
+}
+
+/* Nested parameter settings dialog based on JupyterLab Dialog */
+.jp-ParameterSettings-dialog-wrapper {
+  z-index: 20000 !important;
+}
+
+/* Nested Form Styling */
+.jp-ParameterSettings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.jp-ParameterSettings-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.jp-ParameterSettings-label {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--jp-ui-font-color1);
+}
+
+.jp-ParameterSettings-input {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 12px;
+  padding: 4px 8px;
+  height: 28px;
+}

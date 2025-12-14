@@ -49,13 +49,17 @@ const algorithmPlugin: JupyterFrontEndPlugin<void> = {
         onClick: async () => {
           const session = panel.sessionContext;
           if (session.isReady) {
-            const code = 'from algorithm.widgets import AlgorithmWidget\nAlgorithmWidget()';
+            const code =
+              'from algorithm.widgets import AlgorithmWidget\nAlgorithmWidget()';
             // Import NotebookActions dynamically
             const { NotebookActions } = await import('@jupyterlab/notebook');
 
             if (panel.content.activeCell) {
               const activeCell = panel.content.activeCell;
-              if (activeCell.model.type === 'code' && activeCell.model.sharedModel.getSource().trim() === '') {
+              if (
+                activeCell.model.type === 'code' &&
+                activeCell.model.sharedModel.getSource().trim() === ''
+              ) {
                 activeCell.model.sharedModel.setSource(code);
                 await NotebookActions.run(panel.content, session);
               } else {

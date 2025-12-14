@@ -13,7 +13,10 @@ import {
   LabIcon
 } from '@jupyterlab/ui-components';
 import { AlgorithmInfoDialogManager } from '../../component/algorithm/algorithm-info-dialog';
-import { AlgorithmEditorDialogManager, ICategory } from '../../component/algorithm/algorithm-editor-dialog';
+import {
+  AlgorithmEditorDialogManager,
+  ICategory
+} from '../../component/algorithm/algorithm-editor-dialog';
 import { showErrorMessage, showDialog, Dialog } from '@jupyterlab/apputils';
 
 interface IAlgorithm {
@@ -103,7 +106,9 @@ export class AlgorithmLibraryPanel extends Widget {
     };
 
     // Add Button
-    const addBtn = createBtn(addIcon, 'Add New Algorithm', () => this.handleAdd());
+    const addBtn = createBtn(addIcon, 'Add New Algorithm', () =>
+      this.handleAdd()
+    );
 
     // Refresh Button
     const refreshBtn = createBtn(refreshIcon, 'Refresh Library', async () => {
@@ -274,13 +279,13 @@ export class AlgorithmLibraryPanel extends Widget {
         actions.style.marginLeft = '8px';
         actions.style.gap = '4px';
 
-        const editBtn = this.createActionButton(editIcon, 'Edit', (e) => {
+        const editBtn = this.createActionButton(editIcon, 'Edit', e => {
           e.stopPropagation();
           const catId = this.getCategoryId(category);
           this.handleEdit(algo, catId);
         });
 
-        const deleteBtn = this.createActionButton(closeIcon, 'Delete', (e) => {
+        const deleteBtn = this.createActionButton(closeIcon, 'Delete', e => {
           e.stopPropagation();
           this.handleDelete(algo.id);
         });
@@ -339,7 +344,11 @@ export class AlgorithmLibraryPanel extends Widget {
     dialogManager.showAlgorithmInfo(algo);
   }
 
-  private createActionButton(icon: LabIcon, title: string, onClick: (e: Event) => void) {
+  private createActionButton(
+    icon: LabIcon,
+    title: string,
+    onClick: (e: Event) => void
+  ) {
     const btn = document.createElement('div');
     btn.style.cursor = 'pointer';
     btn.style.padding = '2px';
@@ -392,15 +401,18 @@ export class AlgorithmLibraryPanel extends Widget {
       const code = await this.libraryService.getAlgorithmCode(algo.id);
 
       const manager = new AlgorithmEditorDialogManager();
-      const result = await manager.showEditor({
-        id: algo.id,
-        category: catId,
-        code: code,
-        description: algo.description,
-        args: algo.args,
-        inputs: algo.inputs,
-        outputs: algo.outputs
-      }, this.categories);
+      const result = await manager.showEditor(
+        {
+          id: algo.id,
+          category: catId,
+          code: code,
+          description: algo.description,
+          args: algo.args,
+          inputs: algo.inputs,
+          outputs: algo.outputs
+        },
+        this.categories
+      );
 
       if (result) {
         await this.libraryService.manageAlgorithm('update', result);

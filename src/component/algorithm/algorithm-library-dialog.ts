@@ -599,8 +599,12 @@ if ${outputVarName} is not None:
   getSelectedFunction(): ILibraryFunction | null {
     if (this.selectedFunctionId) {
       for (const cat in this.libraryData) {
-        const func = this.libraryData[cat].find(f => f.id === this.selectedFunctionId);
-        if (func) return func;
+        const func = this.libraryData[cat].find(
+          f => f.id === this.selectedFunctionId
+        );
+        if (func) {
+          return func;
+        }
       }
     }
     return null;
@@ -710,8 +714,12 @@ export class AlgorithmLibraryDialogManager {
     });
 
     // Style adjustments (copied from openLibraryDialog)
-    const content = dialog.node.querySelector('.jp-Dialog-content') as HTMLElement | null;
-    const bodyEl = dialog.node.querySelector('.jp-Dialog-body') as HTMLElement | null;
+    const content = dialog.node.querySelector(
+      '.jp-Dialog-content'
+    ) as HTMLElement | null;
+    const bodyEl = dialog.node.querySelector(
+      '.jp-Dialog-body'
+    ) as HTMLElement | null;
     dialog.node.style.resize = 'none';
     dialog.node.style.overflow = 'hidden';
     if (content) {

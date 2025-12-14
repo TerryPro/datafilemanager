@@ -140,8 +140,8 @@ export class DataFramePanel {
         typeof it.rows === 'number'
           ? String(it.rows)
           : it.shape
-            ? String(it.shape[0])
-            : '';
+          ? String(it.shape[0])
+          : '';
 
       row.appendChild(name);
       row.appendChild(shape);
@@ -356,7 +356,8 @@ export class DataFramePanel {
           await showErrorMessage(
             this.trans.__('Analysis'),
             this.trans.__(
-              `Failed to open library dialog: ${error instanceof Error ? error.message : 'Unknown error'
+              `Failed to open library dialog: ${
+                error instanceof Error ? error.message : 'Unknown error'
               }`
             )
           );

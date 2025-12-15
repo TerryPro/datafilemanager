@@ -1,6 +1,6 @@
 /**
  * Save Algorithm Handler
- * 
+ *
  * Handles saving notebook cell code as algorithm to library.
  */
 
@@ -127,11 +127,20 @@ export async function handleSaveAlgorithm(
     // 6. 打开算法编辑器对话框
     console.log('[SaveAlgorithm] Step 6: Opening editor dialog...');
     console.log('[SaveAlgorithm] Step 6: metadata =', metadata);
+
+    // 使用清理后的代码（如果有）
+    const codeToEdit = metadata.code || cellCode;
+    const hasTestCode = metadata.has_test_code || false;
+
+    if (hasTestCode) {
+      console.log('[SaveAlgorithm] Step 6: Test code detected and cleaned');
+    }
+
     const editorManager = new AlgorithmEditorDialogManager();
     const editorResult = await editorManager.showEditor(
       {
         ...metadata,
-        code: cellCode
+        code: codeToEdit
       },
       categories
     );
@@ -148,7 +157,9 @@ export async function handleSaveAlgorithm(
     await checkAndSaveAlgorithm(libraryService, editorResult);
 
     // 8. 重载Kernel中的算法模块
-    console.log('[SaveAlgorithm] Step 8: Reloading algorithm modules in Kernel...');
+    console.log(
+      '[SaveAlgorithm] Step 8: Reloading algorithm modules in Kernel...'
+    );
     await reloadKernelModules(panel);
 
     // 9. 显示成功提示

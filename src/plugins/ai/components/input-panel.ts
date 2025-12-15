@@ -118,21 +118,20 @@ export class InputPanel extends Widget {
     this.textarea = this.createTextArea();
     inputContainer.appendChild(this.textarea);
 
-    // Create toolbar
-    const toolbar = this.createToolbar();
-    inputContainer.appendChild(toolbar);
-
-    // Add input container to widget
-    this.node.appendChild(inputContainer);
-
-    // Create and add selection bar
+    // Create selection bar first (needed in createToolbar)
     this.selectionBarWidget = new SelectionBar({
       selectedVariable: this.props.selectedVariable,
       selectedAlgorithm: this.props.selectedAlgorithm,
       onClearVariable: () => this.handleClearVariable(),
       onClearAlgorithm: () => this.handleClearAlgorithm()
     });
-    this.node.appendChild(this.selectionBarWidget.node);
+
+    // Create toolbar
+    const toolbar = this.createToolbar();
+    inputContainer.appendChild(toolbar);
+
+    // Add input container to widget
+    this.node.appendChild(inputContainer);
 
     // Setup global click handler to close popups
     this.setupGlobalClickHandler();
@@ -161,11 +160,58 @@ export class InputPanel extends Widget {
   private createToolbar(): HTMLDivElement {
     const toolbar = createElement('div', 'ai-sidebar-toolbar');
 
+    // First row: Intent/Mode selection and Execute button
+    const firstRow = createElement('div', 'ai-sidebar-toolbar-row');
+
+    // Mode select dropdown
+    this.modeSelect = this.createModeSelect();
+    firstRow.appendChild(this.modeSelect);
+
+    // Execute button
+    this.executeBtn = createButton(
+      'ai-sidebar-execute-btn',
+      ICONS.run,
+      '生成',
+      () => this.handleExecute()
+    );
+    firstRow.appendChild(this.executeBtn);
+
+    toolbar.appendChild(firstRow);
+
+    // Second row: Model, Workflow, Context
+    const secondRow = createElement('div', 'ai-sidebar-toolbar-row');
+
     // Model Selector
     this.modelSelectorWidget = new ModelSelector({
       aiService: this.props.aiService
     });
-    toolbar.appendChild(this.modelSelectorWidget.node);
+    secondRow.appendChild(this.modelSelectorWidget.node);
+
+    // Workflow select dropdown
+    this.workflowSelect = this.createWorkflowSelect();
+    secondRow.appendChild(this.workflowSelect);
+
+    // Context Checkbox Wrapper
+    const contextWrapper = createElement('div', 'ai-sidebar-context-wrapper');
+    contextWrapper.title = '是否包含上下文信息';
+
+    this.contextCheckbox = document.createElement('input');
+    this.contextCheckbox.type = 'checkbox';
+    this.contextCheckbox.id = 'ai-sidebar-context-check';
+    this.contextCheckbox.checked = false;
+    const contextLabel = document.createElement('label');
+    contextLabel.htmlFor = 'ai-sidebar-context-check';
+    contextLabel.textContent = '上下文';
+    contextLabel.className = 'ai-sidebar-context-label';
+
+    contextWrapper.appendChild(this.contextCheckbox);
+    contextWrapper.appendChild(contextLabel);
+    secondRow.appendChild(contextWrapper);
+
+    toolbar.appendChild(secondRow);
+
+    // Third row: Variable button, Prompt button, Selection bar, Clear button
+    const thirdRow = createElement('div', 'ai-sidebar-toolbar-row');
 
     // Variable button (@)
     this.variableBtn = createButton(
@@ -175,28 +221,20 @@ export class InputPanel extends Widget {
       () => this.variableSelectorWidget.toggle()
     );
     this.variableBtn.addEventListener('click', e => e.stopPropagation());
-    toolbar.appendChild(this.variableBtn);
+    thirdRow.appendChild(this.variableBtn);
 
     // Prompt library button
     this.promptBtn = createButton(
       'ai-sidebar-toolbar-btn',
       ICONS.library,
-      '提示词库',
+      '引用算法',
       () => this.promptSelectorWidget.toggle()
     );
     this.promptBtn.addEventListener('click', e => e.stopPropagation());
-    toolbar.appendChild(this.promptBtn);
+    thirdRow.appendChild(this.promptBtn);
 
-    // Mode select wrapper
-    const selectWrapper = createElement('div', 'ai-sidebar-select-wrapper');
-
-    // Workflow select dropdown
-    this.workflowSelect = this.createWorkflowSelect();
-    selectWrapper.appendChild(this.workflowSelect);
-
-    // Mode select dropdown
-    this.modeSelect = this.createModeSelect();
-    selectWrapper.appendChild(this.modeSelect);
+    // Create VariableSelector and PromptSelector popups (positioned absolutely)
+    const popupContainer = createElement('div', 'ai-sidebar-popup-container');
 
     // Create VariableSelector component
     this.variableSelectorWidget = new VariableSelector({
@@ -204,7 +242,7 @@ export class InputPanel extends Widget {
       aiService: this.props.aiService,
       onSelect: variable => this.handleVariableSelect(variable)
     });
-    selectWrapper.appendChild(this.variableSelectorWidget.node);
+    popupContainer.appendChild(this.variableSelectorWidget.node);
 
     // Create PromptSelector component
     this.promptSelectorWidget = new PromptSelector({
@@ -212,9 +250,12 @@ export class InputPanel extends Widget {
       libraryService: this.props.libraryService,
       onSelect: algorithm => this.handleAlgorithmSelect(algorithm)
     });
-    selectWrapper.appendChild(this.promptSelectorWidget.node);
+    popupContainer.appendChild(this.promptSelectorWidget.node);
 
-    toolbar.appendChild(selectWrapper);
+    thirdRow.appendChild(popupContainer);
+
+    // Add selection bar inline
+    thirdRow.appendChild(this.selectionBarWidget.node);
 
     // Clear input & selections button
     this.clearInputBtn = createButton(
@@ -224,38 +265,9 @@ export class InputPanel extends Widget {
       () => this.clear()
     );
     this.clearInputBtn.addEventListener('click', e => e.stopPropagation());
-    toolbar.appendChild(this.clearInputBtn);
+    thirdRow.appendChild(this.clearInputBtn);
 
-    // Context Checkbox Wrapper
-    const contextWrapper = createElement('div', 'ai-sidebar-context-wrapper');
-    contextWrapper.style.display = 'flex';
-    contextWrapper.style.alignItems = 'center';
-    contextWrapper.style.marginRight = '4px';
-    contextWrapper.title = '是否包含上下文信息';
-
-    this.contextCheckbox = document.createElement('input');
-    this.contextCheckbox.type = 'checkbox';
-    this.contextCheckbox.id = 'ai-sidebar-context-check';
-    this.contextCheckbox.checked = false; // Default to false as per requirement implication (user chooses) or based on previous behavior
-    const contextLabel = document.createElement('label');
-    contextLabel.htmlFor = 'ai-sidebar-context-check';
-    contextLabel.textContent = '上下文';
-    contextLabel.style.fontSize = '10px';
-    contextLabel.style.marginLeft = '2px';
-    contextLabel.style.cursor = 'pointer';
-
-    contextWrapper.appendChild(this.contextCheckbox);
-    contextWrapper.appendChild(contextLabel);
-    toolbar.appendChild(contextWrapper);
-
-    // Execute button
-    this.executeBtn = createButton(
-      'ai-sidebar-execute-btn',
-      ICONS.run,
-      '生成',
-      () => this.handleExecute()
-    );
-    toolbar.appendChild(this.executeBtn);
+    toolbar.appendChild(thirdRow);
 
     return toolbar;
   }
@@ -268,9 +280,7 @@ export class InputPanel extends Widget {
    */
   private createWorkflowSelect(): HTMLSelectElement {
     const select = document.createElement('select');
-    select.className = 'ai-sidebar-mode-select'; // Reuse same class for styling
-    select.style.marginRight = '4px';
-    select.style.width = 'auto'; // Auto width for shorter content
+    select.className = 'ai-sidebar-mode-select';
 
     const workflows = [
       { value: 'chat', label: 'Chat' },
@@ -301,6 +311,7 @@ export class InputPanel extends Widget {
       { value: 'create', label: '编写代码' },
       { value: 'fix', label: '错误修复' },
       { value: 'refactor', label: '代码完善' },
+      { value: 'normalize', label: '算法规范' },
       { value: 'explain', label: '编写说明' }
     ];
 

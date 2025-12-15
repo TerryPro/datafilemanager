@@ -344,4 +344,62 @@ print(json.dumps(_dfs))
     ].filter(Boolean);
     return parts.join('，');
   }
+
+  /**
+   * 保存算法到算法库
+   *
+   * @param code - 算法函数代码（包含标准docstring）
+   * @param category - 算法分类（可选）
+   * @param overwrite - 是否覆盖已存在的算法
+   * @returns 保存结果
+   */
+  async saveAlgorithm(payload: {
+    code: string;
+    category?: string;
+    overwrite?: boolean;
+  }): Promise<{
+    success: boolean;
+    algorithm_id?: string;
+    file_path?: string;
+    category?: string;
+    message?: string;
+    error?: string;
+    suggestion?: string;
+  }> {
+    try {
+      const resp = await fetch('/aiserver/algorithm-save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await resp.json();
+
+      if (resp.ok) {
+        return {
+          success: true,
+          ...data
+        };
+      } else {
+        // 处理冲突错误（409）
+        if (resp.status === 409) {
+          return {
+            success: false,
+            error: data.error,
+            suggestion: data.suggestion,
+            algorithm_id: data.algorithm_id
+          };
+        }
+        return {
+          success: false,
+          error: data.error || `HTTP ${resp.status}: ${resp.statusText}`
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : '未知错误'
+      };
+    }
+  }
 }

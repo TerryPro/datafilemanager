@@ -475,7 +475,8 @@ export class AiSidebar extends Widget {
       | 'create'
       | 'explain'
       | 'fix'
-      | 'refactor';
+      | 'refactor'
+      | 'normalize';
 
     const content = panel.content;
     const cell = content.activeCell;
@@ -528,7 +529,7 @@ export class AiSidebar extends Widget {
   private async applySuggestion(
     panel: NotebookPanel,
     suggestion: string,
-    mode: 'create' | 'explain' | 'fix' | 'refactor'
+    mode: 'create' | 'explain' | 'fix' | 'refactor' | 'normalize'
   ): Promise<void> {
     const content = panel.content;
     const cell = content.activeCell;
@@ -536,7 +537,7 @@ export class AiSidebar extends Widget {
       return;
     }
 
-    if (mode === 'create' || mode === 'fix' || mode === 'refactor') {
+    if (mode === 'create' || mode === 'fix' || mode === 'refactor' || mode === 'normalize') {
       cell.model.sharedModel.setSource(suggestion);
     } else if (mode === 'explain') {
       await this.app.commands.execute('notebook:insert-cell-below');

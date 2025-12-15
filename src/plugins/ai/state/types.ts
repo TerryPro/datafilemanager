@@ -80,7 +80,7 @@ export interface IChatMessage {
 /**
  * Code generation mode
  */
-export type GenerateMode = 'create' | 'fix' | 'refactor' | 'explain';
+export type GenerateMode = 'create' | 'fix' | 'refactor' | 'explain' | 'normalize';
 
 /**
  * A single diff operation representing a line change

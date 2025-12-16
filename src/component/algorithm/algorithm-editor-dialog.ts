@@ -224,10 +224,12 @@ class AlgorithmEditorBody
   private codeInput: HTMLTextAreaElement;
   private isEdit: boolean;
   private expandedParamIndex: number | null = null;
+  private readOnly: boolean; // New: readonly mode flag
 
-  constructor(algo: IAlgorithmData | null, categories: ICategory[]) {
+  constructor(algo: IAlgorithmData | null, categories: ICategory[], readOnly = false) {
     super();
     this.isEdit = !!algo;
+    this.readOnly = readOnly; // Set readonly mode
     this.args = algo?.args ? JSON.parse(JSON.stringify(algo.args)) : [];
     this.inputs = algo?.inputs ? JSON.parse(JSON.stringify(algo.inputs)) : [];
     this.outputs = algo?.outputs
@@ -282,7 +284,10 @@ class AlgorithmEditorBody
     this.idInput.style.fontWeight = 'bold';
     this.idInput.value = algo?.id || '';
     this.idInput.placeholder = 'my_algorithm_name';
-    this.idInput.addEventListener('input', () => this.syncCode());
+    this.idInput.disabled = this.readOnly; // Disable in readonly mode
+    if (!this.readOnly) {
+      this.idInput.addEventListener('input', () => this.syncCode());
+    }
 
     idWrapper.appendChild(idLabel);
     idWrapper.appendChild(this.idInput);
@@ -300,7 +305,10 @@ class AlgorithmEditorBody
     this.nameInput.style.width = '100%';
     this.nameInput.value = algo?.name || '';
     this.nameInput.placeholder = 'Algorithm Name';
-    this.nameInput.addEventListener('input', () => this.syncCode());
+    this.nameInput.disabled = this.readOnly; // Disable in readonly mode
+    if (!this.readOnly) {
+      this.nameInput.addEventListener('input', () => this.syncCode());
+    }
 
     nameWrapper.appendChild(nameLabel);
     nameWrapper.appendChild(this.nameInput);
@@ -316,6 +324,7 @@ class AlgorithmEditorBody
     this.categorySelect = document.createElement('select');
     this.categorySelect.className = 'jp-mod-styled';
     this.categorySelect.style.width = '100%';
+    this.categorySelect.disabled = this.readOnly; // Disable in readonly mode
 
     categories.forEach(cat => {
       const option = document.createElement('option');
@@ -356,6 +365,8 @@ class AlgorithmEditorBody
       'jp-mod-styled jp-mod-accept jp-AlgorithmEditor-addParamBtn';
     addInputBtn.textContent = '+ Add Input';
     addInputBtn.onclick = () => this.addInput();
+    addInputBtn.disabled = this.readOnly; // Disable in readonly mode
+    addInputBtn.style.display = this.readOnly ? 'none' : 'inline-block'; // Hide in readonly mode
     inputsHeader.appendChild(addInputBtn);
     inputsGroup.appendChild(inputsHeader);
 
@@ -384,6 +395,8 @@ class AlgorithmEditorBody
       'jp-mod-styled jp-mod-accept jp-AlgorithmEditor-addParamBtn';
     addOutputBtn.textContent = '+ Add Output';
     addOutputBtn.onclick = () => this.addOutput();
+    addOutputBtn.disabled = this.readOnly; // Disable in readonly mode
+    addOutputBtn.style.display = this.readOnly ? 'none' : 'inline-block'; // Hide in readonly mode
     outputsHeader.appendChild(addOutputBtn);
     outputsGroup.appendChild(outputsHeader);
 
@@ -412,6 +425,8 @@ class AlgorithmEditorBody
       'jp-mod-styled jp-mod-accept jp-AlgorithmEditor-addParamBtn';
     addParamBtn.textContent = '+ Add Parameter';
     addParamBtn.onclick = () => this.addParam();
+    addParamBtn.disabled = this.readOnly; // Disable in readonly mode
+    addParamBtn.style.display = this.readOnly ? 'none' : 'inline-block'; // Hide in readonly mode
     paramHeader.appendChild(addParamBtn);
     leftPanel.appendChild(paramHeader);
 
@@ -434,7 +449,10 @@ class AlgorithmEditorBody
     this.descriptionInput.style.boxSizing = 'border-box';
     this.descriptionInput.value = algo?.description || '';
     this.descriptionInput.placeholder = 'Enter a brief description...';
-    this.descriptionInput.addEventListener('input', () => this.syncCode());
+    this.descriptionInput.readOnly = this.readOnly; // Make readonly in readonly mode
+    if (!this.readOnly) {
+      this.descriptionInput.addEventListener('input', () => this.syncCode());
+    }
     rightPanel.appendChild(this.descriptionInput);
 
     // --- Prompt Section (Right Panel) ---
@@ -452,7 +470,10 @@ class AlgorithmEditorBody
       algo?.prompt || 'Perform {ALGO_NAME} on {VAR_NAME}';
     this.promptInput.placeholder =
       'e.g. Perform operation on {VAR_NAME} with param {param}';
-    this.promptInput.addEventListener('input', () => this.syncCode());
+    this.promptInput.readOnly = this.readOnly; // Make readonly in readonly mode
+    if (!this.readOnly) {
+      this.promptInput.addEventListener('input', () => this.syncCode());
+    }
     rightPanel.appendChild(this.promptInput);
 
     // --- Right Panel: Code Section ---
@@ -464,6 +485,7 @@ class AlgorithmEditorBody
     this.codeInput = document.createElement('textarea');
     this.codeInput.className = 'jp-mod-styled jp-AlgorithmEditor-codeInput';
     this.codeInput.spellcheck = false;
+    this.codeInput.readOnly = this.readOnly; // Make readonly in readonly mode
 
     // Initial Code
     if (algo?.code) {
@@ -494,8 +516,11 @@ class AlgorithmEditorBody
     const headerRow = document.createElement('tr');
     headerRow.className = 'jp-AlgorithmEditor-table-headerRow';
 
-    ['Name', 'Label', 'Type', 'Widget', 'Description', 'Action'].forEach(
+    ['Name', 'Label', 'Type', 'Widget', 'Description', this.readOnly ? '' : 'Action'].forEach(
       text => {
+        if (text === '' && this.readOnly) {
+          return; // Skip Action column in readonly mode
+        }
         const th = document.createElement('th');
         th.textContent = text;
         th.className = 'jp-AlgorithmEditor-table-th';
@@ -518,7 +543,10 @@ class AlgorithmEditorBody
         const input = document.createElement('input');
         input.value = initialValue;
         input.className = 'jp-AlgorithmEditor-table-input';
-        input.oninput = e => onChange((e.target as HTMLInputElement).value);
+        input.readOnly = this.readOnly; // Make readonly in readonly mode
+        if (!this.readOnly) {
+          input.oninput = e => onChange((e.target as HTMLInputElement).value);
+        }
         return input;
       };
 
@@ -551,6 +579,7 @@ class AlgorithmEditorBody
 
       const typeSelect = document.createElement('select');
       typeSelect.className = 'jp-AlgorithmEditor-table-select';
+      typeSelect.disabled = this.readOnly; // Disable in readonly mode
 
       [
         'str',
@@ -610,6 +639,7 @@ class AlgorithmEditorBody
 
       const widgetSelect = document.createElement('select');
       widgetSelect.className = 'jp-AlgorithmEditor-table-select';
+      widgetSelect.disabled = this.readOnly; // Disable in readonly mode
 
       let allowedWidgets: string[] = ['input'];
       switch (arg.type) {
@@ -667,39 +697,41 @@ class AlgorithmEditorBody
       );
       tr.appendChild(tdDesc);
 
-      // Action
-      const tdAction = document.createElement('td');
-      tdAction.className =
-        'jp-AlgorithmEditor-table-td jp-AlgorithmEditor-table-td-action';
+      // Action (only in edit mode)
+      if (!this.readOnly) {
+        const tdAction = document.createElement('td');
+        tdAction.className =
+          'jp-AlgorithmEditor-table-td jp-AlgorithmEditor-table-td-action';
 
-      const actionDiv = document.createElement('div');
-      actionDiv.className = 'jp-AlgorithmEditor-actionDiv';
+        const actionDiv = document.createElement('div');
+        actionDiv.className = 'jp-AlgorithmEditor-actionDiv';
 
-      // Settings Btn
-      const setBtn = document.createElement('div');
-      setBtn.innerHTML = this.expandedParamIndex === index ? '▲' : '⚙️';
-      setBtn.title =
-        this.expandedParamIndex === index
-          ? 'Close Settings'
-          : 'Advanced Settings';
-      setBtn.className = 'jp-AlgorithmEditor-actionBtn';
-      setBtn.onclick = () => this.toggleParamSettings(index);
+        // Settings Btn
+        const setBtn = document.createElement('div');
+        setBtn.innerHTML = this.expandedParamIndex === index ? '▲' : '⚙️';
+        setBtn.title =
+          this.expandedParamIndex === index
+            ? 'Close Settings'
+            : 'Advanced Settings';
+        setBtn.className = 'jp-AlgorithmEditor-actionBtn';
+        setBtn.onclick = () => this.toggleParamSettings(index);
 
-      // Delete Btn
-      const delBtn = document.createElement('div');
-      delBtn.innerHTML = '🗑️';
-      delBtn.title = 'Delete';
-      delBtn.className = 'jp-AlgorithmEditor-actionBtn';
-      delBtn.onclick = () => {
-        this.args.splice(index, 1);
-        this.renderParams();
-        this.syncCode();
-      };
+        // Delete Btn
+        const delBtn = document.createElement('div');
+        delBtn.innerHTML = '🗑️';
+        delBtn.title = 'Delete';
+        delBtn.className = 'jp-AlgorithmEditor-actionBtn';
+        delBtn.onclick = () => {
+          this.args.splice(index, 1);
+          this.renderParams();
+          this.syncCode();
+        };
 
-      actionDiv.appendChild(setBtn);
-      actionDiv.appendChild(delBtn);
-      tdAction.appendChild(actionDiv);
-      tr.appendChild(tdAction);
+        actionDiv.appendChild(setBtn);
+        actionDiv.appendChild(delBtn);
+        tdAction.appendChild(actionDiv);
+        tr.appendChild(tdAction);
+      }
 
       tbody.appendChild(tr);
 
@@ -862,7 +894,13 @@ class AlgorithmEditorBody
     const headerRow = document.createElement('tr');
     headerRow.className = 'jp-AlgorithmEditor-portTable-headerRow';
 
-    ['Name', 'Description', ''].forEach(text => {
+    ['Name', 'Description', this.readOnly ? '' : ''].forEach(text => {
+      if (text === '' && !this.readOnly) {
+        // Empty header for action column in edit mode
+      }
+      if (this.readOnly && text === '') {
+        return; // Skip action column in readonly mode
+      }
       const th = document.createElement('th');
       th.textContent = text;
       th.className = 'jp-AlgorithmEditor-portTable-th';
@@ -884,10 +922,13 @@ class AlgorithmEditorBody
       nameInput.value = port.name || '';
       nameInput.className = 'jp-AlgorithmEditor-portTable-input';
       nameInput.placeholder = 'Variable Name';
-      nameInput.oninput = e => {
-        ports[index].name = (e.target as HTMLInputElement).value;
-        this.syncCode();
-      };
+      nameInput.readOnly = this.readOnly; // Make readonly in readonly mode
+      if (!this.readOnly) {
+        nameInput.oninput = e => {
+          ports[index].name = (e.target as HTMLInputElement).value;
+          this.syncCode();
+        };
+      }
       tdName.appendChild(nameInput);
       tr.appendChild(tdName);
 
@@ -898,29 +939,34 @@ class AlgorithmEditorBody
       descInput.value = port.description || '';
       descInput.className = 'jp-AlgorithmEditor-portTable-input';
       descInput.placeholder = 'Description';
-      descInput.oninput = e => {
-        ports[index].description = (e.target as HTMLInputElement).value;
-        this.syncCode();
-      };
+      descInput.readOnly = this.readOnly; // Make readonly in readonly mode
+      if (!this.readOnly) {
+        descInput.oninput = e => {
+          ports[index].description = (e.target as HTMLInputElement).value;
+          this.syncCode();
+        };
+      }
       tdDesc.appendChild(descInput);
       tr.appendChild(tdDesc);
 
-      // Action (Delete)
-      const tdAction = document.createElement('td');
-      tdAction.className = 'jp-AlgorithmEditor-portTable-actionTd';
+      // Action (Delete) - only in edit mode
+      if (!this.readOnly) {
+        const tdAction = document.createElement('td');
+        tdAction.className = 'jp-AlgorithmEditor-portTable-actionTd';
 
-      const delBtn = document.createElement('div');
-      delBtn.innerHTML = '&#x2715;';
-      delBtn.title = `Remove ${portType}`;
-      delBtn.className = 'jp-AlgorithmEditor-portTable-deleteBtn';
-      delBtn.onclick = () => {
-        ports.splice(index, 1);
-        this.renderPortTable(container, ports, portType);
-        this.syncCode();
-      };
+        const delBtn = document.createElement('div');
+        delBtn.innerHTML = '&#x2715;';
+        delBtn.title = `Remove ${portType}`;
+        delBtn.className = 'jp-AlgorithmEditor-portTable-deleteBtn';
+        delBtn.onclick = () => {
+          ports.splice(index, 1);
+          this.renderPortTable(container, ports, portType);
+          this.syncCode();
+        };
 
-      tdAction.appendChild(delBtn);
-      tr.appendChild(tdAction);
+        tdAction.appendChild(delBtn);
+        tr.appendChild(tdAction);
+      }
 
       tbody.appendChild(tr);
     });
@@ -987,14 +1033,21 @@ class AlgorithmEditorBody
 export class AlgorithmEditorDialogManager {
   async showEditor(
     algo: IAlgorithmData | null,
-    categories: ICategory[]
+    categories: ICategory[],
+    readOnly = false
   ): Promise<IAlgorithmData | null> {
-    const body = new AlgorithmEditorBody(algo, categories);
+    const body = new AlgorithmEditorBody(algo, categories, readOnly);
 
     const dialog = new Dialog({
-      title: algo ? 'Edit Algorithm' : 'Add New Algorithm',
+      title: readOnly
+        ? 'Algorithm Details'
+        : algo
+        ? 'Edit Algorithm'
+        : 'Add New Algorithm',
       body: body,
-      buttons: [Dialog.cancelButton(), Dialog.okButton({ label: 'Save' })]
+      buttons: readOnly
+        ? [Dialog.okButton({ label: 'Close' })]
+        : [Dialog.cancelButton(), Dialog.okButton({ label: 'Save' })]
     });
     dialog.addClass('jp-AlgorithmEditor-dialog-wrapper');
 
@@ -1020,9 +1073,19 @@ export class AlgorithmEditorDialogManager {
 
     const result = await dialog.launch();
 
-    if (result.button.accept) {
+    if (result.button.accept && !readOnly) {
       return body.getValue();
     }
     return null;
+  }
+
+  /**
+   * Show algorithm in readonly (browse) mode
+   */
+  async showBrowser(
+    algo: IAlgorithmData,
+    categories: ICategory[]
+  ): Promise<void> {
+    await this.showEditor(algo, categories, true);
   }
 }

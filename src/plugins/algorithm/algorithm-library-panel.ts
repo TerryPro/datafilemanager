@@ -1,6 +1,6 @@
 import { JupyterFrontEnd } from '@jupyterlab/application';
-import { INotebookTracker } from '@jupyterlab/notebook';
-import { Widget } from '@lumino/widgets';
+import { INotebookTracker, NotebookActions } from '@jupyterlab/notebook';
+import { Widget, Menu } from '@lumino/widgets';
 import { LibraryService } from '../../services/library-service';
 import {
   paletteIcon,
@@ -8,15 +8,12 @@ import {
   caretRightIcon,
   refreshIcon,
   addIcon,
-  editIcon,
-  closeIcon,
   LabIcon
 } from '@jupyterlab/ui-components';
-import { AlgorithmInfoDialogManager } from '../../component/algorithm/algorithm-info-dialog';
-import {
-  AlgorithmEditorDialogManager,
+import { AlgorithmEditorDialogManager,
   ICategory
 } from '../../component/algorithm/algorithm-editor-dialog';
+import { AlgorithmLoadDialogManager } from '../../component/algorithm/algorithm-load-dialog';
 import { showErrorMessage, showDialog, Dialog } from '@jupyterlab/apputils';
 
 interface IAlgorithm {
@@ -37,15 +34,22 @@ export class AlgorithmLibraryPanel extends Widget {
   private expandedCategories: Set<string> = new Set();
   private algorithms: { [category: string]: IAlgorithm[] } = {};
   private categories: ICategory[] = [];
+  private tracker: INotebookTracker;
+  private commands: any;
 
   constructor(app: JupyterFrontEnd, tracker: INotebookTracker) {
     super();
+    this.tracker = tracker;
+    this.commands = app.commands;
     this.libraryService = new LibraryService();
     this.id = 'algorithm-library-panel';
     this.title.label = ''; // Hide label in sidebar to show only icon
     this.title.icon = paletteIcon;
     this.title.caption = 'Algorithm Library';
     this.addClass('jp-AlgorithmLibraryPanel');
+    
+    // Setup context menu commands
+    this.setupContextMenuCommands();
 
     // Create layout
     const layout = document.createElement('div');
@@ -276,37 +280,23 @@ export class AlgorithmLibraryPanel extends Widget {
         content.appendChild(desc);
         algoItem.appendChild(content);
 
-        // Actions
-        const actions = document.createElement('div');
-        actions.style.display = 'none';
-        actions.style.marginLeft = '8px';
-        actions.style.gap = '4px';
-
-        const editBtn = this.createActionButton(editIcon, 'Edit', e => {
-          e.stopPropagation();
-          const catId = this.getCategoryId(category);
-          this.handleEdit(algo, catId);
-        });
-
-        const deleteBtn = this.createActionButton(closeIcon, 'Delete', e => {
-          e.stopPropagation();
-          this.handleDelete(algo.id);
-        });
-
-        actions.appendChild(editBtn);
-        actions.appendChild(deleteBtn);
-        algoItem.appendChild(actions);
-
+        // Hover effect
         algoItem.onmouseenter = () => {
           algoItem.style.backgroundColor = 'var(--jp-layout-color2)';
-          actions.style.display = 'flex';
         };
         algoItem.onmouseleave = () => {
           algoItem.style.backgroundColor = 'transparent';
-          actions.style.display = 'none';
         };
 
-        algoItem.onclick = () => this.openAlgorithmDialog(algo);
+        // 移除左键单击事件，只保留右键菜单
+        // algoItem.onclick = () => this.openAlgorithmDialog(algo);
+        
+        // Add context menu support
+        algoItem.addEventListener('contextmenu', (e: MouseEvent) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.showContextMenu(e, algo);
+        });
 
         algoList.appendChild(algoItem);
       });
@@ -342,43 +332,29 @@ export class AlgorithmLibraryPanel extends Widget {
     this.renderTree(text);
   }
 
-  private openAlgorithmDialog(algo: IAlgorithm) {
-    const dialogManager = new AlgorithmInfoDialogManager();
-    dialogManager.showAlgorithmInfo(algo);
-  }
+  private async openAlgorithmDialog(algo: IAlgorithm) {
+    try {
+      const code = await this.libraryService.getAlgorithmCode(algo.id);
+      const metadata = await this.libraryService.parseCode(code);
 
-  private createActionButton(
-    icon: LabIcon,
-    title: string,
-    onClick: (e: Event) => void
-  ) {
-    const btn = document.createElement('div');
-    btn.style.cursor = 'pointer';
-    btn.style.padding = '2px';
-    btn.style.borderRadius = '3px';
-    btn.style.color = 'var(--jp-ui-font-color2)';
-    btn.title = title;
-
-    btn.onmouseenter = () => {
-      btn.style.backgroundColor = 'var(--jp-layout-color3)';
-      btn.style.color = 'var(--jp-ui-font-color1)';
-    };
-    btn.onmouseleave = () => {
-      btn.style.backgroundColor = 'transparent';
-      btn.style.color = 'var(--jp-ui-font-color2)';
-    };
-
-    const iconNode = document.createElement('div');
-    icon.element({
-      container: iconNode,
-      height: '14px',
-      width: '14px',
-      elementPosition: 'center'
-    });
-    btn.appendChild(iconNode);
-
-    btn.onclick = onClick;
-    return btn;
+      const manager = new AlgorithmEditorDialogManager();
+      await manager.showBrowser(
+        {
+          id: algo.id,
+          name: algo.name,
+          category: this.getCategoryId(algo.category),
+          code: code,
+          description: algo.description || metadata.description,
+          prompt: metadata.prompt,
+          args: algo.args || metadata.args,
+          inputs: algo.inputs || metadata.inputs,
+          outputs: algo.outputs || metadata.outputs
+        },
+        this.categories
+      );
+    } catch (e: any) {
+      await showErrorMessage('Failed to load algorithm', e.message);
+    }
   }
 
   private getCategoryId(label: string): string {
@@ -447,4 +423,213 @@ export class AlgorithmLibraryPanel extends Widget {
       }
     }
   }
+
+  /**
+   * Setup context menu commands
+   */
+  private setupContextMenuCommands(): void {
+    // Browse Algorithm (View Details)
+    this.commands.addCommand('algorithm-library:browse', {
+      label: '浏览算法',
+      execute: (args: any) => {
+        const algo = this.findAlgorithmById(args.id as string);
+        if (algo) {
+          this.openAlgorithmDialog(algo);
+        }
+      }
+    });
+
+    // Edit Algorithm
+    this.commands.addCommand('algorithm-library:edit', {
+      label: '编辑算法',
+      execute: async (args: any) => {
+        const algo = this.findAlgorithmById(args.id as string);
+        if (algo) {
+          const catId = this.getCategoryId(args.category as string);
+          await this.handleEdit(algo, catId);
+        }
+      }
+    });
+
+    // Delete Algorithm
+    this.commands.addCommand('algorithm-library:delete', {
+      label: '删除算法',
+      execute: async (args: any) => {
+        await this.handleDelete(args.id as string);
+      }
+    });
+
+    // Insert as Widget (类似 Browse Algorithm Library)
+    this.commands.addCommand('algorithm-library:insert-widget', {
+      label: '插入为Widget',
+      execute: async (args: any) => {
+        const algo = this.findAlgorithmById(args.id as string);
+        if (algo) {
+          await this.insertAsWidget(algo);
+        }
+      }
+    });
+
+    // Load to Cell (类似 加载算法到CELL)
+    this.commands.addCommand('algorithm-library:load-to-cell', {
+      label: '加载到Cell',
+      execute: async (args: any) => {
+        const algo = this.findAlgorithmById(args.id as string);
+        if (algo) {
+          await this.loadToCell(algo);
+        }
+      }
+    });
+  }
+
+  /**
+   * Find algorithm by ID
+   */
+  private findAlgorithmById(id: string): IAlgorithm | null {
+    for (const category in this.algorithms) {
+      const algo = this.algorithms[category].find(a => a.id === id);
+      if (algo) {
+        return algo;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Show context menu for an algorithm
+   */
+  private showContextMenu(event: MouseEvent, algo: IAlgorithm): void {
+    const menu = new Menu({ commands: this.commands });
+    
+    // Pass algorithm ID instead of the whole object to avoid type issues
+    menu.addItem({
+      command: 'algorithm-library:browse',
+      args: { id: algo.id, name: algo.name, category: algo.category }
+    });
+    
+    menu.addItem({ type: 'separator' });
+    
+    menu.addItem({
+      command: 'algorithm-library:insert-widget',
+      args: { id: algo.id, name: algo.name, category: algo.category }
+    });
+    
+    menu.addItem({
+      command: 'algorithm-library:load-to-cell',
+      args: { id: algo.id, name: algo.name, category: algo.category }
+    });
+    
+    menu.addItem({ type: 'separator' });
+    
+    menu.addItem({
+      command: 'algorithm-library:edit',
+      args: { id: algo.id, name: algo.name, category: algo.category }
+    });
+    
+    menu.addItem({
+      command: 'algorithm-library:delete',
+      args: { id: algo.id, name: algo.name }
+    });
+    
+    // 修复：使用 aboutToClose 而不是 dispose，避免循环调用
+    let disposed = false;
+    menu.aboutToClose.connect(() => {
+      if (!disposed) {
+        disposed = true;
+        setTimeout(() => menu.dispose(), 0);
+      }
+    });
+    menu.open(event.clientX, event.clientY);
+  }
+
+  /**
+   * Insert algorithm as widget (类似 Browse Algorithm Library 功能)
+   * 将选中的算法作为 AlgorithmWidget 添加到 Notebook Cell
+   */
+  private async insertAsWidget(algo: IAlgorithm): Promise<void> {
+    const panel = this.tracker.currentWidget;
+    if (!panel) {
+      await showErrorMessage('No Active Notebook', 'Please open a notebook first.');
+      return;
+    }
+
+    const session = panel.sessionContext;
+    if (!session.isReady) {
+      await showErrorMessage('Session Not Ready', 'Please wait for the notebook session to be ready.');
+      return;
+    }
+
+    // Generate widget code with pre-selected algorithm
+    const code = `from algorithm.widgets import AlgorithmWidget\nAlgorithmWidget(init_algo='${algo.id}')`;
+
+    if (panel.content.activeCell) {
+      const activeCell = panel.content.activeCell;
+      const source = activeCell.model.sharedModel.getSource().trim();
+
+      if (source === '') {
+        // Current cell is empty, use it
+        activeCell.model.sharedModel.setSource(code);
+        await NotebookActions.run(panel.content, session);
+      } else {
+        // Current cell not empty, insert below
+        NotebookActions.insertBelow(panel.content);
+        const newCell = panel.content.activeCell;
+        if (newCell) {
+          newCell.model.sharedModel.setSource(code);
+          await NotebookActions.run(panel.content, session);
+        }
+      }
+    }
+  }
+
+  /**
+   * Load algorithm code to cell (类似 加载算法到CELL 功能)
+   * 通过对话框选择并将算法代码直接加载到 Cell
+   */
+  private async loadToCell(algo: IAlgorithm): Promise<void> {
+    const panel = this.tracker.currentWidget;
+    if (!panel) {
+      await showErrorMessage('无活动Notebook', '请先打开一个Notebook');
+      return;
+    }
+
+    const activeCell = panel.content.activeCell;
+    if (!activeCell) {
+      await showErrorMessage('无活动单元格', '请先选择一个Notebook单元格');
+      return;
+    }
+
+    if (activeCell.model.type !== 'code') {
+      await showErrorMessage('无效单元格类型', '请选择一个代码单元格');
+      return;
+    }
+
+    try {
+      // 获取算法完整信息
+      const code = await this.libraryService.getAlgorithmCode(algo.id);
+      const metadata = await this.libraryService.parseCode(code);
+
+      // 打开加载对话框
+      const loadManager = new AlgorithmLoadDialogManager();
+      const generatedCode = await loadManager.showLoadDialog({
+        id: algo.id,
+        name: algo.name,
+        description: algo.description,
+        category: algo.category,
+        code: code,
+        imports: metadata.imports,
+        args: algo.args || metadata.args,
+        inputs: algo.inputs || metadata.inputs,
+        outputs: algo.outputs || metadata.outputs
+      }, panel);
+
+      if (generatedCode) {
+        // 直接替换当前单元格的代码
+        activeCell.model.sharedModel.setSource(generatedCode);
+      }
+    } catch (e: any) {
+      await showErrorMessage('加载失败', e.message);
+    }
+  }
 }
+

@@ -70,6 +70,8 @@ export class AlgorithmLibraryPanel extends Widget {
     this.searchInput.className = 'jp-mod-styled';
     this.searchInput.placeholder = '搜索算法...';
     this.searchInput.style.flex = '1';
+    this.searchInput.style.minWidth = '0'; // 允许缩小
+    this.searchInput.style.maxWidth = '100%'; // 响应式限制
     this.searchInput.style.boxSizing = 'border-box';
     this.searchInput.addEventListener('input', () => this.filterAlgorithms());
 
@@ -83,6 +85,7 @@ export class AlgorithmLibraryPanel extends Widget {
       btn.style.justifyContent = 'center';
       btn.style.width = '24px';
       btn.style.height = '24px';
+      btn.style.flexShrink = '0'; // 防止按钮被压缩
       btn.title = title;
       btn.style.borderRadius = '3px';
       btn.onmouseover = () => {

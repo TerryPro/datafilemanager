@@ -226,7 +226,11 @@ class AlgorithmEditorBody
   private expandedParamIndex: number | null = null;
   private readOnly: boolean; // New: readonly mode flag
 
-  constructor(algo: IAlgorithmData | null, categories: ICategory[], readOnly = false) {
+  constructor(
+    algo: IAlgorithmData | null,
+    categories: ICategory[],
+    readOnly = false
+  ) {
     super();
     this.isEdit = !!algo;
     this.readOnly = readOnly; // Set readonly mode
@@ -516,17 +520,22 @@ class AlgorithmEditorBody
     const headerRow = document.createElement('tr');
     headerRow.className = 'jp-AlgorithmEditor-table-headerRow';
 
-    ['Name', 'Label', 'Type', 'Widget', 'Description', this.readOnly ? '' : 'Action'].forEach(
-      text => {
-        if (text === '' && this.readOnly) {
-          return; // Skip Action column in readonly mode
-        }
-        const th = document.createElement('th');
-        th.textContent = text;
-        th.className = 'jp-AlgorithmEditor-table-th';
-        headerRow.appendChild(th);
+    [
+      'Name',
+      'Label',
+      'Type',
+      'Widget',
+      'Description',
+      this.readOnly ? '' : 'Action'
+    ].forEach(text => {
+      if (text === '' && this.readOnly) {
+        return; // Skip Action column in readonly mode
       }
-    );
+      const th = document.createElement('th');
+      th.textContent = text;
+      th.className = 'jp-AlgorithmEditor-table-th';
+      headerRow.appendChild(th);
+    });
     thead.appendChild(headerRow);
     table.appendChild(thead);
 

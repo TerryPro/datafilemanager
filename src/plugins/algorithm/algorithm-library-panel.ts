@@ -10,7 +10,8 @@ import {
   addIcon,
   LabIcon
 } from '@jupyterlab/ui-components';
-import { AlgorithmEditorDialogManager,
+import {
+  AlgorithmEditorDialogManager,
   ICategory
 } from '../../component/algorithm/algorithm-editor-dialog';
 import { AlgorithmLoadDialogManager } from '../../component/algorithm/algorithm-load-dialog';
@@ -47,7 +48,7 @@ export class AlgorithmLibraryPanel extends Widget {
     this.title.icon = paletteIcon;
     this.title.caption = 'Algorithm Library';
     this.addClass('jp-AlgorithmLibraryPanel');
-    
+
     // Setup context menu commands
     this.setupContextMenuCommands();
 
@@ -290,7 +291,7 @@ export class AlgorithmLibraryPanel extends Widget {
 
         // 移除左键单击事件，只保留右键菜单
         // algoItem.onclick = () => this.openAlgorithmDialog(algo);
-        
+
         // Add context menu support
         algoItem.addEventListener('contextmenu', (e: MouseEvent) => {
           e.preventDefault();
@@ -461,7 +462,7 @@ export class AlgorithmLibraryPanel extends Widget {
 
     // Insert as Widget (类似 Browse Algorithm Library)
     this.commands.addCommand('algorithm-library:insert-widget', {
-      label: '插入为Widget',
+      label: '加载算法（Widget）',
       execute: async (args: any) => {
         const algo = this.findAlgorithmById(args.id as string);
         if (algo) {
@@ -472,7 +473,7 @@ export class AlgorithmLibraryPanel extends Widget {
 
     // Load to Cell (类似 加载算法到CELL)
     this.commands.addCommand('algorithm-library:load-to-cell', {
-      label: '加载到Cell',
+      label: '加载算法（代码）',
       execute: async (args: any) => {
         const algo = this.findAlgorithmById(args.id as string);
         if (algo) {
@@ -500,37 +501,37 @@ export class AlgorithmLibraryPanel extends Widget {
    */
   private showContextMenu(event: MouseEvent, algo: IAlgorithm): void {
     const menu = new Menu({ commands: this.commands });
-    
+
     // Pass algorithm ID instead of the whole object to avoid type issues
     menu.addItem({
       command: 'algorithm-library:browse',
       args: { id: algo.id, name: algo.name, category: algo.category }
     });
-    
+
     menu.addItem({ type: 'separator' });
-    
+
     menu.addItem({
       command: 'algorithm-library:insert-widget',
       args: { id: algo.id, name: algo.name, category: algo.category }
     });
-    
+
     menu.addItem({
       command: 'algorithm-library:load-to-cell',
       args: { id: algo.id, name: algo.name, category: algo.category }
     });
-    
+
     menu.addItem({ type: 'separator' });
-    
+
     menu.addItem({
       command: 'algorithm-library:edit',
       args: { id: algo.id, name: algo.name, category: algo.category }
     });
-    
+
     menu.addItem({
       command: 'algorithm-library:delete',
       args: { id: algo.id, name: algo.name }
     });
-    
+
     // 修复：使用 aboutToClose 而不是 dispose，避免循环调用
     let disposed = false;
     menu.aboutToClose.connect(() => {
@@ -549,13 +550,19 @@ export class AlgorithmLibraryPanel extends Widget {
   private async insertAsWidget(algo: IAlgorithm): Promise<void> {
     const panel = this.tracker.currentWidget;
     if (!panel) {
-      await showErrorMessage('No Active Notebook', 'Please open a notebook first.');
+      await showErrorMessage(
+        'No Active Notebook',
+        'Please open a notebook first.'
+      );
       return;
     }
 
     const session = panel.sessionContext;
     if (!session.isReady) {
-      await showErrorMessage('Session Not Ready', 'Please wait for the notebook session to be ready.');
+      await showErrorMessage(
+        'Session Not Ready',
+        'Please wait for the notebook session to be ready.'
+      );
       return;
     }
 
@@ -611,17 +618,20 @@ export class AlgorithmLibraryPanel extends Widget {
 
       // 打开加载对话框
       const loadManager = new AlgorithmLoadDialogManager();
-      const generatedCode = await loadManager.showLoadDialog({
-        id: algo.id,
-        name: algo.name,
-        description: algo.description,
-        category: algo.category,
-        code: code,
-        imports: metadata.imports,
-        args: algo.args || metadata.args,
-        inputs: algo.inputs || metadata.inputs,
-        outputs: algo.outputs || metadata.outputs
-      }, panel);
+      const generatedCode = await loadManager.showLoadDialog(
+        {
+          id: algo.id,
+          name: algo.name,
+          description: algo.description,
+          category: algo.category,
+          code: code,
+          imports: metadata.imports,
+          args: algo.args || metadata.args,
+          inputs: algo.inputs || metadata.inputs,
+          outputs: algo.outputs || metadata.outputs
+        },
+        panel
+      );
 
       if (generatedCode) {
         // 直接替换当前单元格的代码
@@ -632,4 +642,3 @@ export class AlgorithmLibraryPanel extends Widget {
     }
   }
 }
-

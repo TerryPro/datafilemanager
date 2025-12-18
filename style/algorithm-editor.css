@@ -618,7 +618,7 @@
 }
 
 .jp-AlgorithmLoad-section h4 {
-  margin: 0 0 12px 0;
+  margin: 0 0 12px;
   font-size: 13px;
   font-weight: 600;
   color: var(--jp-ui-font-color1);
@@ -658,7 +658,7 @@
   background-color: var(--jp-layout-color2);
 }
 
-.jp-AlgorithmLoad-checkboxItem input[type="checkbox"] {
+.jp-AlgorithmLoad-checkboxItem input[type='checkbox'] {
   margin: 0;
   cursor: pointer;
   width: 16px;

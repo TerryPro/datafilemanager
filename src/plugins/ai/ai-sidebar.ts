@@ -537,7 +537,12 @@ export class AiSidebar extends Widget {
       return;
     }
 
-    if (mode === 'create' || mode === 'fix' || mode === 'refactor' || mode === 'normalize') {
+    if (
+      mode === 'create' ||
+      mode === 'fix' ||
+      mode === 'refactor' ||
+      mode === 'normalize'
+    ) {
       cell.model.sharedModel.setSource(suggestion);
     } else if (mode === 'explain') {
       await this.app.commands.execute('notebook:insert-cell-below');

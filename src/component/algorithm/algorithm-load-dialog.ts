@@ -42,7 +42,10 @@ interface ILoadConfig {
   outputs: { [key: string]: string };
 }
 
-class AlgorithmLoadBody extends Widget implements Dialog.IBodyWidget<ILoadConfig> {
+class AlgorithmLoadBody
+  extends Widget
+  implements Dialog.IBodyWidget<ILoadConfig>
+{
   private algo: IAlgorithmInfo;
   private panel: NotebookPanel | null;
   private parameters: { [key: string]: any } = {};
@@ -58,7 +61,7 @@ class AlgorithmLoadBody extends Widget implements Dialog.IBodyWidget<ILoadConfig
     this.algo = algo;
     this.panel = panel;
     this.addClass('jp-AlgorithmLoad-body');
-    
+
     this.container = document.createElement('div');
     this.container.className = 'jp-AlgorithmLoad-container';
     this.container.style.display = 'flex';
@@ -95,10 +98,10 @@ print(json.dumps(result))
 `;
 
       const future = kernel.requestExecute({ code });
-      
-      return new Promise((resolve) => {
+
+      return new Promise(resolve => {
         let resolved = false;
-        
+
         future.onIOPub = (msg: KernelMessage.IIOPubMessage) => {
           if (msg.header.msg_type === 'stream') {
             const content = msg.content as KernelMessage.IStreamMsg['content'];
@@ -119,7 +122,7 @@ print(json.dumps(result))
             }
           }
         };
-        
+
         // 设置超时保护
         setTimeout(() => {
           if (!resolved) {
@@ -211,8 +214,10 @@ print(json.dumps(result))
     header.style.color = 'var(--jp-ui-font-color1)';
     section.appendChild(header);
 
-    const inputs = this.algo.inputs || [{ name: 'df', type: 'pd.DataFrame', description: '输入数据' }];
-    
+    const inputs = this.algo.inputs || [
+      { name: 'df', type: 'pd.DataFrame', description: '输入数据' }
+    ];
+
     if (inputs.length > 0) {
       inputs.forEach(input => {
         const row = this.createInputRow(input);
@@ -246,7 +251,10 @@ print(json.dumps(result))
     row.appendChild(label);
 
     // 如果是 DataFrame 类型且有可用的 DataFrame 列表，使用下拉选择
-    if (input.type.includes('DataFrame') && this.availableDataFrames.length > 0) {
+    if (
+      input.type.includes('DataFrame') &&
+      this.availableDataFrames.length > 0
+    ) {
       const selectWrapper = document.createElement('div');
       selectWrapper.style.flex = '1';
       selectWrapper.style.display = 'flex';
@@ -339,10 +347,10 @@ print(json.dumps(result))
       inputEl.style.flex = '1';
       inputEl.value = input.name;
       inputEl.placeholder = '输入变量名';
-      
+
       // 初始化 inputVars
       this.inputVars[input.name] = input.name;
-      
+
       inputEl.oninput = () => {
         this.inputVars[input.name] = inputEl.value;
         this.updateCodePreview();
@@ -383,7 +391,8 @@ print(json.dumps(result))
         // 注意：参数初始化在 createParameterInput 的各个子方法中完成
         // 只有当参数没有被初始化时，才使用默认值
         if (this.parameters[param.name] === undefined) {
-          this.parameters[param.name] = param.default !== undefined ? param.default : '';
+          this.parameters[param.name] =
+            param.default !== undefined ? param.default : '';
         }
       });
 
@@ -433,37 +442,40 @@ print(json.dumps(result))
 
   private createParameterInput(param: IParameter): HTMLElement {
     // 根据参数类型和widget创建不同的输入控件
-    
+
     // 列选择器（单选）
     if (param.widget === 'column-selector') {
       return this.createColumnSelector(param);
     }
-    
+
     // 列选择器（多选）
     if (param.widget === 'multi-column-selector') {
       return this.createMultiColumnSelector(param);
     }
-    
+
     // 下拉选择（widget 为 select 或有预定义选项）
-    if (param.widget === 'select' || (param.options && param.options.length > 0)) {
+    if (
+      param.widget === 'select' ||
+      (param.options && param.options.length > 0)
+    ) {
       return this.createSelectInput(param);
     }
-    
+
     // 复选框
     if (param.type === 'bool' || param.widget === 'checkbox') {
       return this.createCheckboxInput(param);
     }
-    
+
     // 数字输入
     if (param.type === 'int' || param.type === 'float') {
       return this.createNumberInput(param);
     }
-    
+
     // 列表输入
     if (param.type === 'list' || Array.isArray(param.default)) {
       return this.createListInput(param);
     }
-    
+
     // 默认：文本输入
     return this.createTextInput(param);
   }
@@ -481,7 +493,7 @@ print(json.dumps(result))
         return this.dataFrameColumns[dfName];
       }
     }
-    
+
     // 如果没有找到，返回所有可用 DataFrame 的列名并集
     const allColumns = new Set<string>();
     Object.values(this.dataFrameColumns).forEach(cols => {
@@ -584,7 +596,7 @@ print(json.dumps(result))
 
     // 获取可用列名
     const columns = this.getAvailableColumns();
-    
+
     // 初始化已选列表
     let selectedColumns: string[] = [];
     if (Array.isArray(param.default)) {
@@ -645,7 +657,7 @@ print(json.dumps(result))
     select.style.width = '100%';
 
     const options = param.options || [];
-    
+
     options.forEach(opt => {
       const option = document.createElement('option');
       option.value = opt;
@@ -657,7 +669,10 @@ print(json.dumps(result))
     });
 
     // 初始化参数值
-    if (param.default !== undefined && options.includes(param.default as string)) {
+    if (
+      param.default !== undefined &&
+      options.includes(param.default as string)
+    ) {
       this.parameters[param.name] = param.default;
     } else if (options.length > 0) {
       this.parameters[param.name] = options[0];
@@ -681,7 +696,7 @@ print(json.dumps(result))
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.style.margin = '0 8px 0 0';
-    
+
     const isChecked = param.default === true || param.default === 'True';
     checkbox.checked = isChecked;
     this.parameters[param.name] = isChecked;
@@ -707,19 +722,29 @@ print(json.dumps(result))
     input.style.width = '100%';
     input.type = 'number';
     input.value = param.default !== undefined ? String(param.default) : '';
-    
-    if (param.min !== undefined) input.min = String(param.min);
-    if (param.max !== undefined) input.max = String(param.max);
-    if (param.step !== undefined) input.step = String(param.step);
+
+    if (param.min !== undefined) {
+      input.min = String(param.min);
+    }
+    if (param.max !== undefined) {
+      input.max = String(param.max);
+    }
+    if (param.step !== undefined) {
+      input.step = String(param.step);
+    }
 
     // 初始化参数值
     if (param.default !== undefined) {
-      this.parameters[param.name] = param.type === 'int' ? parseInt(String(param.default)) : parseFloat(String(param.default));
+      this.parameters[param.name] =
+        param.type === 'int'
+          ? parseInt(String(param.default))
+          : parseFloat(String(param.default));
     }
 
     input.oninput = () => {
       const val = input.value;
-      this.parameters[param.name] = param.type === 'int' ? parseInt(val) : parseFloat(val);
+      this.parameters[param.name] =
+        param.type === 'int' ? parseInt(val) : parseFloat(val);
       this.updateCodePreview();
     };
 
@@ -731,7 +756,7 @@ print(json.dumps(result))
     input.className = 'jp-mod-styled';
     input.style.width = '100%';
     input.placeholder = '列名1, 列名2 (逗号分隔)';
-    
+
     let displayVal = '';
     if (Array.isArray(param.default)) {
       displayVal = param.default.join(', ');
@@ -788,8 +813,10 @@ print(json.dumps(result))
     header.style.color = 'var(--jp-ui-font-color1)';
     section.appendChild(header);
 
-    const outputs = this.algo.outputs || [{ name: 'df_out', type: 'DataFrame', description: '输出数据' }];
-    
+    const outputs = this.algo.outputs || [
+      { name: 'df_out', type: 'DataFrame', description: '输出数据' }
+    ];
+
     if (outputs.length > 0) {
       outputs.forEach(output => {
         const row = this.createOutputRow(output);
@@ -810,7 +837,9 @@ print(json.dumps(result))
     row.style.gap = '12px';
 
     const label = document.createElement('label');
-    label.textContent = `${output.description || output.name} (${output.type}):`;
+    label.textContent = `${output.description || output.name} (${
+      output.type
+    }):`;
     label.style.fontSize = '12px';
     label.style.fontWeight = '500';
     label.style.minWidth = '150px';
@@ -887,7 +916,7 @@ print(json.dumps(result))
 
     // 3. 生成函数调用
     code += `# ${this.algo.name}\n`;
-    
+
     const callArgs: string[] = [];
 
     // 处理输入参数
@@ -900,7 +929,7 @@ print(json.dumps(result))
     // 处理其他参数
     Object.keys(this.parameters).forEach(key => {
       let val = this.parameters[key];
-      
+
       if (val === undefined || val === null || val === '') {
         return; // 跳过空值
       }
@@ -912,7 +941,11 @@ print(json.dumps(result))
         val = `[${formatted}]`;
       } else if (typeof val === 'string') {
         // 检查是否需要引号
-        const noQuote = val === 'True' || val === 'False' || val === 'None' || !isNaN(Number(val));
+        const noQuote =
+          val === 'True' ||
+          val === 'False' ||
+          val === 'None' ||
+          !isNaN(Number(val));
         if (!noQuote) {
           val = `'${val}'`;
         }
@@ -924,10 +957,12 @@ print(json.dumps(result))
     // 修复问题2：检查是否有输出变量
     const outputs = this.algo.outputs || [];
     const hasOutputs = outputs.length > 0;
-    const hasOutputVars = hasOutputs && outputs.some(o => {
-      const varName = this.outputVars[o.name];
-      return varName && varName.trim() !== '';
-    });
+    const hasOutputVars =
+      hasOutputs &&
+      outputs.some(o => {
+        const varName = this.outputVars[o.name];
+        return varName && varName.trim() !== '';
+      });
 
     // 生成函数调用代码
     if (hasOutputVars) {
@@ -935,13 +970,14 @@ print(json.dumps(result))
       const outputNames = outputs
         .map(o => this.outputVars[o.name] || o.name)
         .filter(name => name && name.trim() !== '');
-      
+
       if (outputNames.length > 0) {
-        const outputStr = outputNames.length > 1 ? outputNames.join(', ') : outputNames[0];
+        const outputStr =
+          outputNames.length > 1 ? outputNames.join(', ') : outputNames[0];
         code += `${outputStr} = ${this.algo.id}(${callArgs.join(', ')})\n`;
-        
+
         // 添加显示结果
-        code += `\n# 显示结果\n`;
+        code += '\n# 显示结果\n';
         code += `if ${outputNames[0]} is not None:\n`;
         code += `    display(${outputNames[0]}.head())`;
       } else {
@@ -971,8 +1007,10 @@ print(json.dumps(result))
 }
 
 export class AlgorithmLoadDialogManager {
-
-  async showLoadDialog(algo: IAlgorithmInfo, panel: NotebookPanel | null = null): Promise<string | null> {
+  async showLoadDialog(
+    algo: IAlgorithmInfo,
+    panel: NotebookPanel | null = null
+  ): Promise<string | null> {
     const body = new AlgorithmLoadBody(algo, panel);
 
     const dialog = new Dialog({
@@ -987,7 +1025,9 @@ export class AlgorithmLoadDialogManager {
     dialog.addClass('jp-AlgorithmLoad-dialog');
 
     // 样式调整
-    const content = dialog.node.querySelector('.jp-Dialog-content') as HTMLElement;
+    const content = dialog.node.querySelector(
+      '.jp-Dialog-content'
+    ) as HTMLElement;
     const bodyEl = dialog.node.querySelector('.jp-Dialog-body') as HTMLElement;
 
     dialog.node.style.resize = 'none';

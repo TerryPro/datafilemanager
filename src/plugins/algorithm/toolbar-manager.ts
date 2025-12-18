@@ -7,15 +7,9 @@
 import { JupyterFrontEnd } from '@jupyterlab/application';
 import { NotebookPanel, NotebookActions } from '@jupyterlab/notebook';
 import { ToolbarButton } from '@jupyterlab/apputils';
-import {
-  paletteIcon,
-  searchIcon,
-  saveIcon,
-  addIcon
-} from '@jupyterlab/ui-components';
-import { AlgorithmLibraryDialogManager } from '../../component/algorithm/algorithm-library-dialog';
-import { handleLoadAlgorithm } from './load-algorithm-handler';
+import { paletteIcon, saveIcon, checkIcon } from '@jupyterlab/ui-components';
 import { handleSaveAlgorithm } from './save-algorithm-handler';
+import { handleValidateAlgorithm } from './validate-algorithm-handler';
 
 /**
  * Setup algorithm toolbar buttons for a notebook panel
@@ -28,42 +22,32 @@ export function setupAlgorithmToolbar(
   const insertWidgetButton = new ToolbarButton({
     icon: paletteIcon,
     label: '',
-    tooltip: 'Insert Algorithm Widget',
+    tooltip: '插入算法小部件',
     onClick: async () => {
       await handleInsertAlgorithmWidget(panel);
     }
   });
   panel.toolbar.insertItem(10, 'add-algorithm-widget', insertWidgetButton);
 
-  // 2. Browse Algorithm Library Button
-  const browseButton = new ToolbarButton({
-    icon: searchIcon,
-    tooltip: 'Browse Algorithm Library',
+  // 2. Validate Algorithm Button
+  const validateAlgorithmButton = new ToolbarButton({
+    icon: checkIcon,
+    tooltip: '验证算法格式',
     onClick: async () => {
-      await handleBrowseLibrary(panel, app);
+      await handleValidateAlgorithm(panel, app);
     }
   });
-  panel.toolbar.insertItem(11, 'browse-algorithm-library', browseButton);
+  panel.toolbar.insertItem(11, 'validate-algorithm', validateAlgorithmButton);
 
-  // 3. Load Algorithm to Cell Button
-  const loadAlgorithmButton = new ToolbarButton({
-    icon: addIcon,
-    tooltip: '加载算法到Cell',
-    onClick: async () => {
-      await handleLoadAlgorithm(panel, app);
-    }
-  });
-  panel.toolbar.insertItem(12, 'load-algorithm', loadAlgorithmButton);
-
-  // 4. Save Algorithm Button
+  // 3. Save Algorithm Button
   const saveAlgorithmButton = new ToolbarButton({
     icon: saveIcon,
-    tooltip: '保存当前Cell为算法',
+    tooltip: '保存算法',
     onClick: async () => {
       await handleSaveAlgorithm(panel, app);
     }
   });
-  panel.toolbar.insertItem(13, 'save-algorithm', saveAlgorithmButton);
+  panel.toolbar.insertItem(12, 'save-algorithm', saveAlgorithmButton);
 }
 
 /**
@@ -96,45 +80,6 @@ async function handleInsertAlgorithmWidget(
       if (newCell) {
         newCell.model.sharedModel.setSource(code);
         await NotebookActions.run(panel.content, session);
-      }
-    }
-  }
-}
-
-/**
- * Handle Browse Library
- */
-async function handleBrowseLibrary(
-  panel: NotebookPanel,
-  app: JupyterFrontEnd
-): Promise<void> {
-  const session = panel.sessionContext;
-  if (!session.isReady) {
-    return;
-  }
-
-  const manager = new AlgorithmLibraryDialogManager(app);
-  const selection = await manager.selectAlgorithm(panel);
-
-  if (selection) {
-    const code = `from algorithm.widgets import AlgorithmWidget\nAlgorithmWidget(init_algo='${selection.id}')`;
-
-    if (panel.content.activeCell) {
-      const activeCell = panel.content.activeCell;
-      const source = activeCell.model.sharedModel.getSource().trim();
-
-      if (source === '') {
-        // Current cell is empty, use it
-        activeCell.model.sharedModel.setSource(code);
-        await NotebookActions.run(panel.content, session);
-      } else {
-        // Current cell not empty, insert below
-        NotebookActions.insertBelow(panel.content);
-        const newCell = panel.content.activeCell;
-        if (newCell) {
-          newCell.model.sharedModel.setSource(code);
-          await NotebookActions.run(panel.content, session);
-        }
       }
     }
   }

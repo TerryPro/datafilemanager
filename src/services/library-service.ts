@@ -172,6 +172,27 @@ export class LibraryService {
   }
 
   /**
+   * Validate algorithm code format
+   */
+  async validateCode(code: string): Promise<any> {
+    try {
+      const resp = await fetch('/aiserver/algorithm-validate', {
+        method: 'POST',
+        body: JSON.stringify({ code })
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        return data;
+      }
+      const errorText = await resp.text();
+      throw new Error(errorText || resp.statusText);
+    } catch (error) {
+      console.error('Error validating code:', error);
+      throw error;
+    }
+  }
+
+  /**
    * 为算法生成默认的参数配置与预期输出
    */
   getDefaultAlgorithmMeta(id: string): { params: any; expectedOutput: string } {

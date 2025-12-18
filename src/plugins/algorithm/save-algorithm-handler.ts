@@ -7,6 +7,7 @@
 import { JupyterFrontEnd } from '@jupyterlab/application';
 import { NotebookPanel } from '@jupyterlab/notebook';
 import { showErrorMessage, showDialog, Dialog } from '@jupyterlab/apputils';
+import { Widget } from '@lumino/widgets';
 import { AlgorithmEditorDialogManager } from '../../component/algorithm/algorithm-editor-dialog';
 import { LibraryService } from '../../services/library-service';
 
@@ -35,33 +36,52 @@ export async function handleSaveAlgorithm(
   console.log('[SaveAlgorithm] Step 2: code length =', cellCode?.length);
   if (!cellCode.trim()) {
     console.log('[SaveAlgorithm] Step 2: Empty cell');
-    await showErrorMessage('保存算法', '代码单元格为空，无法保存');
+    await showErrorMessage('\u4fdd\u5b58\u7b97\u6cd5', '\u4ee3\u7801\u5355\u5143\u683c\u4e3a\u7a7a\uff0c\u65e0\u6cd5\u4fdd\u5b58');
     return;
   }
-
-  // 3. 显示加载提示
-  console.log('[SaveAlgorithm] Step 3: Creating loading dialog');
+  
+  // 3. \u683c\u5f0f\u68c0\u67e5\u548c\u9a8c\u8bc1
+  console.log('[SaveAlgorithm] Step 3: Validating code format...');
+  try {
+    const validationResult = await libraryService.validateCode(cellCode);
+    console.log('[SaveAlgorithm] Step 3: Validation result =', validationResult);
+      
+    // \u5982\u679c\u6709\u9519\u8bef\u6216\u8b66\u544a,\u663e\u793a\u9a8c\u8bc1\u7ed3\u679c\u5bf9\u8bdd\u6848
+    if (validationResult.issues && validationResult.issues.length > 0) {
+      const shouldContinue = await showValidationDialog(validationResult);
+      if (!shouldContinue) {
+        console.log('[SaveAlgorithm] Step 3: User cancelled due to validation issues');
+        return;
+      }
+    }
+  } catch (validationError: any) {
+    console.warn('[SaveAlgorithm] Step 3: Validation failed:', validationError);
+    // \u9a8c\u8bc1\u5931\u8d25\u4e0d\u963b\u6b62\u6d41\u7a0b,\u7ee7\u7eed\u6267\u884c
+  }
+  
+  // 4. \u663e\u793a\u52a0\u8f7d\u63d0\u793a
+  console.log('[SaveAlgorithm] Step 4: Creating loading dialog');
   let loadingDialog: Dialog<void> | null = new Dialog({
     title: '正在解析算法代码...',
     body: '请稍候',
     buttons: [Dialog.okButton({ label: '取消' })]
   });
   loadingDialog.launch();
-  console.log('[SaveAlgorithm] Step 3: Loading dialog launched');
-
+  console.log('[SaveAlgorithm] Step 4: Loading dialog launched');
+  
   try {
-    // 4. 调用后端解析代码
-    console.log('[SaveAlgorithm] Step 4: Parsing code...');
+    // 5. \u8c03\u7528\u540e\u7aef\u89e3\u6790\u4ee3\u7801
+    console.log('[SaveAlgorithm] Step 5: Parsing code...');
     let metadata: any;
     try {
       metadata = await libraryService.parseCode(cellCode);
-      console.log('[SaveAlgorithm] Step 4: Parse OK', metadata);
+      console.log('[SaveAlgorithm] Step 5: Parse OK', metadata);
     } catch (parseError: any) {
-      console.log('[SaveAlgorithm] Step 4: Parse failed:', parseError);
+      console.log('[SaveAlgorithm] Step 5: Parse failed:', parseError);
       if (loadingDialog) {
         loadingDialog.reject();
         loadingDialog = null;
-        console.log('[SaveAlgorithm] Step 4: Loading dialog closed');
+        console.log('[SaveAlgorithm] Step 5: Loading dialog closed');
       }
 
       // 检测是否为非标准代码
@@ -300,6 +320,88 @@ if modules_to_remove:
     }
   } catch (reloadError: any) {
     console.warn('[SaveAlgorithm] Step 8: Kernel reload failed:', reloadError);
-    // 重载失败不影响保存流程，继续执行
+    // \u91cd\u8f7d\u5931\u8d25\u4e0d\u5f71\u54cd\u4fdd\u5b58\u6d41\u7a0b\uff0c\u7ee7\u7eed\u6267\u884c
   }
+}
+
+/**
+ * 显示验证结果对话框
+ */
+async function showValidationDialog(
+  validationResult: any
+): Promise<boolean> {
+  const { issues } = validationResult;
+
+  const errorIssues = issues.filter((i: any) => i.level === 'error');
+  const warningIssues = issues.filter((i: any) => i.level === 'warning');
+  const suggestionIssues = issues.filter((i: any) => i.level === 'suggestion');
+
+  // 创建HTML内容
+  const createIssueList = (
+    title: string,
+    issues: any[],
+    color: string,
+    icon: string
+  ): string => {
+    if (issues.length === 0) return '';
+    let html = `<div style="margin-bottom: 20px;">`;
+    html += `<div style="color: ${color}; font-weight: bold; font-size: 14px; margin-bottom: 10px; display: flex; align-items: center;">`;
+    html += `<span style="margin-right: 8px;">${icon}</span>`;
+    html += `<span>${title} (${issues.length} 个)</span>`;
+    html += `</div>`;
+    html += `<ul style="margin: 0; padding-left: 30px; list-style: decimal;">`;
+    issues.forEach((issue: any) => {
+      html += `<li style="margin-bottom: 8px; line-height: 1.5;">`;
+      html += `<span>${issue.message}</span>`;
+      if (issue.line) {
+        html += ` <span style="color: #999; font-size: 12px;">(行 ${issue.line})</span>`;
+      }
+      html += `</li>`;
+    });
+    html += `</ul>`;
+    html += `</div>`;
+    return html;
+  };
+
+  let bodyHtml = '<div style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Helvetica, Arial, sans-serif; font-size: 13px; line-height: 1.6; padding: 10px;">';
+  
+  bodyHtml += createIssueList('错误', errorIssues, '#d32f2f', '❌');
+  bodyHtml += createIssueList('警告', warningIssues, '#f57c00', '⚠️');
+  bodyHtml += createIssueList('建议', suggestionIssues, '#1976d2', '💡');
+
+  if (errorIssues.length > 0) {
+    bodyHtml += '<div style="margin-top: 20px; padding: 12px; background-color: #ffebee; border-left: 4px solid #d32f2f; border-radius: 4px;">';
+    bodyHtml += '<strong>⚠️ 发现严重错误，请修复后再保存。</strong>';
+    bodyHtml += '</div>';
+  } else {
+    bodyHtml += '<div style="margin-top: 20px; padding: 12px; background-color: #e3f2fd; border-left: 4px solid #1976d2; border-radius: 4px;">';
+    bodyHtml += '<strong>❓ 是否继续保存？</strong>';
+    bodyHtml += '</div>';
+  }
+  
+  bodyHtml += '</div>';
+
+  // 创建Widget来显示HTML内容
+  const bodyWidget = new Widget();
+  bodyWidget.node.innerHTML = bodyHtml;
+
+  if (errorIssues.length > 0) {
+    await showDialog({
+      title: '代码格式检查',
+      body: bodyWidget,
+      buttons: [Dialog.okButton({ label: '确定' })]
+    });
+    return false;
+  }
+
+  const result = await showDialog({
+    title: '代码格式检查',
+    body: bodyWidget,
+    buttons: [
+      Dialog.cancelButton({ label: '取消' }),
+      Dialog.okButton({ label: '继续保存' })
+    ]
+  });
+
+  return result.button.accept;
 }

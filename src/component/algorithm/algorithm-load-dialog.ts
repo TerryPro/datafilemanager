@@ -443,14 +443,13 @@ print(json.dumps(result))
   private createParameterInput(param: IParameter): HTMLElement {
     // 根据参数类型和widget创建不同的输入控件
 
-    // 列选择器（单选）
+    // 列选择器：根据类型判断单选或多选
     if (param.widget === 'column-selector') {
-      return this.createColumnSelector(param);
-    }
-
-    // 列选择器（多选）
-    if (param.widget === 'multi-column-selector') {
-      return this.createMultiColumnSelector(param);
+      if (param.type === 'list') {
+        return this.createMultiColumnSelector(param);
+      } else {
+        return this.createColumnSelector(param);
+      }
     }
 
     // 下拉选择（widget 为 select 或有预定义选项）

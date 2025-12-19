@@ -7,7 +7,7 @@
 import { JupyterFrontEnd } from '@jupyterlab/application';
 import { NotebookPanel, NotebookActions } from '@jupyterlab/notebook';
 import { ToolbarButton } from '@jupyterlab/apputils';
-import { paletteIcon, saveIcon, checkIcon } from '@jupyterlab/ui-components';
+import { paletteIcon, fileUploadIcon, checkIcon } from '@jupyterlab/ui-components';
 import { handleSaveAlgorithm } from './save-algorithm-handler';
 import { handleValidateAlgorithm } from './validate-algorithm-handler';
 
@@ -22,7 +22,7 @@ export function setupAlgorithmToolbar(
   const insertWidgetButton = new ToolbarButton({
     icon: paletteIcon,
     label: '',
-    tooltip: '插入算法小部件',
+    tooltip: '插入算法',
     onClick: async () => {
       await handleInsertAlgorithmWidget(panel);
     }
@@ -32,7 +32,7 @@ export function setupAlgorithmToolbar(
   // 2. Validate Algorithm Button
   const validateAlgorithmButton = new ToolbarButton({
     icon: checkIcon,
-    tooltip: '验证算法格式',
+    tooltip: '验证算法',
     onClick: async () => {
       await handleValidateAlgorithm(panel, app);
     }
@@ -41,8 +41,8 @@ export function setupAlgorithmToolbar(
 
   // 3. Save Algorithm Button
   const saveAlgorithmButton = new ToolbarButton({
-    icon: saveIcon,
-    tooltip: '保存算法',
+    icon: fileUploadIcon,
+    tooltip: '保存算法到库',
     onClick: async () => {
       await handleSaveAlgorithm(panel, app);
     }

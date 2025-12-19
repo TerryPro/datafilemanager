@@ -160,36 +160,14 @@ export class InputPanel extends Widget {
   private createToolbar(): HTMLDivElement {
     const toolbar = createElement('div', 'ai-sidebar-toolbar');
 
-    // First row: Intent/Mode selection and Execute button
+    // First row: Mode selection, Context checkbox, Execute button
     const firstRow = createElement('div', 'ai-sidebar-toolbar-row');
 
-    // Mode select dropdown
+    // Mode select dropdown with wrapper
+    const modeWrapper = createElement('div', 'ai-sidebar-select-wrapper');
     this.modeSelect = this.createModeSelect();
-    firstRow.appendChild(this.modeSelect);
-
-    // Execute button
-    this.executeBtn = createButton(
-      'ai-sidebar-execute-btn',
-      ICONS.run,
-      '生成',
-      () => this.handleExecute()
-    );
-    firstRow.appendChild(this.executeBtn);
-
-    toolbar.appendChild(firstRow);
-
-    // Second row: Model, Workflow, Context
-    const secondRow = createElement('div', 'ai-sidebar-toolbar-row');
-
-    // Model Selector
-    this.modelSelectorWidget = new ModelSelector({
-      aiService: this.props.aiService
-    });
-    secondRow.appendChild(this.modelSelectorWidget.node);
-
-    // Workflow select dropdown
-    this.workflowSelect = this.createWorkflowSelect();
-    secondRow.appendChild(this.workflowSelect);
+    modeWrapper.appendChild(this.modeSelect);
+    firstRow.appendChild(modeWrapper);
 
     // Context Checkbox Wrapper
     const contextWrapper = createElement('div', 'ai-sidebar-context-wrapper');
@@ -206,7 +184,37 @@ export class InputPanel extends Widget {
 
     contextWrapper.appendChild(this.contextCheckbox);
     contextWrapper.appendChild(contextLabel);
-    secondRow.appendChild(contextWrapper);
+    firstRow.appendChild(contextWrapper);
+
+    // 添加一个空的 flex 占位符，让按钮右对齐
+    const spacer = createElement('div', 'ai-sidebar-toolbar-spacer');
+    firstRow.appendChild(spacer);
+
+    // Execute button - 使用上传图标
+    this.executeBtn = createButton(
+      'ai-sidebar-execute-btn',
+      ICONS.send, // 使用发送/上传图标
+      '生成',
+      () => this.handleExecute()
+    );
+    firstRow.appendChild(this.executeBtn);
+
+    toolbar.appendChild(firstRow);
+
+    // Second row: Model selector, Workflow select
+    const secondRow = createElement('div', 'ai-sidebar-toolbar-row');
+
+    // Model Selector
+    this.modelSelectorWidget = new ModelSelector({
+      aiService: this.props.aiService
+    });
+    secondRow.appendChild(this.modelSelectorWidget.node);
+
+    // Workflow select dropdown with wrapper
+    const workflowWrapper = createElement('div', 'ai-sidebar-select-wrapper');
+    this.workflowSelect = this.createWorkflowSelect();
+    workflowWrapper.appendChild(this.workflowSelect);
+    secondRow.appendChild(workflowWrapper);
 
     toolbar.appendChild(secondRow);
 

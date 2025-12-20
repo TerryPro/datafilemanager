@@ -410,7 +410,13 @@ export class InputPanel extends Widget {
    */
   private handleExecute(): void {
     const intent = this.textarea.value.trim();
-    this.props.onGenerate(intent);
+    if (intent) {
+        this.props.onGenerate(intent);
+        this.textarea.value = '';
+    } else {
+        // Handle empty input case (which might trigger auto-generation in parent)
+        this.props.onGenerate('');
+    }
   }
 
   /**

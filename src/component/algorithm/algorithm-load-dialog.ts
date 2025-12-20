@@ -137,9 +137,11 @@ print(json.dumps(result))
   }
 
   private render(): void {
-    // 创建滚动区域
+    // 创建滚动区域 - 使用flex布局
     const scrollArea = document.createElement('div');
     scrollArea.style.flex = '1';
+    scrollArea.style.display = 'flex';
+    scrollArea.style.flexDirection = 'column';
     scrollArea.style.overflowY = 'auto';
     scrollArea.style.padding = '16px';
     scrollArea.style.paddingBottom = '8px';
@@ -160,11 +162,11 @@ print(json.dumps(result))
     const outputSection = this.createOutputSection();
     scrollArea.appendChild(outputSection);
 
-    this.container.appendChild(scrollArea);
-
-    // 5. 代码预览（固定在底部）
+    // 5. 代码预览
     const previewSection = this.createCodePreview();
-    this.container.appendChild(previewSection);
+    scrollArea.appendChild(previewSection);
+
+    this.container.appendChild(scrollArea);
   }
 
   private createInfoSection(): HTMLElement {
@@ -861,10 +863,13 @@ print(json.dumps(result))
 
   private createCodePreview(): HTMLElement {
     const section = document.createElement('div');
-    section.style.padding = '16px';
-    section.style.paddingTop = '8px';
-    section.style.borderTop = '1px solid var(--jp-border-color2)';
-    section.style.background = 'var(--jp-layout-color1)';
+    section.className = 'jp-AlgorithmLoad-section';
+    section.style.flex = '1'; // 占据剩余空间
+    section.style.display = 'flex';
+    section.style.flexDirection = 'column';
+    section.style.marginBottom = '0'; // 最后一个section，不需要下边距
+    section.style.marginTop = '20px'; // 上边距保持与其他section一致
+    section.style.minHeight = '0'; // 允许flex项目缩小
 
     const header = document.createElement('h4');
     header.textContent = '代码预览';
@@ -872,19 +877,21 @@ print(json.dumps(result))
     header.style.fontSize = '12px';
     header.style.fontWeight = '600';
     header.style.color = 'var(--jp-ui-font-color2)';
+    header.style.flexShrink = '0'; // header不缩小
     section.appendChild(header);
 
     this.codePreview = document.createElement('pre');
+    this.codePreview.style.flex = '1'; // 充满剩余高度
     this.codePreview.style.background = 'var(--jp-layout-color0)';
     this.codePreview.style.padding = '12px';
     this.codePreview.style.borderRadius = '4px';
     this.codePreview.style.border = '1px solid var(--jp-border-color2)';
     this.codePreview.style.fontFamily = 'var(--jp-code-font-family)';
     this.codePreview.style.fontSize = '12px';
-    this.codePreview.style.maxHeight = '150px';
-    this.codePreview.style.overflowY = 'auto';
+    this.codePreview.style.overflowY = 'auto'; // 内容过多时滚动
     this.codePreview.style.margin = '0';
     this.codePreview.style.whiteSpace = 'pre';
+    this.codePreview.style.minHeight = '0'; // 允许缩小
     section.appendChild(this.codePreview);
 
     // 初始化代码预览
@@ -903,8 +910,13 @@ print(json.dumps(result))
   private generateCode(): string {
     let code = '';
 
-    // 1. 添加导入语句
-    if (this.algo.imports && this.algo.imports.length > 0) {
+    // 注意:this.algo.code可能已经包含了imports(从文件读取时)
+    // 检查code是否已包含import语句
+    const codeHasImports = this.algo.code && 
+      (this.algo.code.includes('import ') || this.algo.code.includes('from '));
+    
+    // 1. 添加导入语句(仅当code中不包含imports时)
+    if (!codeHasImports && this.algo.imports && this.algo.imports.length > 0) {
       code += this.algo.imports.join('\n') + '\n\n';
     }
 

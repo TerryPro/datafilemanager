@@ -89,7 +89,7 @@ export class AiSidebar extends Widget {
     // Input Panel - using InputPanel component
     const state = this.stateManager.getState();
     this.inputPanelWidget = new InputPanel({
-      onGenerate: intent => this.handleGenerate(),
+      onGenerate: intent => this.handleGenerate(intent),
       onVariableSelect: variable => this.handleVariableSelect(variable),
       onAlgorithmSelect: algorithm => this.handleAlgorithmSelect(algorithm),
       selectedVariable: state.selectedVariable,
@@ -378,19 +378,27 @@ export class AiSidebar extends Widget {
     }
   }
 
-  private async handleGenerate() {
+  private async handleGenerate(intentOverride?: string) {
     const panel = this.tracker.currentWidget;
     if (!panel) {
       this.appendHistory('System', '未检测到活动的 Notebook。', 'error');
       return;
     }
 
-    // Get intent from InputPanel
-    const intentValue = this.inputPanelWidget.getValue().trim();
-    if (!intentValue) {
-      this.updateStructuredIntent();
+    // Get intent from override or InputPanel
+    let intent = intentOverride?.trim();
+    
+    // If no intent provided, try to get from input widget or auto-generate
+    if (!intent) {
+        const intentValue = this.inputPanelWidget.getValue().trim();
+        if (!intentValue) {
+          this.updateStructuredIntent();
+          // After updateStructuredIntent, the input widget has the new value
+          intent = this.inputPanelWidget.getValue().trim();
+        } else {
+          intent = intentValue;
+        }
     }
-    const intent = this.inputPanelWidget.getValue().trim();
 
     const cell = panel.content.activeCell;
     if (!cell || cell.model.type !== 'code') {

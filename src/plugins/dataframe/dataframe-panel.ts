@@ -6,9 +6,6 @@ import { ITranslator } from '@jupyterlab/translation';
 import { Menu } from '@lumino/widgets';
 import { AlgorithmLibraryDialogManager } from '../../component/algorithm/algorithm-library-dialog';
 
-/**
- * DataFrame 检视面板组件，显示当前笔记本中的所有 DataFrame 变量
- */
 export class DataFramePanel {
   private app: JupyterFrontEnd;
   private notebookTracker?: INotebookTracker;
@@ -34,9 +31,6 @@ export class DataFramePanel {
     this.setupCommands();
   }
 
-  /**
-   * 创建并配置 DataFrame 检视面板
-   */
   private createPanel(): Widget {
     const dfPanel = new Widget();
     dfPanel.id = 'datafilemanager-dataframe-panel';
@@ -52,17 +46,84 @@ export class DataFramePanel {
 
     const refresh = document.createElement('button');
     refresh.className = 'df-refresh';
-    refresh.title = '刷新';
+    refresh.title = 'Refresh';
     const refreshIconEl = document.createElement('span');
     refreshIconEl.className = 'jp-Icon jp-Icon-16 jp-RefreshIcon';
     refresh.appendChild(refreshIconEl);
-
-    this.list.className = 'df-panel-list';
 
     root.appendChild(toolbar);
     toolbar.appendChild(refresh);
     root.appendChild(this.list);
     dfPanel.node.appendChild(root);
+
+    const style = document.createElement('style');
+    style.textContent = `
+      .df-panel-root {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        width: 100%;
+      }
+      .df-panel-toolbar {
+        padding: 4px 8px;
+        border-bottom: 1px solid var(--jp-border-color1);
+      }
+      .df-refresh {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+      }
+      .df-refresh:hover {
+        background-color: var(--jp-hover-background);
+      }
+      .df-panel-list {
+        padding: 8px;
+      }
+      .df-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .df-row {
+        display: flex;
+        padding: 8px;
+        border-bottom: 1px solid var(--jp-border-color1);
+        cursor: pointer;
+      }
+      .df-row:hover {
+        background-color: var(--jp-hover-background);
+      }
+      .df-row.df-header {
+        font-weight: bold;
+        background-color: var(--jp-layout-color2);
+        cursor: default;
+      }
+      .df-row.df-header:hover {
+        background-color: var(--jp-layout-color2);
+      }
+      .df-cell {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .df-col-name {
+        flex: 2;
+      }
+      .df-col-shape {
+        flex: 1;
+      }
+      .df-col-rows {
+        flex: 1;
+      }
+      .df-empty {
+        padding: 16px;
+        text-align: center;
+        color: var(--jp-ui-font-color3);
+      }
+    `;
+    document.head.appendChild(style);
 
     refresh.addEventListener('click', () => {
       void this.refreshList();
@@ -76,9 +137,6 @@ export class DataFramePanel {
     return dfPanel;
   }
 
-  /**
-   * 获取当前活动的 Notebook 面板
-   */
   private getActiveNotebook(): NotebookPanel | null {
     const panel =
       this.notebookTracker?.currentWidget ??
@@ -86,9 +144,6 @@ export class DataFramePanel {
     return panel ?? null;
   }
 
-  /**
-   * 渲染 DataFrame 列表
-   */
   private renderList(
     items: Array<{ name: string; shape?: [number, number]; rows?: number }>
   ): void {
@@ -152,9 +207,6 @@ export class DataFramePanel {
     this.list.appendChild(table);
   }
 
-  /**
-   * 从当前 Notebook 内核中获取 DataFrame 变量列表
-   */
   private async fetchDataFrames(): Promise<
     Array<{ name: string; shape?: [number, number]; rows?: number }>
   > {
@@ -214,17 +266,11 @@ export class DataFramePanel {
     }
   }
 
-  /**
-   * 刷新当前列表展示
-   */
   private async refreshList(): Promise<void> {
     const items = await this.fetchDataFrames();
     this.renderList(items);
   }
 
-  /**
-   * 设置右键菜单命令
-   */
   private setupCommands(): void {
     const describeCommand = 'datafilemanager:df-describe';
     this.commands.addCommand(describeCommand, {
@@ -310,7 +356,7 @@ export class DataFramePanel {
           '    __target = os.path.join(__dir, f"{root}_{__i}{ext}")',
           '    __i += 1',
           '__df.to_csv(__target, index=False)',
-          'print(__target)'
+          'print(__path)'
         ].join('\n');
         const session = nb.sessionContext.session;
         if (!session || !session.kernel) {
@@ -366,9 +412,6 @@ export class DataFramePanel {
     });
   }
 
-  /**
-   * 处理右键菜单事件
-   */
   private handleContextMenu(event: MouseEvent): void {
     const target = event.target as HTMLElement;
     const row = target.closest('.df-row') as HTMLElement | null;
@@ -386,7 +429,6 @@ export class DataFramePanel {
     menu.open(event.clientX, event.clientY);
   }
 
-  /** 获取面板实例 */
   get panel(): Widget {
     return this.dfPanel;
   }

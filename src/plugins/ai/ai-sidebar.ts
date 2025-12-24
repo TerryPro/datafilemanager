@@ -387,17 +387,17 @@ export class AiSidebar extends Widget {
 
     // Get intent from override or InputPanel
     let intent = intentOverride?.trim();
-    
+
     // If no intent provided, try to get from input widget or auto-generate
     if (!intent) {
-        const intentValue = this.inputPanelWidget.getValue().trim();
-        if (!intentValue) {
-          this.updateStructuredIntent();
-          // After updateStructuredIntent, the input widget has the new value
-          intent = this.inputPanelWidget.getValue().trim();
-        } else {
-          intent = intentValue;
-        }
+      const intentValue = this.inputPanelWidget.getValue().trim();
+      if (!intentValue) {
+        this.updateStructuredIntent();
+        // After updateStructuredIntent, the input widget has the new value
+        intent = this.inputPanelWidget.getValue().trim();
+      } else {
+        intent = intentValue;
+      }
     }
 
     const cell = panel.content.activeCell;

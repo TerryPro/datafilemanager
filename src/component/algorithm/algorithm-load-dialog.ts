@@ -912,9 +912,10 @@ print(json.dumps(result))
 
     // 注意:this.algo.code可能已经包含了imports(从文件读取时)
     // 检查code是否已包含import语句
-    const codeHasImports = this.algo.code && 
+    const codeHasImports =
+      this.algo.code &&
       (this.algo.code.includes('import ') || this.algo.code.includes('from '));
-    
+
     // 1. 添加导入语句(仅当code中不包含imports时)
     if (!codeHasImports && this.algo.imports && this.algo.imports.length > 0) {
       code += this.algo.imports.join('\n') + '\n\n';

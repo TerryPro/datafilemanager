@@ -7,7 +7,11 @@
 import { JupyterFrontEnd } from '@jupyterlab/application';
 import { NotebookPanel, NotebookActions } from '@jupyterlab/notebook';
 import { ToolbarButton } from '@jupyterlab/apputils';
-import { paletteIcon, fileUploadIcon, checkIcon } from '@jupyterlab/ui-components';
+import {
+  paletteIcon,
+  fileUploadIcon,
+  checkIcon
+} from '@jupyterlab/ui-components';
 import { handleSaveAlgorithm } from './save-algorithm-handler';
 import { handleValidateAlgorithm } from './validate-algorithm-handler';
 

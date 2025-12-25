@@ -410,6 +410,60 @@ export class DataFramePanel {
         }
       }
     });
+
+    const paginationCommand = 'datafilemanager:df-pagination';
+    this.commands.addCommand(paginationCommand, {
+      label: 'Browse Data',
+      caption: this.trans.__('Browse DataFrame using pagination'),
+      iconClass: 'jp-MaterialIcon jp-TableIcon',
+      execute: async () => {
+        const nb = this.getActiveNotebook();
+        if (!nb) {
+          await showErrorMessage(
+            this.trans.__('Browse Data'),
+            this.trans.__('No active notebook found.')
+          );
+          return;
+        }
+        if (!this.currentDfName) {
+           return;
+         }
+         const code = [
+           'import sys, os',
+           'def _add_project_root():',
+           '    current_path = os.getcwd()',
+           '    while current_path:',
+           '        if os.path.exists(os.path.join(current_path, "library")) and os.path.isdir(os.path.join(current_path, "library")):',
+           '            if current_path not in sys.path:',
+           '                sys.path.insert(0, current_path)',
+           '            return',
+           '        parent = os.path.dirname(current_path)',
+           '        if parent == current_path:',
+           '            break',
+           '        current_path = parent',
+           '_add_project_root()',
+           '',
+           'from library.algorithm.eda.pagination_view import pagination_view',
+           `pagination_view(${this.currentDfName})`
+         ].join('\n');
+         
+         const cell = nb.content.activeCell;
+        if (cell && cell.model.type === 'code') {
+          const src = (cell.model.sharedModel.getSource() || '').trim();
+          if (src.length === 0) {
+            cell.model.sharedModel.setSource(code);
+            await this.commands.execute('notebook:run-cell');
+          } else {
+            await this.commands.execute('notebook:insert-cell-below');
+            const newCell = nb.content.activeCell;
+            if (newCell && newCell.model.type === 'code') {
+              newCell.model.sharedModel.setSource(code);
+              await this.commands.execute('notebook:run-cell');
+            }
+          }
+        }
+      }
+    });
   }
 
   private handleContextMenu(event: MouseEvent): void {
@@ -425,6 +479,7 @@ export class DataFramePanel {
     menu.addItem({ command: 'datafilemanager:df-describe' });
     menu.addItem({ command: 'datafilemanager:df-savefile' });
     menu.addItem({ command: 'datafilemanager:df-analysis' });
+    menu.addItem({ command: 'datafilemanager:df-pagination' });
     menu.aboutToClose.connect(() => menu.dispose());
     menu.open(event.clientX, event.clientY);
   }

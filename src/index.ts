@@ -26,7 +26,6 @@ import algorithmPlugin from './plugins/algorithm';
 import workflowPlugin from './plugins/workflow';
 import filebrowserPlugin from './plugins/filebrowser';
 import flowNotePlugin from './plugins/flownote';
-import tableWalkerPlugin from './renderer';
 
 /**
  * Export all plugins as a default array
@@ -42,6 +41,5 @@ export default [
   algorithmPlugin,
   workflowPlugin,
   filebrowserPlugin,
-  flowNotePlugin,
-  tableWalkerPlugin
+  flowNotePlugin
 ];

@@ -92,6 +92,7 @@ export class InputPanel extends Widget {
   private modeSelect!: HTMLSelectElement;
   private workflowSelect!: HTMLSelectElement;
   private contextCheckbox!: HTMLInputElement;
+  private systemLibraryCheckbox!: HTMLInputElement;
   private executeBtn!: HTMLButtonElement;
   private clearInputBtn!: HTMLButtonElement;
   private variableBtn!: HTMLButtonElement;
@@ -168,6 +169,23 @@ export class InputPanel extends Widget {
     this.modeSelect = this.createModeSelect();
     modeWrapper.appendChild(this.modeSelect);
     firstRow.appendChild(modeWrapper);
+
+    // System Library Checkbox Wrapper
+    const systemLibraryWrapper = createElement('div', 'ai-sidebar-context-wrapper');
+    systemLibraryWrapper.title = '使用系统内置算法库生成代码';
+
+    this.systemLibraryCheckbox = document.createElement('input');
+    this.systemLibraryCheckbox.type = 'checkbox';
+    this.systemLibraryCheckbox.id = 'ai-sidebar-system-library-check';
+    this.systemLibraryCheckbox.checked = false;
+    const systemLibraryLabel = document.createElement('label');
+    systemLibraryLabel.htmlFor = 'ai-sidebar-system-library-check';
+    systemLibraryLabel.textContent = '系统算法';
+    systemLibraryLabel.className = 'ai-sidebar-context-label';
+
+    systemLibraryWrapper.appendChild(this.systemLibraryCheckbox);
+    systemLibraryWrapper.appendChild(systemLibraryLabel);
+    firstRow.appendChild(systemLibraryWrapper);
 
     // Context Checkbox Wrapper
     const contextWrapper = createElement('div', 'ai-sidebar-context-wrapper');
@@ -487,6 +505,15 @@ export class InputPanel extends Widget {
    */
   getIncludeContext(): boolean {
     return this.contextCheckbox.checked;
+  }
+
+  /**
+   * Gets whether to use system library algorithms
+   *
+   * @returns Boolean indicating if system library should be used
+   */
+  getUseSystemLibrary(): boolean {
+    return this.systemLibraryCheckbox.checked;
   }
 
   /**

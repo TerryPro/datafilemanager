@@ -211,7 +211,8 @@ print(json.dumps(_dfs))
         params?: any;
         expectedOutput?: string;
       };
-    }
+    },
+    useSystemLibrary: boolean = false
   ): any {
     const kernel = panel.sessionContext?.session?.kernel?.name ?? 'python';
     const ctx = this.pickNeighborCells(panel, 2);
@@ -258,7 +259,7 @@ print(json.dumps(_dfs))
       source,
       context: ctx,
       intent,
-      options: { mode, autoRun, privacy: 'normal', selection },
+      options: { mode, autoRun, privacy: 'normal', selection, useSystemLibrary },
       output,
       variables,
       notebookId,

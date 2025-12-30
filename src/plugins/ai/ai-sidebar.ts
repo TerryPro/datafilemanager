@@ -313,6 +313,7 @@ export class AiSidebar extends Widget {
       }
       const source = cell.model.sharedModel.getSource();
       const includeContext = this.inputPanelWidget.getIncludeContext();
+      const useSystemLibrary = this.inputPanelWidget.getUseSystemLibrary();
 
       const payload = this.aiService.buildAiRequestPayload(
         panel,
@@ -321,7 +322,8 @@ export class AiSidebar extends Widget {
         currentMode,
         includeContext,
         variables,
-        { variable: state.selectedVariable, algorithm: state.selectedAlgorithm }
+        { variable: state.selectedVariable, algorithm: state.selectedAlgorithm },
+        useSystemLibrary
       );
 
       const resp = await this.aiService.requestGenerate(payload);
@@ -431,6 +433,7 @@ export class AiSidebar extends Widget {
 
       const state = this.stateManager.getState();
       const includeContext = this.inputPanelWidget.getIncludeContext();
+      const useSystemLibrary = this.inputPanelWidget.getUseSystemLibrary();
       const payload = this.aiService.buildAiRequestPayload(
         panel,
         source,
@@ -438,7 +441,8 @@ export class AiSidebar extends Widget {
         mode,
         includeContext,
         variables,
-        { variable: state.selectedVariable, algorithm: state.selectedAlgorithm }
+        { variable: state.selectedVariable, algorithm: state.selectedAlgorithm },
+        useSystemLibrary
       );
       const resp = await this.aiService.requestGenerate(payload);
 

@@ -23,6 +23,7 @@ export interface IAiSidebarState {
   isGenerating: boolean;
   intentText: string;
   mode: GenerateMode;
+  useSystemLibrary: boolean;
 }
 
 /**
@@ -68,7 +69,8 @@ export class StateManager {
       chatHistory: [],
       isGenerating: false,
       intentText: '',
-      mode: 'create'
+      mode: 'create',
+      useSystemLibrary: false
     };
     this.listeners = new Set();
   }
